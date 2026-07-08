@@ -30,7 +30,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checking code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
+      with:
+        # semantic-release needs full history + tags to determine the release
+        fetch-depth: 0
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
 
     - name: Integrating
       run: npm ci
@@ -39,12 +47,12 @@ jobs:
       run: npm test
 
     - name: Code coverage
-      uses: codecov/codecov-action@v1.0.3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Releasing
-      uses: cycjimmy/semantic-release-action@v2
+      run: npx semantic-release
       env:
         GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
         NPM_TOKEN:        ${{ secrets.NPM_TOKEN }}
