@@ -335,7 +335,12 @@ const injectVariable = (
   if (!stepObject.stepRegExp)
     return {
       stepExpression: scenarioSentence,
-      stepFn: stepObject.stepFn,
+      // Forward through a rest-param wrapper so the reported arity is 0.
+      // jest-cucumber v4.4.0+ treats an arity mismatch (stepFn.length >
+      // matched args) as a request for a done() callback and then blocks
+      // on a Promise that never resolves. A rest param has length 0 while
+      // still passing along whatever args jest-cucumber provides.
+      stepFn: (...args) => stepObject.stepFn(...args),
     };
 
   const exprMatches = stepObject.stepRegExp.exec(scenarioSentence);
@@ -343,7 +348,10 @@ const injectVariable = (
   if (!exprMatches || /<.*>/.test(scenarioSentence))
     return {
       stepExpression: stepObject.stepRegExp,
-      stepFn: stepObject.stepFn,
+      // See note above: keep arity 0 to avoid jest-cucumber's done-callback
+      // heuristic hanging the step (matters for plain scenarios whose text
+      // contains "<...>" and for outline template steps).
+      stepFn: (...args) => stepObject.stepFn(...args),
     };
 
   const dynamicMatchThatAreVariables = [];
