@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - 'releases/*'
+  workflow_dispatch:
 
 jobs:
   prettier:
@@ -28,6 +29,13 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
+    # semantic-release pushes the version tag, creates the GitHub release, and
+    # comments on released issues/PRs — all of which need write access. The
+    # default GITHUB_TOKEN is read-only, which caused EGITNOPERMISSION.
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
     - name: Checking code
       uses: actions/checkout@v4
