@@ -32,6 +32,11 @@ jobs:
     - name: Checking code
       uses: actions/checkout@v1
 
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
     - name: Integrating
       run: npm ci
 
