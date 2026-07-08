@@ -55,7 +55,7 @@ jobs:
       run: npm test
 
     - name: Code coverage
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
