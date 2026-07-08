@@ -46,9 +46,8 @@
       [
         "@semantic-release/github",
         {
-          "assets": [
-            "dist/**"
-          ]
+          "successComment": false,
+          "failComment": false
         }
       ],
       [
