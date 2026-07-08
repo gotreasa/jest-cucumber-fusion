@@ -6,7 +6,7 @@
   "types": "src/index.d.ts",
   "scripts": {
     "test": "jest --color",
-    "coverage": "codecov",
+    "coverage": "jest --coverage",
     "commit": "git-cz",
     "semantic-release": "semantic-release",
     "fmt": "npx prettier --write ."
@@ -27,7 +27,6 @@
     "jest-cucumber": "^4.5.0"
   },
   "devDependencies": {
-    "codecov": "~4.0.0-0",
     "cz-conventional-changelog": "^3.3.0",
     "prettier": "2.3.2",
     "semantic-release": "^25.0.5"
