@@ -71,6 +71,10 @@
     "testMatch": [
       "**/*.steps.js"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/.claude/"
+    ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/test/"

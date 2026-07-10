@@ -79,3 +79,6 @@ dist
 
 .idea
 .DS_Store
+
+# Claude Code worktree / scratch
+.claude
