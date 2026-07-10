@@ -35,17 +35,20 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 | E1 | env | stale local `node_modules` (3.0.2 vs 4.5.0) | `npm install` to resync; re-verify M5 + silent-skip mechanism on 4.5.0 |
 
 ## Decisions
-- Rigor **thorough**; first DELIVER pass scoped to **P0 (H1 + T1)** — highest value, and the negative tests harden every later fix.
+- **Scope for this PR (confirmed 2026-07-10): P0 + P1** (H1, T1, H2, M1, M2, M4, M5). Folded into the fork-tidy branch/PR #7 so all "house in order" + hardening work ships as **one** semantic-release patch (avoids a release per PR). P2/P3 deferred.
+- Rigor **thorough**; order P0 first (H1 + T1 — the negative tests harden every later fix), then the P1 items.
 - Bug-fix flow (RCA → regression test → fix), not greenfield waves; RCA is `discuss/rca.md`.
+- **H1 contract:** when >1 step definition matches a step, **throw an ambiguity error** (mirrors Cucumber / jest-cucumber's automatic binding) rather than silently taking the first insertion-order match. Converts the silent-wrong-result into a loud failure; the current suite has no overlapping defs so nothing regresses.
+- **Execution vehicle:** nWave agents dispatched in DISTILL→DELIVER cadence — `nw-acceptance-designer` (RED regression tests) → `nw-software-crafter` (opus, GREEN fix) → `nw-*-reviewer` double gate → orchestrator adjudication → commit. No DELIVER `deliver-session` started, so DES PreToolUse edit gates stay inert (bug-fix flow, not the full atdd_pure carpaccio machinery).
 
 ## Status
 - [x] nWave config scaffolded (`.nwave/des-config.json`: thorough, application).
 - [x] Feature folder + seeded RCA (`discuss/rca.md`).
-- [x] Plan committed (this file).
-- [ ] **Next:** resync `node_modules` (E1) so DISTILL/DELIVER run against the shipped 4.5.0.
-- [ ] **Next:** DISTILL — author failing regression tests for H1 + the T1 negative suite.
+- [x] Plan committed (this file); scaffold cherry-picked onto fork-tidy branch.
+- [x] **E1 done:** `npm ci` in the worktree → local `node_modules` on jest-cucumber **4.5.0** (was resolving up to the main checkout's stale 3.0.2); 38 tests green on 4.5.0 = trustworthy baseline.
+- [ ] **Next:** DISTILL — author failing regression tests for H1 + the T1 negative suite (Cycle 1, P0).
 - [ ] DELIVER — implement H1 fix; green; review gate.
-- [ ] Iterate P1 → P3.
+- [ ] Cycle 2 — P1 (H2 `.d.ts`+tsd, M1 hooks-as-arrays, M2 dup-matcher, M4 callsites robustness, M5 errors:false-still-fails).
 
-## Caveat on nWave setup
-`.nwave/des-config.json` was authored directly using the exact structure the `/nw-rigor` skill documents (no `nwave` CLI is available on this machine to run `nwave install`). Wave skills read this config; full DES **hook enforcement** (PreToolUse TDD gates) is normally wired by `nwave install` — run that if/when the CLI is available to guarantee the enforcement layer, not just the config.
+## Caveat on nWave setup — RESOLVED
+Earlier note said no `nwave` CLI was available. **Correction (2026-07-10):** `des` (`~/.claude/bin/des`) and `nwave-ai` are installed, and global `~/.claude/settings.json` registers the DES PreToolUse hooks. The edit/write gate self-skips unless `.nwave/des/deliver-session.json` exists (none here), and freshness auto-skips on this developer checkout — so config is honoured and enforcement is available, but the bug-fix flow runs without the DELIVER-session gates engaging.
