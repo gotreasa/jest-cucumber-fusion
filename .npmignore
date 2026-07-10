@@ -82,3 +82,8 @@ dist
 
 # Claude Code worktree / scratch
 .claude
+
+# Dev-only artifacts (not shipped to consumers)
+.nwave
+docs/feature
+test-d
