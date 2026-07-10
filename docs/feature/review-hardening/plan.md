@@ -46,9 +46,10 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 - [x] Feature folder + seeded RCA (`discuss/rca.md`).
 - [x] Plan committed (this file); scaffold cherry-picked onto fork-tidy branch.
 - [x] **E1 done:** `npm ci` in the worktree → local `node_modules` on jest-cucumber **4.5.0** (was resolving up to the main checkout's stale 3.0.2); 38 tests green on 4.5.0 = trustworthy baseline.
-- [ ] **Next:** DISTILL — author failing regression tests for H1 + the T1 negative suite (Cycle 1, P0).
-- [ ] DELIVER — implement H1 fix; green; review gate.
-- [ ] Cycle 2 — P1 (H2 `.d.ts`+tsd, M1 hooks-as-arrays, M2 dup-matcher, M4 callsites robustness, M5 errors:false-still-fails).
+- [x] **Cycle 1 (P0) DONE** — commit `085859d`. H1 (throw on ambiguous step defs) + T1 negative suite. 42 tests green; code APPROVED, tests APPROVED_WITH_NOTES (notes applied).
+- [x] **Cycle 2a (P1 runtime) DONE** — commit `0c17fb9`. M1 (hooks-as-arrays), M2 (dup-matcher throw), M4 (callsites robustness), M5 (errors:false-only throw). 49 tests green; both reviewers APPROVED_WITH_NOTES. M5 adjudicated to errors:false-scope after a probe showed the unconditional throw shadowed jest-cucumber's native default-path error (refuting the reviewers' "unreachable" assumption) — default-path transparency preserved.
+- [x] **Cycle 2b (H2) DONE** — commit `3b6f168`. `.d.ts` StepChain return type + overloads; tsd type test (`test-d/index.test-d.ts`) wired via a `test-d` script + a CI Type-checking step that gates the release. crafter-reviewer APPROVED. `npm run test-d` green; void-revert reproduces 7 tsd errors (test genuinely guards H2).
+- [x] **P0 + P1 COMPLETE.** All seven items (H1, T1, H2, M1, M2, M4, M5) landed on the fork-tidy branch (PR #7). Full suite: 49 jest tests + tsd, all green. **P2/P3 deferred** (M3 singleton-reset; L1 dead code; T2/T3 weak assertions; L2 outline edge cases) — plus the pre-existing prettier debt in `scenario-outline2.steps.js` (a T3 file). These are a follow-up PR/release.
 
 ## Caveat on nWave setup — RESOLVED
 Earlier note said no `nwave` CLI was available. **Correction (2026-07-10):** `des` (`~/.claude/bin/des`) and `nwave-ai` are installed, and global `~/.claude/settings.json` registers the DES PreToolUse hooks. The edit/write gate self-skips unless `.nwave/des/deliver-session.json` exists (none here), and freshness auto-skips on this developer checkout — so config is honoured and enforcement is available, but the bug-fix flow runs without the DELIVER-session gates engaging.
