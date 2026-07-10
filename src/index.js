@@ -4,8 +4,8 @@ const stepsDefinition = {
   then: {},
   and: {},
   but: {},
-  before: null,
-  after: null,
+  before: [],
+  after: [],
 };
 
 const addDefinitionFunction = (
@@ -14,19 +14,29 @@ const addDefinitionFunction = (
   fnForDefinition
 ) => {
   if (stepsDefinition[definitionType]) {
-    if (regexpSentence.constructor === RegExp)
+    if (regexpSentence.constructor === RegExp) {
+      throwIfDuplicateMatcher(definitionType, regexpSentence.source);
       stepsDefinition[definitionType][regexpSentence.source] = {
         stepRegExp: regexpSentence,
         stepExpression: null,
         stepFn: fnForDefinition,
       };
-    else if (typeof regexpSentence === "string")
+    } else if (typeof regexpSentence === "string") {
+      throwIfDuplicateMatcher(definitionType, regexpSentence);
       stepsDefinition[definitionType][regexpSentence] = {
         stepRegExp: null,
         stepExpression: regexpSentence,
         stepFn: fnForDefinition,
       };
+    }
   }
+};
+
+const throwIfDuplicateMatcher = (definitionType, matcherKey) => {
+  if (stepsDefinition[definitionType][matcherKey])
+    throw new Error(
+      `Duplicate step definition: "${matcherKey}" is already registered for "${definitionType}"`
+    );
 };
 
 const Given = (regexpSentenceOrChainedObject, fnForDefinition) => {
@@ -73,16 +83,22 @@ const defineAndChain = (stepType, stepObjectOrSentence, fnForStep) => {
 };
 
 const Before = (fnDefinition) => {
-  stepsDefinition.before = fnDefinition;
+  stepsDefinition.before.push(fnDefinition);
 };
 const After = (fnDefinition) => {
-  stepsDefinition.after = fnDefinition;
+  stepsDefinition.after.push(fnDefinition);
 };
 
 const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
   const path = require("path");
   const callerSites = require("callsites");
-  const callerSiteCaller = callerSites.default()[1].getFileName();
+  // Resolve the feature path from the FIRST stack frame outside this package, so
+  // an in-package re-export/wrapper frame does not retarget it; guard a shallow
+  // stack (no external frame) so we never call getFileName() on undefined.
+  const externalFrame = callerSites
+    .default()
+    .find((currentFrame) => currentFrame.getFileName() !== __filename);
+  const callerSiteCaller = externalFrame ? externalFrame.getFileName() : "";
   const dirOfCaller = path.dirname(callerSiteCaller || "");
   const absoluteFeatureFilePath = path.resolve(dirOfCaller, featureFileToLoad);
 
@@ -92,13 +108,22 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
     optionsToPassToJestCucumber
   );
 
+  // When jest-cucumber's own step-count validation is disabled ({ errors: false }),
+  // the wrapper must fail loudly on an unmatched step itself; otherwise stay silent
+  // so jest-cucumber's native validation remains the (transparent) source of truth.
+  const failOnUnmatchedStep = !!(
+    optionsToPassToJestCucumber && optionsToPassToJestCucumber.errors === false
+  );
+
   jestCucumber.defineFeature(feature, (testFn) => {
     if (feature.scenarios.length > 0)
       matchJestTestSuiteWithCucumberFeature(
         feature.scenarios,
         beforeEach,
         afterEach,
-        testFn
+        testFn,
+        false,
+        failOnUnmatchedStep
       );
 
     if (feature.scenarioOutlines.length > 0)
@@ -107,7 +132,8 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
         beforeEach,
         afterEach,
         testFn,
-        true
+        true,
+        failOnUnmatchedStep
       );
   });
 };
@@ -117,19 +143,21 @@ const matchJestTestSuiteWithCucumberFeature = (
   beforeEachFn,
   afterEachFn,
   testFn,
-  isOutline
+  isOutline,
+  failOnUnmatchedStep
 ) => {
   featureScenariosOrOutline.forEach((currentScenarioOrOutline) => {
-    if (stepsDefinition.before) beforeEachFn(stepsDefinition.before);
+    stepsDefinition.before.forEach((beforeHook) => beforeEachFn(beforeHook));
 
     matchJestTestWithCucumberScenario(
       currentScenarioOrOutline.title,
       currentScenarioOrOutline.steps,
       testFn,
-      isOutline
+      isOutline,
+      failOnUnmatchedStep
     );
 
-    if (stepsDefinition.after) afterEachFn(stepsDefinition.after);
+    stepsDefinition.after.forEach((afterHook) => afterEachFn(afterHook));
   });
 };
 
@@ -137,14 +165,16 @@ const matchJestTestWithCucumberScenario = (
   currentScenarioTitle,
   currentScenarioSteps,
   testFn,
-  isOutline
+  isOutline,
+  failOnUnmatchedStep
 ) => {
   testFn(currentScenarioTitle, ({ given, when, then, and, but }) => {
     currentScenarioSteps.forEach((currentStep) => {
       matchJestDefinitionWithCucumberStep(
         { given, when, then, and, but },
         currentStep,
-        isOutline
+        isOutline,
+        failOnUnmatchedStep
       );
     });
   });
@@ -153,10 +183,15 @@ const matchJestTestWithCucumberScenario = (
 const matchJestDefinitionWithCucumberStep = (
   verbFunction,
   currentStep,
-  isOutline
+  isOutline,
+  failOnUnmatchedStep
 ) => {
   const foundMatchingStep = findMatchingStep(currentStep, isOutline);
-  if (!foundMatchingStep) return;
+  if (!foundMatchingStep) {
+    if (failOnUnmatchedStep)
+      throw new Error(`No step definition matches: "${currentStep.stepText}"`);
+    return;
+  }
 
   // this will be the "given", "when", "then"...functions
   verbFunction[currentStep.keyword](
