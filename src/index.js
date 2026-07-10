@@ -168,7 +168,7 @@ const matchJestDefinitionWithCucumberStep = (
 const findMatchingStep = (currentStep, isOutline) => {
   const scenarioType = currentStep.keyword;
   const scenarioSentence = currentStep.stepText;
-  const foundStep = Object.keys(stepsDefinition[scenarioType]).find(
+  const matchingSteps = Object.keys(stepsDefinition[scenarioType]).filter(
     (currentStepDefinitionFunction) => {
       return isFunctionForScenario(
         scenarioSentence,
@@ -177,12 +177,21 @@ const findMatchingStep = (currentStep, isOutline) => {
       );
     }
   );
-  if (!foundStep) return null;
+  if (matchingSteps.length === 0) return null;
+
+  if (matchingSteps.length > 1) {
+    const competingMatchers = matchingSteps
+      .map((matcherSource) => `"${matcherSource}"`)
+      .join(", ");
+    throw new Error(
+      `Ambiguous step definition: "${scenarioSentence}" matches ${matchingSteps.length} step definitions: ${competingMatchers}`
+    );
+  }
 
   return injectVariable(
     scenarioType,
     scenarioSentence,
-    foundStep,
+    matchingSteps[0],
     currentStep.stepArgument
   );
 };
