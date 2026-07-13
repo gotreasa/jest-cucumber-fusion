@@ -317,14 +317,18 @@ const isPotentialStepFunctionForScenario = (
     let idxCutScenarioPart =
       currentScenarioPart.index + currentScenarioPart[0].length;
 
-    const regEscapedStepFunc = /\([a-zA-Z0!|,:?*+.^=${}><\\\-]+\)/g.exec(
+    // The character class spans the source of a capturing group. It must include the digits 0-9:
+    // spelled `0` alone it cannot span a group whose source holds a digit 1-9, which makes EVERY
+    // bounded quantifier — "(\d{4})" — invisible to this detector and therefore unbindable in an
+    // outline, while "(\d+)" (no digit in its source) binds. Braces are not the cause; the digits are.
+    const regEscapedStepFunc = /\([a-zA-Z0-9!|,:?*+.^=${}><\\\-]+\)/g.exec(
       currentStepFuncLeft
         .replace(/\\\(/g, "(")
         .replace(/\\\)/g, ")")
         .replace(/\\\^/g, "^")
         .replace(/\\\$/g, "$")
     );
-    const regStepFuncLeft = /\([a-zA-Z0!|,:?*+.^=${}><\\\-]+\)/g.exec(
+    const regStepFuncLeft = /\([a-zA-Z0-9!|,:?*+.^=${}><\\\-]+\)/g.exec(
       currentStepFuncLeft
     );
 
@@ -386,14 +390,27 @@ const isPotentialStepFunctionForScenario = (
   );
 };
 
+// A leftover fragment holds a CAPTURING group — so it has to be evaluated as a regex, not compared
+// as a literal. Escaped parens are stripped first (`\(n\)` is literal text, not a group) and `(?...)`
+// is skipped (non-capturing), so this recognises exactly the real groups.
+const holdsCapturingGroup = (stepFunctionDef) =>
+  /\((?!\?)[^()]*\)/.test(stepFunctionDef.replace(/\\[()]/g, ""));
+
 const evaluateStepFuncEndVsScenarioEnd = (
   stepFunctionDef,
   scenarioDefinition
 ) => {
+  // The leftover is regex SOURCE, so a capturing group in it must be evaluated as a regex. The old
+  // test only recognised a group holding one of [sSdDwWbB*], which made the group's SPELLING the
+  // discriminator rather than its presence: " lamp is (on|off)" fell through to a literal endsWith
+  // (always false — the scenario text reads " lamp is on") and never bound, while the identically
+  // shaped " lamp is (on|down)" took the regex branch and bound. Widening is strict: every fragment
+  // that already took the regex branch still does.
   if (
     /\(.*(\?\:)?[.\\]*[sSdDwWbB*][*?+]?.*\)|\(\[.*\](?:[+?*]{1}|\{\d\})\)/g.test(
       stepFunctionDef
-    )
+    ) ||
+    holdsCapturingGroup(stepFunctionDef)
   ) {
     return new RegExp(stepFunctionDef).test(scenarioDefinition);
   }
@@ -448,29 +465,6 @@ const injectVariable = (
   };
 };
 
-// const path        = require( 'path' )
-//
-// function walkthroughDirectory( directoryName, bRecursive, fnDoForEachFile ) {
-//     const filesystem  = require( 'fs' )
-//     let filenamesOrDirectorynames = filesystem.readdirSync( directoryName )
-//
-//     filenamesOrDirectorynames.forEach( ( currentFilenameOrDirectoryname ) => {
-//         let currentFilepath = path.join( directoryName, currentFilenameOrDirectoryname )
-//         let currentFileStats = filesystem.statSync( currentFilepath )
-//         if( bRecursive && currentFileStats.isDirectory() )
-//             walkthroughDirectory( currentFilepath, activeLoadings, bRecursive, fnOnLoading )
-//
-//         else
-//             fnDoForEachFile( currentFilepath )
-//     } )
-// }
-
-// function FusionAll( dirFeatureFiles, bRecursive ) {
-//     const dirFinalDirectory = ( !dirFeatureFiles ? '<rootDir>/test/feature' : dirFeatureFiles )
-//
-//     walkthroughDirectory( dirFinalDirectory, bRecursive, Fusion )
-// }
-
 module.exports.Before = Before;
 module.exports.After = After;
 module.exports.Given = Given;
@@ -479,4 +473,3 @@ module.exports.Then = Then;
 module.exports.And = And;
 module.exports.But = But;
 module.exports.Fusion = Fusion;
-// module.exports.FusionAll    = FusionAll
