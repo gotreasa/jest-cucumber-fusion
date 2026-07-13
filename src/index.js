@@ -1,4 +1,4 @@
-const stepsDefinition = {
+const emptyStepsDefinition = () => ({
   given: {},
   when: {},
   then: {},
@@ -6,7 +6,12 @@ const stepsDefinition = {
   but: {},
   before: [],
   after: [],
-};
+});
+
+// Module-level registry. Rebuilt from the empty shape above once a feature has been
+// loaded, so a second Fusion() in the same module starts from a clean slate rather
+// than inheriting the previous feature's step definitions and hooks.
+let stepsDefinition = emptyStepsDefinition();
 
 const addDefinitionFunction = (
   definitionType,
@@ -90,55 +95,74 @@ const After = (fnDefinition) => {
 };
 
 const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
-  const path = require("path");
-  const callerSites = require("callsites");
-  // Resolve the feature path from the FIRST stack frame outside this package, so
-  // an in-package re-export/wrapper frame does not retarget it; guard a shallow
-  // stack (no external frame) so we never call getFileName() on undefined.
-  const externalFrame = callerSites
-    .default()
-    .find((currentFrame) => currentFrame.getFileName() !== __filename);
-  const callerSiteCaller = externalFrame ? externalFrame.getFileName() : "";
-  const dirOfCaller = path.dirname(callerSiteCaller || "");
-  const absoluteFeatureFilePath = path.resolve(dirOfCaller, featureFileToLoad);
+  try {
+    const path = require("path");
+    const callerSites = require("callsites");
+    // Resolve the feature path from the FIRST stack frame outside this package, so
+    // an in-package re-export/wrapper frame does not retarget it; guard a shallow
+    // stack (no external frame) so we never call getFileName() on undefined.
+    const externalFrame = callerSites
+      .default()
+      .find((currentFrame) => currentFrame.getFileName() !== __filename);
+    const callerSiteCaller = externalFrame ? externalFrame.getFileName() : "";
+    const dirOfCaller = path.dirname(callerSiteCaller || "");
+    const absoluteFeatureFilePath = path.resolve(
+      dirOfCaller,
+      featureFileToLoad
+    );
 
-  const jestCucumber = require("jest-cucumber");
-  const feature = jestCucumber.loadFeature(
-    absoluteFeatureFilePath,
-    optionsToPassToJestCucumber
-  );
+    const jestCucumber = require("jest-cucumber");
+    const feature = jestCucumber.loadFeature(
+      absoluteFeatureFilePath,
+      optionsToPassToJestCucumber
+    );
 
-  // When jest-cucumber's own step-count validation is disabled ({ errors: false }),
-  // the wrapper must fail loudly on an unmatched step itself; otherwise stay silent
-  // so jest-cucumber's native validation remains the (transparent) source of truth.
-  const failOnUnmatchedStep = !!(
-    optionsToPassToJestCucumber && optionsToPassToJestCucumber.errors === false
-  );
+    // When jest-cucumber's own step-count validation is disabled ({ errors: false }),
+    // the wrapper must fail loudly on an unmatched step itself; otherwise stay silent
+    // so jest-cucumber's native validation remains the (transparent) source of truth.
+    const failOnUnmatchedStep = !!(
+      optionsToPassToJestCucumber &&
+      optionsToPassToJestCucumber.errors === false
+    );
 
-  jestCucumber.defineFeature(feature, (testFn) => {
-    if (feature.scenarios.length > 0)
-      matchJestTestSuiteWithCucumberFeature(
-        feature.scenarios,
-        beforeEach,
-        afterEach,
-        testFn,
-        false,
-        failOnUnmatchedStep
-      );
+    // This feature binds the definitions and hooks registered for IT — captured before the
+    // registry is reset below, so the binding does not depend on when jest-cucumber invokes
+    // the callback.
+    const registryForThisFeature = stepsDefinition;
 
-    if (feature.scenarioOutlines.length > 0)
-      matchJestTestSuiteWithCucumberFeature(
-        feature.scenarioOutlines,
-        beforeEach,
-        afterEach,
-        testFn,
-        true,
-        failOnUnmatchedStep
-      );
-  });
+    jestCucumber.defineFeature(feature, (testFn) => {
+      if (feature.scenarios.length > 0)
+        matchJestTestSuiteWithCucumberFeature(
+          registryForThisFeature,
+          feature.scenarios,
+          beforeEach,
+          afterEach,
+          testFn,
+          false,
+          failOnUnmatchedStep
+        );
+
+      if (feature.scenarioOutlines.length > 0)
+        matchJestTestSuiteWithCucumberFeature(
+          registryForThisFeature,
+          feature.scenarioOutlines,
+          beforeEach,
+          afterEach,
+          testFn,
+          true,
+          failOnUnmatchedStep
+        );
+    });
+  } finally {
+    // Unconditional: Fusion() always leaves a clean slate — normal return OR throw. Rebinding
+    // the module-level registry (never mutating it in place) keeps the object captured above
+    // intact for the callback, while the next Fusion() starts empty and must re-register.
+    stepsDefinition = emptyStepsDefinition();
+  }
 };
 
 const matchJestTestSuiteWithCucumberFeature = (
+  featureRegistry,
   featureScenariosOrOutline,
   beforeEachFn,
   afterEachFn,
@@ -147,9 +171,10 @@ const matchJestTestSuiteWithCucumberFeature = (
   failOnUnmatchedStep
 ) => {
   featureScenariosOrOutline.forEach((currentScenarioOrOutline) => {
-    stepsDefinition.before.forEach((beforeHook) => beforeEachFn(beforeHook));
+    featureRegistry.before.forEach((beforeHook) => beforeEachFn(beforeHook));
 
     matchJestTestWithCucumberScenario(
+      featureRegistry,
       currentScenarioOrOutline.title,
       currentScenarioOrOutline.steps,
       testFn,
@@ -157,11 +182,12 @@ const matchJestTestSuiteWithCucumberFeature = (
       failOnUnmatchedStep
     );
 
-    stepsDefinition.after.forEach((afterHook) => afterEachFn(afterHook));
+    featureRegistry.after.forEach((afterHook) => afterEachFn(afterHook));
   });
 };
 
 const matchJestTestWithCucumberScenario = (
+  featureRegistry,
   currentScenarioTitle,
   currentScenarioSteps,
   testFn,
@@ -171,6 +197,7 @@ const matchJestTestWithCucumberScenario = (
   testFn(currentScenarioTitle, ({ given, when, then, and, but }) => {
     currentScenarioSteps.forEach((currentStep) => {
       matchJestDefinitionWithCucumberStep(
+        featureRegistry,
         { given, when, then, and, but },
         currentStep,
         isOutline,
@@ -181,12 +208,17 @@ const matchJestTestWithCucumberScenario = (
 };
 
 const matchJestDefinitionWithCucumberStep = (
+  featureRegistry,
   verbFunction,
   currentStep,
   isOutline,
   failOnUnmatchedStep
 ) => {
-  const foundMatchingStep = findMatchingStep(currentStep, isOutline);
+  const foundMatchingStep = findMatchingStep(
+    featureRegistry,
+    currentStep,
+    isOutline
+  );
   if (!foundMatchingStep) {
     if (failOnUnmatchedStep)
       throw new Error(`No step definition matches: "${currentStep.stepText}"`);
@@ -200,14 +232,14 @@ const matchJestDefinitionWithCucumberStep = (
   );
 };
 
-const findMatchingStep = (currentStep, isOutline) => {
+const findMatchingStep = (featureRegistry, currentStep, isOutline) => {
   const scenarioType = currentStep.keyword;
   const scenarioSentence = currentStep.stepText;
-  const matchingSteps = Object.keys(stepsDefinition[scenarioType]).filter(
+  const matchingSteps = Object.keys(featureRegistry[scenarioType]).filter(
     (currentStepDefinitionFunction) => {
       return isFunctionForScenario(
         scenarioSentence,
-        stepsDefinition[scenarioType][currentStepDefinitionFunction],
+        featureRegistry[scenarioType][currentStepDefinitionFunction],
         isOutline
       );
     }
@@ -224,6 +256,7 @@ const findMatchingStep = (currentStep, isOutline) => {
   }
 
   return injectVariable(
+    featureRegistry,
     scenarioType,
     scenarioSentence,
     matchingSteps[0],
@@ -369,12 +402,13 @@ const evaluateStepFuncEndVsScenarioEnd = (
 };
 
 const injectVariable = (
+  featureRegistry,
   scenarioType,
   scenarioSentence,
   stepFunctionDefinition,
   stepArgs
 ) => {
-  const stepObject = stepsDefinition[scenarioType][stepFunctionDefinition];
+  const stepObject = featureRegistry[scenarioType][stepFunctionDefinition];
 
   if (!stepObject.stepRegExp)
     return {
