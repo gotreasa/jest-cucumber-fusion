@@ -71,6 +71,30 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 
 Signed: Koru (orchestrator), 2026-07-13.
 
+## Review — Cycle 5 (T2 + T3 + prettier debt)
+
+**Verdict: APPROVED.** Test review verified every claim. Test-only cycle — `src/` and `test/src/` pristine, so no Vera examine (nothing user-visible changed; the deliverable *is* the suite's ability to detect breakage, and mutation testing is the right oracle for that).
+
+**The assertions were not merely weak — the suite was blind.** Proven by mutation, old suite vs new:
+
+| Mutant | Old suite | New suite |
+|---|---|---|
+| `rocket.js` ctor sets `isInSpace = true`, so `launch()` is a no-op | **all 63 GREEN — blind** | 3 fail |
+| `launch()` never sets `isInSpace` | "Reading the critics" passes | fails |
+| `online-sales.js` `sellItem` returns `0` not `null` for an unlisted item (phantom sale) | all 6 green — blind | 2 fail |
+| `src/index.js` injects the whole match instead of the capture group | 2 pass (`toBeDefined()` waved it through) | fails |
+
+A rocket that was never launched passed the entire old suite. That is what the T2 tautologies (`expect("people").not.toBe("haters")`, `toBeDefined()`-only) actually cost.
+
+- **T3 silent-skip guards were DEAD, not merely defensive.** The runtime shapes were probed, not assumed: `table` is always an `Array`, `nItems` always a `string`, across all six runs — **no guard had ever fired**. They could only ever have skipped an assertion. Removed.
+- **T3 `Given` now establishes state** (lists items via `listItem`, a real `OnlineSales` method no test had ever called) instead of asserting a precondition it never set up — which previously only "worked" via cross-scenario carry-over. The `Before` hook is now unconditional, making it load-bearing: if hook wiring regressed (the M1 class), counts go wrong and the test goes RED.
+- **`scenario-outline2.feature` edited — description text ONLY** (verified by review: step text, scenario titles and the examples table are unchanged). Necessary: the old description claimed the hook clears "if number of items >= 2" and that the scenario "demonstrates case dependency between scenarios" — both became false once the `Given` established its own state. Leaving it would be documentation that lies.
+- **Prettier debt cleared.** `npx prettier --check src/ test/` now passes repo-wide.
+
+**Known residue, deliberately not taken (flagged, not hidden):** `test/src/reuse-code.js:3-5` — `And("I drop my mic", …)` asserts nothing at all; fixing it requires restructuring that file (the `And` sits outside the exported closure and cannot reach the rocket). And `scenario-outline2.feature`'s "Complex Scenario" still lacks a final count assertion after the sell step, though the strengthened sell step now asserts *within* it, so it can no longer pass by doing nothing.
+
+Signed: Koru (orchestrator), 2026-07-13.
+
 ## Review — Cycle 4 (L2 + L1)
 
 **Verdict: APPROVED.** Code review APPROVED; test review CONDITIONALLY_APPROVED (conditions met, see below); Vera FAIL — **the flag is real but out of scope, disposed as backlog item L4** (a named, owned residue, not a silent ship).

@@ -3,9 +3,17 @@ const { Given, When, Then, And, But, Fusion } = require("../../../../src");
 const { Rocket } = require("../../../src/rocket");
 
 let rocket;
+let rocketOnTheLaunchpad;
+
+const observableRocketState = () => ({
+  isInSpace: rocket.isInSpace,
+  boostersLanded: rocket.boostersLanded,
+});
 
 Given("I am Elon Musk attempting to launch a rocket into space", () => {
   rocket = new Rocket();
+  // Remember how the rocket sat on the pad, so a later step can prove it moved
+  rocketOnTheLaunchpad = observableRocketState();
 });
 
 When("I launch the rocket", () => {
@@ -17,7 +25,7 @@ When("I launch the '<rocket>'", () => {
 });
 
 When(/^I launch my personal rocket named '(.*)'$/, (nameRocket) => {
-  expect(nameRocket).toBeDefined();
+  expect(nameRocket).toBe("<space poney==>");
   rocket.launch();
 });
 
@@ -39,7 +47,16 @@ And(/^the booster\(s\) should land back on the launch pad$/, () => {
 });
 
 But("nobody should doubt me ever again", () => {
-  expect("people").not.toBe("haters");
+  // The doubt is that the rocket never really flew. It sat on the pad — grounded,
+  // boosters intact — and it is now in space with its boosters recovered.
+  expect(rocketOnTheLaunchpad).toEqual({
+    isInSpace: false,
+    boostersLanded: true,
+  });
+  expect(observableRocketState()).toEqual({
+    isInSpace: true,
+    boostersLanded: true,
+  });
 });
 
 Fusion("../basic-scenarios.feature");
