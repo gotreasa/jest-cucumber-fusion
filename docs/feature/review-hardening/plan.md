@@ -10,10 +10,10 @@
 - Adjudicated findings: [`discuss/rca.md`](./discuss/rca.md) (root-cause work already done — do NOT re-run RCA).
 - Code under change: `src/index.js`, `src/index.d.ts`; tests under `test/specs/features/`.
 
-## Lifecycle links (fill as they come into being)
-- GitHub issue: _n/a (fork; tracked via this plan + PR)_
-- Jira work item (WorkToBeDone): _TBD — create + link before DELIVER_
-- PRs: nWave setup + plan → _this PR_; fix passes → _TBD_
+## Lifecycle links
+- GitHub issue: _n/a (fork; issues are disabled on this repo — tracked via this plan + PR)_
+- Jira work item (WorkToBeDone): **none — declined by Gearoid, 2026-07-14.** (Superseding the earlier "TBD — create + link before DELIVER" note, which went stale: DELIVER ran seven cycles without one. This plan + PR #7 are the tracking artefacts.)
+- PRs: **#7** (`worktree-fork-tidy`) — the single vehicle for all fork-tidy + review-hardening work, so it ships as one semantic-release bump. **#6 closed 2026-07-14 as superseded** (its three files are all on #7; config + RCA byte-identical, plan since extended).
 
 ## Backlog (prioritised)
 
@@ -58,7 +58,7 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 - [x] **Cycle 6 (L4 — the outline crash) DONE.** New defect found by Vera on the real surface, fixed at the root. 66 tests green.
 - [x] **ALL ORIGINAL P2 + P3 ITEMS COMPLETE** (M3, L1, L2, T2, T3 + prettier debt), plus the newly-found L4.
 - [x] **Cycle 7 (L3 — docstring dropped by the injection path) DONE** (un-deferred by Gearoid, 2026-07-14). Fixed at the root: the capture-injection branch now forwards the step argument on PRESENCE (`!= null`), mirroring jest-cucumber's own test, instead of on TYPE (`Array.isArray`). 73 tests green. Vera found a **new, pre-existing** defect while examining — tracked as **L5**.
-- [ ] **L5 — NEW (found 2026-07-14 by Vera during the L3 examine).** An **empty docstring inside a scenario OUTLINE** is dropped: the step receives `["alpha"]` where `["alpha", ""]` is due. **Root cause is UPSTREAM in jest-cucumber, not in this wrapper** — `node_modules/jest-cucumber/dist/src/parsed-feature-loading.js:96-97` initialises `var stepArgument = null` and then gates the example-row substitution on `if (scenarioStep.stepArgument)`, a **truthiness** test; `""` is falsy, so an empty docstring is nulled out *before* our wrapper is ever called. We cannot fix it from `injectVariable` — the value is already gone. **Verified PRE-EXISTING, not a regression:** reproduced identically against the pre-fix guard on a real `npm pack` install. Fix would mean either an upstream PR to jest-cucumber or re-reading the parsed feature in the wrapper (a bigger change than the defect warrants). Not started; low severity (an empty docstring in an outline is a rare shape).
+- [ ] **L5 — NEW (found 2026-07-14 by Vera during the L3 examine).** An **empty docstring inside a scenario OUTLINE** is dropped: the step receives `["alpha"]` where `["alpha", ""]` is due. **Root cause is UPSTREAM in jest-cucumber, not in this wrapper** — `node_modules/jest-cucumber/dist/src/parsed-feature-loading.js:96-97` initialises `var stepArgument = null` and then gates the example-row substitution on `if (scenarioStep.stepArgument)`, a **truthiness** test; `""` is falsy, so an empty docstring is nulled out *before* our wrapper is ever called. We cannot fix it from `injectVariable` — the value is already gone. **Verified PRE-EXISTING, not a regression:** reproduced identically against the pre-fix guard on a real `npm pack` install. Fix would mean either an upstream PR to jest-cucumber or re-reading the parsed feature in the wrapper (a bigger change than the defect warrants). **Disposition (Gearoid, 2026-07-14): leave tracked, do not fix.** Rare shape (an *empty* docstring, inside an *outline*), the root cause is not ours to fix, and both available routes cost more than the defect — an upstream PR runs on jest-cucumber's release cadence, and a wrapper workaround would mean duplicating upstream's feature parsing to recover a value it already nulled. Revisit if a real user hits it.
 
 ## Decisions — Cycle 3 (2026-07-13)
 
