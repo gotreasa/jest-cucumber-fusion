@@ -473,7 +473,12 @@ const injectVariable = (
     if (groupIndex > 0) dynamicMatchThatAreVariables.push(match);
   });
 
-  if (Array.isArray(stepArgs) && stepArgs.length > 0) {
+  // Forward the step's Gherkin argument on PRESENCE, never on its type — the same test jest-cucumber
+  // itself applies before handing an argument to a step (feature-definition-creation.js:129-130). A
+  // type test drops half the shapes: Gherkin parses a data table to an array but a docstring to a
+  // string, and an empty docstring to "" — which a `.length` test would drop too. Absent, the argument
+  // is null, so this is the whole distinction that matters.
+  if (stepArgs != null) {
     dynamicMatchThatAreVariables.push(stepArgs);
   }
 
