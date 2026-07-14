@@ -281,6 +281,22 @@ const isFunctionForScenario = (
   return scenarioSentence === stepDefinitionFunction.stepExpression;
 };
 
+// An ESCAPED paren is literal text, never a group delimiter — the same knowledge holdsCapturingGroup
+// (below) already encodes. Masking each `\(` / `\)` with an ordinary two-character body sequence keeps
+// every index and length identical to the raw source, so the group locator can run over the mask and
+// its result still addresses the RAW string.
+const maskEscapedParens = (stepFunctionDef) =>
+  stepFunctionDef.replace(/\\[()]/g, "\\-");
+
+// The scenario sentence carries a matcher's parens/anchors as LITERAL characters, so a position in the
+// sentence is only comparable against the step function once its escapes are collapsed the same way.
+const asScenarioText = (stepFunctionDef) =>
+  stepFunctionDef
+    .replace(/\\\(/g, "(")
+    .replace(/\\\)/g, ")")
+    .replace(/\\\^/g, "^")
+    .replace(/\\\$/g, "$");
+
 const isPotentialStepFunctionForScenario = (
   scenarioDefinition,
   regStepFunc
@@ -321,50 +337,52 @@ const isPotentialStepFunctionForScenario = (
     // spelled `0` alone it cannot span a group whose source holds a digit 1-9, which makes EVERY
     // bounded quantifier — "(\d{4})" — invisible to this detector and therefore unbindable in an
     // outline, while "(\d+)" (no digit in its source) binds. Braces are not the cause; the digits are.
-    const regEscapedStepFunc = /\([a-zA-Z0-9!|,:?*+.^=${}><\\\-]+\)/g.exec(
-      currentStepFuncLeft
-        .replace(/\\\(/g, "(")
-        .replace(/\\\)/g, ")")
-        .replace(/\\\^/g, "^")
-        .replace(/\\\$/g, "$")
+    //
+    // Locate the group over the MASKED source, so an escaped paren can never be mistaken for a group
+    // boundary: previously the locator ran twice — once on the raw source, once on a source whose
+    // `\(`/`\)` had been unescaped into BARE parens — and the two disagreed about where (and whether)
+    // a group was. For "(\w+\(\))" the raw pass matched "(\)" while the unescaped pass ("(\w+())")
+    // matched nothing at all, and a guard that tested the first while dereferencing the second threw
+    // on the null. One escape-aware pass gives one answer: the real group, in raw coordinates.
+    const groupInStepFunc = /\([a-zA-Z0-9!|,:?*+.^=${}><\\\-]+\)/g.exec(
+      maskEscapedParens(currentStepFuncLeft)
     );
-    const regStepFuncLeft = /\([a-zA-Z0-9!|,:?*+.^=${}><\\\-]+\)/g.exec(
-      currentStepFuncLeft
-    );
+    // The scenario sentence spells the step function's prefix as literal text, so the two are only
+    // comparable in scenario-text coordinates — escapes collapsed, one character each.
+    const stepFuncPrefixAsScenarioText = groupInStepFunc
+      ? asScenarioText(currentStepFuncLeft.substring(0, groupInStepFunc.index))
+      : "";
 
     if (
-      regStepFuncLeft &&
-      regEscapedStepFunc.index == currentScenarioPart.index
+      groupInStepFunc &&
+      stepFuncPrefixAsScenarioText.length == currentScenarioPart.index
     ) {
       //if we have a regex inside our step function definition
       // and that regex is at the same position than our Outlined variable
       // we just need to check that the sentence match,
       // so we can "evaluate" the step function and remove the regex in it
       currentStepFuncLeft =
-        regEscapedStepFunc.input.substring(0, regEscapedStepFunc.index) +
+        stepFuncPrefixAsScenarioText +
         currentStepFuncLeft.substring(
-          regStepFuncLeft.index + regStepFuncLeft[0].length
+          groupInStepFunc.index + groupInStepFunc[0].length
         );
     } else if (
-      regStepFuncLeft &&
-      regStepFuncLeft.index < currentScenarioPart.index
+      groupInStepFunc &&
+      groupInStepFunc.index < currentScenarioPart.index
     ) {
       //if we have a regex inside our step function definition
       // but that regex is not at the same position than our outlined variable
       // we need to evaluate the regex against the scenario part
-      const strRegexToEvaluate = regStepFuncLeft.input.substring(
+      const strRegexToEvaluate = currentStepFuncLeft.substring(
         0,
-        regStepFuncLeft.index + regStepFuncLeft[0].length
+        groupInStepFunc.index + groupInStepFunc[0].length
       );
       const regexToEvaluate = new RegExp(strRegexToEvaluate);
       const regIntermediatePart = regexToEvaluate.exec(
         currentScenarioPart.input
       );
       if (regIntermediatePart) {
-        fixedPart = regStepFuncLeft.input.substring(
-          0,
-          regStepFuncLeft.index + regStepFuncLeft[0].length
-        );
+        fixedPart = strRegexToEvaluate;
         idxCutScenarioPart = regIntermediatePart[0].length;
       }
     }

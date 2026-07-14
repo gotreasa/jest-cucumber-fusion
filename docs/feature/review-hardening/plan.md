@@ -52,7 +52,12 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 - [x] **Cycle 2a (P1 runtime) DONE** — commit `0c17fb9`. M1 (hooks-as-arrays), M2 (dup-matcher throw), M4 (callsites robustness), M5 (errors:false-only throw). 49 tests green; both reviewers APPROVED_WITH_NOTES. M5 adjudicated to errors:false-scope after a probe showed the unconditional throw shadowed jest-cucumber's native default-path error (refuting the reviewers' "unreachable" assumption) — default-path transparency preserved.
 - [x] **Cycle 2b (H2) DONE** — commit `3b6f168`. `.d.ts` StepChain return type + overloads; tsd type test (`test-d/index.test-d.ts`) wired via a `test-d` script + a CI Type-checking step that gates the release. crafter-reviewer APPROVED. `npm run test-d` green; void-revert reproduces 7 tsd errors (test genuinely guards H2).
 - [x] **P0 + P1 COMPLETE.** All seven items (H1, T1, H2, M1, M2, M4, M5) landed on the fork-tidy branch (PR #7). Full suite: 49 jest tests + tsd, all green. **P2/P3 deferred** (M3 singleton-reset; L1 dead code; T2/T3 weak assertions; L2 outline edge cases) — plus the pre-existing prettier debt in `scenario-outline2.steps.js` (a T3 file). These are a follow-up PR/release.
-- [x] **Cycle 3 (P2 — M3) DONE.** Folded into fork-tidy/PR #7 rather than a follow-up PR (decision below). 55 jest tests + tsd green.
+- [x] **Cycle 3 (P2 — M3) DONE.** Folded into fork-tidy/PR #7 rather than a follow-up PR (decision below). 55 jest tests + tsd green. Commit `a3b6c3e`.
+- [x] **Cycle 4 (P3 — L2 + L1) DONE.** L2(a) literal capturing group + L2(c) digit-class typo fixed; L2(b) rejected with evidence; L1 dead code removed. 63 tests green. Commit `b69b6a3`.
+- [x] **Cycle 5 (P3 — T2 + T3 + prettier) DONE.** Tautological assertions replaced with falsifiable ones (mutation-proven); `Given` now establishes state; dead silent-skip guards removed; prettier debt cleared. 63 tests green. Commit `bc7b4b4`.
+- [x] **Cycle 6 (L4 — the outline crash) DONE.** New defect found by Vera on the real surface, fixed at the root. 66 tests green.
+- [x] **ALL ORIGINAL P2 + P3 ITEMS COMPLETE** (M3, L1, L2, T2, T3 + prettier debt), plus the newly-found L4.
+- [ ] **L3 (docstring dropped by the injection path) — DEFERRED by explicit decision (Gearoid, 2026-07-13).** Real, tracked, repro in the backlog row above. Not started.
 
 ## Decisions — Cycle 3 (2026-07-13)
 
@@ -68,6 +73,41 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 - **REJECTED — code-review D1 "post-`Fusion()` registration is orphaned" (raised BLOCKER).** Claim: after the reset, a `Given()` called post-`Fusion()` writes to an empty registry and is never used. **Refuted:** that is the supported path for feature two, and it is directly asserted — `m3-singleton-reset.steps.js:187-199` registers a step *after* the first `Fusion()` and asserts the second `Fusion()` binds it (`toHaveBeenCalledTimes(1)`). The reviewer's secondary claim (a `Before()` between two `Fusion()` calls clobbers feature two's hooks) is also false: hooks are arrays since M1 and are reset to `[]`, so the call populates feature two's fresh array — covered by test B.
 - **REJECTED — Vera's first verdict, FAIL on "critical hook leak".** Her probe reset counters in the module body (**collection** time) but read them inside a step (**execution** time), so F1's hook firing during F1's *own* scenario was indistinguishable from a leak. **Refuted by reproduction:** an accumulating fire-count probe against a real `file:` install shows the pre-fix code firing `F1-BEFORE` **twice** during feature two (`["F1-BEFORE","F1-BEFORE","F2-BEFORE"]`) and the fixed code firing it **once** (`["F1-BEFORE","F2-BEFORE"]`). The leak is real, and the fix eliminates it. Vera re-derived her own corrected probe and returned **PASS, zero flags**.
 - **Correction logged against the test author's comment.** The designer predicted that mutating the registry in place (instead of rebinding) would break test A. It does not — M3's fake is synchronous, so collection completes before `finally` runs. What in-place mutation actually breaks is the three *deferred*-fake files (`m1-before-hooks-clobber`, `hook-error`, `ambiguous-step-shadowing`). Right instruction, wrong stated guard; the crafter proved both by mutation probe.
+
+Signed: Koru (orchestrator), 2026-07-13.
+
+## Review — Cycle 6 (L4 — the outline crash)
+
+**Verdict: APPROVED.** Code review CLEAN (zero defects, after an adversarial pass); Vera **PASS, zero flags** (19 scenarios actually executed). 66 tests, 18 suites, 100% stmts / 97.18% branch, tsd green, prettier clean repo-wide.
+
+**How L4 was found, and why it matters.** No unit test, no reviewer and no static pass ever went near this. Vera found it on the real surface while examining a *different* fix (L2), flagged it, and honestly reported that she could not tell whether it was a regression or pre-existing. I settled that by reproducing it against `a3b6c3e` (L2 absent) and the fixed tree — **identical crash in both, so pre-existing**. That is the argument for the examine step in one story: the mechanical layers were all green.
+
+**Root cause (not what it looked like).** The crashing guard ran the *same* group-locator regex as two separate `exec`s against **different strings**, then tested one and dereferenced the other:
+
+| variable | exec'd against | result |
+|---|---|---|
+| `regStepFuncLeft` | raw source `I call the function (\w+\(\))` | `"(\)"` @25 — **truthy**, passes the guard |
+| `regEscapedStepFunc` | unescaped source `I call the function (\w+())` | **null** — `.index` throws |
+
+The locator's char class contains no `(`, so on the raw source it closed a group *across the backslash*; on the unescaped source the inner `()` left no class character between the parens.
+
+**The fix is not a null-guard — deliberately.** A null-guard would stop the crash and leave the step **unbound**, which is a *worse* silent failure. Instead the two passes were collapsed into one escape-aware pass: `maskEscapedParens` replaces each `\(`/`\)` with `\-` — **same length**, both chars already in the locator's character class, neither able to be a group delimiter — so the located index/length still address the raw string but an escaped paren can no longer be mistaken for a group boundary. For any matcher *without* escaped parens the mask is a no-op and the located group is byte-identical to before, which is why all 63 baseline tests and the CONTROL were untouched.
+
+**The test's trap was armed against the counterfeit fix — proven, not asserted:**
+
+| variant | crashed? | step left unbound? | test verdict |
+|---|---|---|---|
+| pre-fix code | **yes** (TypeError) | — | RED |
+| **crash-only null-guard** | no — crash silenced | **yes** ("No step definition matches") | **RED** |
+| the real fix | no | no | GREEN |
+
+A test asserting only "does not crash" would have passed the counterfeit.
+
+**Orchestrator error, caught by the crafter.** The NEGATIVE test as first authored **could not pass, even against a perfect fix**: it invoked the thunk three times (`expect(...).not.toThrow()` *calls* it) while registering the step once — and our own M3 unconditional reset empties the registry after every `Fusion()`, so invocations #2 and #3 correctly reported "No step definition matches". The crafter escalated rather than touching a sealed test; the designer restructured it to capture a single outcome (rejecting "register inside the thunk", which would have silently coupled the test to M3's reset). The first assertion had only passed by accident, because `.not.toThrow(regex)` also passes when a *different* error is thrown — which masked the flaw until the TypeError was gone.
+
+**Real-surface proof:** Vera's original crash repro now binds both example rows (`BOUND:process()`, `BOUND:validate()`) where it previously died with a TypeError.
+
+**L3 (docstring) remains deferred by explicit human decision** and was verified untouched — the `Array.isArray(stepArgs)` guard is byte-identical.
 
 Signed: Koru (orchestrator), 2026-07-13.
 
