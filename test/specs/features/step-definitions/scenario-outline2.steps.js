@@ -4,14 +4,19 @@ const { OnlineSales } = require("../../../src/online-sales");
 
 const onlineSales = new OnlineSales();
 
-Before(()=>{
-  if (onlineSales.nItems() >= 2) {
-    onlineSales.listedItems = [];
-  }
-})
+// Every scenario (and every example row) starts from an empty shop. The hook is what
+// isolates them from one another, so a scenario's outcome is decided by its own steps.
+Before(() => {
+  onlineSales.listedItems = [];
+});
 
+// A Given ESTABLISHES the precondition -- it does not assert it. The shop is emptied by
+// the hook above, so listing exactly nItems here is what puts the scenario in its
+// starting state.
 Given(/^I have (\d+) items for sale$/, (nItems) => {
-  expect(Number(nItems)).toBe(onlineSales.nItems());
+  for (let itemNumber = 1; itemNumber <= Number(nItems); itemNumber += 1) {
+    onlineSales.listItem(`Item already for sale ${itemNumber}`);
+  }
 });
 
 When(/^I bought "(.+)"/, (item) => {
@@ -19,26 +24,32 @@ When(/^I bought "(.+)"/, (item) => {
 });
 
 When(/^I bought the following items:$/, (table) => {
-    if (typeof table === "string") return;
-
-    table.forEach((row) => {
-      onlineSales.buyItem(row.Item)
-    });
+  table.forEach((row) => {
+    onlineSales.buyItem(row.Item);
+  });
 });
 
 Then(/^I have (\d+) items for sale$/, (nItems) => {
-  expect(Number(nItems)).toBe(onlineSales.nItems());
+  expect(onlineSales.nItems()).toBe(Number(nItems));
 });
 
 Then(/^I want to sell (\d+) items if they in list$/, (nItems, table) => {
-  if (typeof nItems !== "string") return;
-  if (typeof table === "string") return;
-  let iNumber = Number(nItems);
+  let itemsLeftToSell = Number(nItems);
 
   table.forEach((row) => {
-    if (iNumber > 0 && onlineSales.listedItems.includes(row.Item)) {
+    const itemIsForSale = onlineSales.listedItems.includes(row.Item);
+    const itemsBeforeTheSale = onlineSales.nItems();
+
+    if (itemIsForSale && itemsLeftToSell > 0) {
       onlineSales.sellItem(row.Item);
-      iNumber--;
+
+      expect(onlineSales.listedItems).not.toContain(row.Item);
+      expect(onlineSales.nItems()).toBe(itemsBeforeTheSale - 1);
+      itemsLeftToSell -= 1;
+    } else if (!itemIsForSale) {
+      // Nobody ever listed this one: there is no sale to make and the shop is untouched
+      expect(onlineSales.sellItem(row.Item)).toBeNull();
+      expect(onlineSales.nItems()).toBe(itemsBeforeTheSale);
     }
   });
 });

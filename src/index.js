@@ -1,12 +1,17 @@
-const stepsDefinition = {
+const emptyStepsDefinition = () => ({
   given: {},
   when: {},
   then: {},
   and: {},
   but: {},
-  before: null,
-  after: null,
-};
+  before: [],
+  after: [],
+});
+
+// Module-level registry. Rebuilt from the empty shape above once a feature has been
+// loaded, so a second Fusion() in the same module starts from a clean slate rather
+// than inheriting the previous feature's step definitions and hooks.
+let stepsDefinition = emptyStepsDefinition();
 
 const addDefinitionFunction = (
   definitionType,
@@ -14,19 +19,29 @@ const addDefinitionFunction = (
   fnForDefinition
 ) => {
   if (stepsDefinition[definitionType]) {
-    if (regexpSentence.constructor === RegExp)
+    if (regexpSentence.constructor === RegExp) {
+      throwIfDuplicateMatcher(definitionType, regexpSentence.source);
       stepsDefinition[definitionType][regexpSentence.source] = {
         stepRegExp: regexpSentence,
         stepExpression: null,
         stepFn: fnForDefinition,
       };
-    else if (typeof regexpSentence === "string")
+    } else if (typeof regexpSentence === "string") {
+      throwIfDuplicateMatcher(definitionType, regexpSentence);
       stepsDefinition[definitionType][regexpSentence] = {
         stepRegExp: null,
         stepExpression: regexpSentence,
         stepFn: fnForDefinition,
       };
+    }
   }
+};
+
+const throwIfDuplicateMatcher = (definitionType, matcherKey) => {
+  if (stepsDefinition[definitionType][matcherKey])
+    throw new Error(
+      `Duplicate step definition: "${matcherKey}" is already registered for "${definitionType}"`
+    );
 };
 
 const Given = (regexpSentenceOrChainedObject, fnForDefinition) => {
@@ -73,90 +88,142 @@ const defineAndChain = (stepType, stepObjectOrSentence, fnForStep) => {
 };
 
 const Before = (fnDefinition) => {
-  stepsDefinition.before = fnDefinition;
+  stepsDefinition.before.push(fnDefinition);
 };
 const After = (fnDefinition) => {
-  stepsDefinition.after = fnDefinition;
+  stepsDefinition.after.push(fnDefinition);
 };
 
 const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
-  const path = require("path");
-  const callerSites = require("callsites");
-  const callerSiteCaller = callerSites.default()[1].getFileName();
-  const dirOfCaller = path.dirname(callerSiteCaller || "");
-  const absoluteFeatureFilePath = path.resolve(dirOfCaller, featureFileToLoad);
+  try {
+    const path = require("path");
+    const callerSites = require("callsites");
+    // Resolve the feature path from the FIRST stack frame outside this package, so
+    // an in-package re-export/wrapper frame does not retarget it; guard a shallow
+    // stack (no external frame) so we never call getFileName() on undefined.
+    const externalFrame = callerSites
+      .default()
+      .find((currentFrame) => currentFrame.getFileName() !== __filename);
+    const callerSiteCaller = externalFrame ? externalFrame.getFileName() : "";
+    const dirOfCaller = path.dirname(callerSiteCaller || "");
+    const absoluteFeatureFilePath = path.resolve(
+      dirOfCaller,
+      featureFileToLoad
+    );
 
-  const jestCucumber = require("jest-cucumber");
-  const feature = jestCucumber.loadFeature(
-    absoluteFeatureFilePath,
-    optionsToPassToJestCucumber
-  );
+    const jestCucumber = require("jest-cucumber");
+    const feature = jestCucumber.loadFeature(
+      absoluteFeatureFilePath,
+      optionsToPassToJestCucumber
+    );
 
-  jestCucumber.defineFeature(feature, (testFn) => {
-    if (feature.scenarios.length > 0)
-      matchJestTestSuiteWithCucumberFeature(
-        feature.scenarios,
-        beforeEach,
-        afterEach,
-        testFn
-      );
+    // When jest-cucumber's own step-count validation is disabled ({ errors: false }),
+    // the wrapper must fail loudly on an unmatched step itself; otherwise stay silent
+    // so jest-cucumber's native validation remains the (transparent) source of truth.
+    const failOnUnmatchedStep = !!(
+      optionsToPassToJestCucumber &&
+      optionsToPassToJestCucumber.errors === false
+    );
 
-    if (feature.scenarioOutlines.length > 0)
-      matchJestTestSuiteWithCucumberFeature(
-        feature.scenarioOutlines,
-        beforeEach,
-        afterEach,
-        testFn,
-        true
-      );
-  });
+    // This feature binds the definitions and hooks registered for IT — captured before the
+    // registry is reset below, so the binding does not depend on when jest-cucumber invokes
+    // the callback.
+    const registryForThisFeature = stepsDefinition;
+
+    jestCucumber.defineFeature(feature, (testFn) => {
+      if (feature.scenarios.length > 0)
+        matchJestTestSuiteWithCucumberFeature(
+          registryForThisFeature,
+          feature.scenarios,
+          beforeEach,
+          afterEach,
+          testFn,
+          false,
+          failOnUnmatchedStep
+        );
+
+      if (feature.scenarioOutlines.length > 0)
+        matchJestTestSuiteWithCucumberFeature(
+          registryForThisFeature,
+          feature.scenarioOutlines,
+          beforeEach,
+          afterEach,
+          testFn,
+          true,
+          failOnUnmatchedStep
+        );
+    });
+  } finally {
+    // Unconditional: Fusion() always leaves a clean slate — normal return OR throw. Rebinding
+    // the module-level registry (never mutating it in place) keeps the object captured above
+    // intact for the callback, while the next Fusion() starts empty and must re-register.
+    stepsDefinition = emptyStepsDefinition();
+  }
 };
 
 const matchJestTestSuiteWithCucumberFeature = (
+  featureRegistry,
   featureScenariosOrOutline,
   beforeEachFn,
   afterEachFn,
   testFn,
-  isOutline
+  isOutline,
+  failOnUnmatchedStep
 ) => {
   featureScenariosOrOutline.forEach((currentScenarioOrOutline) => {
-    if (stepsDefinition.before) beforeEachFn(stepsDefinition.before);
+    featureRegistry.before.forEach((beforeHook) => beforeEachFn(beforeHook));
 
     matchJestTestWithCucumberScenario(
+      featureRegistry,
       currentScenarioOrOutline.title,
       currentScenarioOrOutline.steps,
       testFn,
-      isOutline
+      isOutline,
+      failOnUnmatchedStep
     );
 
-    if (stepsDefinition.after) afterEachFn(stepsDefinition.after);
+    featureRegistry.after.forEach((afterHook) => afterEachFn(afterHook));
   });
 };
 
 const matchJestTestWithCucumberScenario = (
+  featureRegistry,
   currentScenarioTitle,
   currentScenarioSteps,
   testFn,
-  isOutline
+  isOutline,
+  failOnUnmatchedStep
 ) => {
   testFn(currentScenarioTitle, ({ given, when, then, and, but }) => {
     currentScenarioSteps.forEach((currentStep) => {
       matchJestDefinitionWithCucumberStep(
+        featureRegistry,
         { given, when, then, and, but },
         currentStep,
-        isOutline
+        isOutline,
+        failOnUnmatchedStep
       );
     });
   });
 };
 
 const matchJestDefinitionWithCucumberStep = (
+  featureRegistry,
   verbFunction,
   currentStep,
-  isOutline
+  isOutline,
+  failOnUnmatchedStep
 ) => {
-  const foundMatchingStep = findMatchingStep(currentStep, isOutline);
-  if (!foundMatchingStep) return;
+  const foundMatchingStep = findMatchingStep(
+    featureRegistry,
+    currentStep,
+    isOutline
+  );
+  if (!foundMatchingStep) {
+    if (failOnUnmatchedStep)
+      throw new Error(`No step definition matches: "${currentStep.stepText}"`);
+    return;
+  }
 
   // this will be the "given", "when", "then"...functions
   verbFunction[currentStep.keyword](
@@ -165,24 +232,34 @@ const matchJestDefinitionWithCucumberStep = (
   );
 };
 
-const findMatchingStep = (currentStep, isOutline) => {
+const findMatchingStep = (featureRegistry, currentStep, isOutline) => {
   const scenarioType = currentStep.keyword;
   const scenarioSentence = currentStep.stepText;
-  const foundStep = Object.keys(stepsDefinition[scenarioType]).find(
+  const matchingSteps = Object.keys(featureRegistry[scenarioType]).filter(
     (currentStepDefinitionFunction) => {
       return isFunctionForScenario(
         scenarioSentence,
-        stepsDefinition[scenarioType][currentStepDefinitionFunction],
+        featureRegistry[scenarioType][currentStepDefinitionFunction],
         isOutline
       );
     }
   );
-  if (!foundStep) return null;
+  if (matchingSteps.length === 0) return null;
+
+  if (matchingSteps.length > 1) {
+    const competingMatchers = matchingSteps
+      .map((matcherSource) => `"${matcherSource}"`)
+      .join(", ");
+    throw new Error(
+      `Ambiguous step definition: "${scenarioSentence}" matches ${matchingSteps.length} step definitions: ${competingMatchers}`
+    );
+  }
 
   return injectVariable(
+    featureRegistry,
     scenarioType,
     scenarioSentence,
-    foundStep,
+    matchingSteps[0],
     currentStep.stepArgument
   );
 };
@@ -203,6 +280,22 @@ const isFunctionForScenario = (
 
   return scenarioSentence === stepDefinitionFunction.stepExpression;
 };
+
+// An ESCAPED paren is literal text, never a group delimiter — the same knowledge holdsCapturingGroup
+// (below) already encodes. Masking each `\(` / `\)` with an ordinary two-character body sequence keeps
+// every index and length identical to the raw source, so the group locator can run over the mask and
+// its result still addresses the RAW string.
+const maskEscapedParens = (stepFunctionDef) =>
+  stepFunctionDef.replace(/\\[()]/g, "\\-");
+
+// The scenario sentence carries a matcher's parens/anchors as LITERAL characters, so a position in the
+// sentence is only comparable against the step function once its escapes are collapsed the same way.
+const asScenarioText = (stepFunctionDef) =>
+  stepFunctionDef
+    .replace(/\\\(/g, "(")
+    .replace(/\\\)/g, ")")
+    .replace(/\\\^/g, "^")
+    .replace(/\\\$/g, "$");
 
 const isPotentialStepFunctionForScenario = (
   scenarioDefinition,
@@ -240,50 +333,56 @@ const isPotentialStepFunctionForScenario = (
     let idxCutScenarioPart =
       currentScenarioPart.index + currentScenarioPart[0].length;
 
-    const regEscapedStepFunc = /\([a-zA-Z0!|,:?*+.^=${}><\\\-]+\)/g.exec(
-      currentStepFuncLeft
-        .replace(/\\\(/g, "(")
-        .replace(/\\\)/g, ")")
-        .replace(/\\\^/g, "^")
-        .replace(/\\\$/g, "$")
+    // The character class spans the source of a capturing group. It must include the digits 0-9:
+    // spelled `0` alone it cannot span a group whose source holds a digit 1-9, which makes EVERY
+    // bounded quantifier — "(\d{4})" — invisible to this detector and therefore unbindable in an
+    // outline, while "(\d+)" (no digit in its source) binds. Braces are not the cause; the digits are.
+    //
+    // Locate the group over the MASKED source, so an escaped paren can never be mistaken for a group
+    // boundary: previously the locator ran twice — once on the raw source, once on a source whose
+    // `\(`/`\)` had been unescaped into BARE parens — and the two disagreed about where (and whether)
+    // a group was. For "(\w+\(\))" the raw pass matched "(\)" while the unescaped pass ("(\w+())")
+    // matched nothing at all, and a guard that tested the first while dereferencing the second threw
+    // on the null. One escape-aware pass gives one answer: the real group, in raw coordinates.
+    const groupInStepFunc = /\([a-zA-Z0-9!|,:?*+.^=${}><\\\-]+\)/g.exec(
+      maskEscapedParens(currentStepFuncLeft)
     );
-    const regStepFuncLeft = /\([a-zA-Z0!|,:?*+.^=${}><\\\-]+\)/g.exec(
-      currentStepFuncLeft
-    );
+    // The scenario sentence spells the step function's prefix as literal text, so the two are only
+    // comparable in scenario-text coordinates — escapes collapsed, one character each.
+    const stepFuncPrefixAsScenarioText = groupInStepFunc
+      ? asScenarioText(currentStepFuncLeft.substring(0, groupInStepFunc.index))
+      : "";
 
     if (
-      regStepFuncLeft &&
-      regEscapedStepFunc.index == currentScenarioPart.index
+      groupInStepFunc &&
+      stepFuncPrefixAsScenarioText.length == currentScenarioPart.index
     ) {
       //if we have a regex inside our step function definition
       // and that regex is at the same position than our Outlined variable
       // we just need to check that the sentence match,
       // so we can "evaluate" the step function and remove the regex in it
       currentStepFuncLeft =
-        regEscapedStepFunc.input.substring(0, regEscapedStepFunc.index) +
+        stepFuncPrefixAsScenarioText +
         currentStepFuncLeft.substring(
-          regStepFuncLeft.index + regStepFuncLeft[0].length
+          groupInStepFunc.index + groupInStepFunc[0].length
         );
     } else if (
-      regStepFuncLeft &&
-      regStepFuncLeft.index < currentScenarioPart.index
+      groupInStepFunc &&
+      groupInStepFunc.index < currentScenarioPart.index
     ) {
       //if we have a regex inside our step function definition
       // but that regex is not at the same position than our outlined variable
       // we need to evaluate the regex against the scenario part
-      const strRegexToEvaluate = regStepFuncLeft.input.substring(
+      const strRegexToEvaluate = currentStepFuncLeft.substring(
         0,
-        regStepFuncLeft.index + regStepFuncLeft[0].length
+        groupInStepFunc.index + groupInStepFunc[0].length
       );
       const regexToEvaluate = new RegExp(strRegexToEvaluate);
       const regIntermediatePart = regexToEvaluate.exec(
         currentScenarioPart.input
       );
       if (regIntermediatePart) {
-        fixedPart = regStepFuncLeft.input.substring(
-          0,
-          regStepFuncLeft.index + regStepFuncLeft[0].length
-        );
+        fixedPart = strRegexToEvaluate;
         idxCutScenarioPart = regIntermediatePart[0].length;
       }
     }
@@ -309,14 +408,27 @@ const isPotentialStepFunctionForScenario = (
   );
 };
 
+// A leftover fragment holds a CAPTURING group — so it has to be evaluated as a regex, not compared
+// as a literal. Escaped parens are stripped first (`\(n\)` is literal text, not a group) and `(?...)`
+// is skipped (non-capturing), so this recognises exactly the real groups.
+const holdsCapturingGroup = (stepFunctionDef) =>
+  /\((?!\?)[^()]*\)/.test(stepFunctionDef.replace(/\\[()]/g, ""));
+
 const evaluateStepFuncEndVsScenarioEnd = (
   stepFunctionDef,
   scenarioDefinition
 ) => {
+  // The leftover is regex SOURCE, so a capturing group in it must be evaluated as a regex. The old
+  // test only recognised a group holding one of [sSdDwWbB*], which made the group's SPELLING the
+  // discriminator rather than its presence: " lamp is (on|off)" fell through to a literal endsWith
+  // (always false — the scenario text reads " lamp is on") and never bound, while the identically
+  // shaped " lamp is (on|down)" took the regex branch and bound. Widening is strict: every fragment
+  // that already took the regex branch still does.
   if (
     /\(.*(\?\:)?[.\\]*[sSdDwWbB*][*?+]?.*\)|\(\[.*\](?:[+?*]{1}|\{\d\})\)/g.test(
       stepFunctionDef
-    )
+    ) ||
+    holdsCapturingGroup(stepFunctionDef)
   ) {
     return new RegExp(stepFunctionDef).test(scenarioDefinition);
   }
@@ -325,12 +437,13 @@ const evaluateStepFuncEndVsScenarioEnd = (
 };
 
 const injectVariable = (
+  featureRegistry,
   scenarioType,
   scenarioSentence,
   stepFunctionDefinition,
   stepArgs
 ) => {
-  const stepObject = stepsDefinition[scenarioType][stepFunctionDefinition];
+  const stepObject = featureRegistry[scenarioType][stepFunctionDefinition];
 
   if (!stepObject.stepRegExp)
     return {
@@ -360,7 +473,12 @@ const injectVariable = (
     if (groupIndex > 0) dynamicMatchThatAreVariables.push(match);
   });
 
-  if (Array.isArray(stepArgs) && stepArgs.length > 0) {
+  // Forward the step's Gherkin argument on PRESENCE, never on its type — the same test jest-cucumber
+  // itself applies before handing an argument to a step (feature-definition-creation.js:129-130). A
+  // type test drops half the shapes: Gherkin parses a data table to an array but a docstring to a
+  // string, and an empty docstring to "" — which a `.length` test would drop too. Absent, the argument
+  // is null, so this is the whole distinction that matters.
+  if (stepArgs != null) {
     dynamicMatchThatAreVariables.push(stepArgs);
   }
 
@@ -370,29 +488,6 @@ const injectVariable = (
   };
 };
 
-// const path        = require( 'path' )
-//
-// function walkthroughDirectory( directoryName, bRecursive, fnDoForEachFile ) {
-//     const filesystem  = require( 'fs' )
-//     let filenamesOrDirectorynames = filesystem.readdirSync( directoryName )
-//
-//     filenamesOrDirectorynames.forEach( ( currentFilenameOrDirectoryname ) => {
-//         let currentFilepath = path.join( directoryName, currentFilenameOrDirectoryname )
-//         let currentFileStats = filesystem.statSync( currentFilepath )
-//         if( bRecursive && currentFileStats.isDirectory() )
-//             walkthroughDirectory( currentFilepath, activeLoadings, bRecursive, fnOnLoading )
-//
-//         else
-//             fnDoForEachFile( currentFilepath )
-//     } )
-// }
-
-// function FusionAll( dirFeatureFiles, bRecursive ) {
-//     const dirFinalDirectory = ( !dirFeatureFiles ? '<rootDir>/test/feature' : dirFeatureFiles )
-//
-//     walkthroughDirectory( dirFinalDirectory, bRecursive, Fusion )
-// }
-
 module.exports.Before = Before;
 module.exports.After = After;
 module.exports.Given = Given;
@@ -401,4 +496,3 @@ module.exports.Then = Then;
 module.exports.And = And;
 module.exports.But = But;
 module.exports.Fusion = Fusion;
-// module.exports.FusionAll    = FusionAll

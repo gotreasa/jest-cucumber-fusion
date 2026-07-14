@@ -1,10 +1,10 @@
 Feature: Scenario Outline verification
 
     Scenario Outline: Simple Scenario Outline. Buy item: <Item>
-        This scenario use Before fusion hook (see scenario-outline2.steps.js)
-        This hook is remove all items from list of onlineSales if number of items >=2.
-        This scenario also demonstrate case dependancy in scenario outline:
-        if you are using some global variable it is not clear between scenarious.
+        This scenario uses the Before fusion hook (see scenario-outline2.steps.js).
+        The hook empties the shop before every scenario and every example row, so each
+        row stands on its own: the Given establishes the items already for sale, and
+        nothing carries over from the row before it.
 
         Given I have <nItems> items for sale
         When I bought "<Item>"
