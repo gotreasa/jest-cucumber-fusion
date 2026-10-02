@@ -10,11 +10,21 @@ export type CallBack = (
   ...args: ReadonlyArray<string | Array<Record<string, string>>>
 ) => void | Promise<void>;
 
-export function Given(name: string | RegExp, callback: CallBack): void;
-export function When(name: string | RegExp, callback: CallBack): void;
-export function Then(name: string | RegExp, callback: CallBack): void;
-export function And(name: string | RegExp, callback: CallBack): void;
-export function But(name: string | RegExp, callback: CallBack): void;
+export interface StepChain {
+  stepSentence: string | RegExp;
+  stepFnDefinition: CallBack;
+}
+
+export function Given(name: string | RegExp, callback: CallBack): StepChain;
+export function Given(chain: StepChain): StepChain;
+export function When(name: string | RegExp, callback: CallBack): StepChain;
+export function When(chain: StepChain): StepChain;
+export function Then(name: string | RegExp, callback: CallBack): StepChain;
+export function Then(chain: StepChain): StepChain;
+export function And(name: string | RegExp, callback: CallBack): StepChain;
+export function And(chain: StepChain): StepChain;
+export function But(name: string | RegExp, callback: CallBack): StepChain;
+export function But(chain: StepChain): StepChain;
 
 export function Before(callback: () => void | Promise<void>): void;
 export function After(callback: () => void | Promise<void>): void;

@@ -80,3 +80,11 @@ dist
 .idea
 .DS_Store
 .vscode/
+
+# Claude Code worktree / scratch
+.claude
+
+# nWave runtime noise; keep the checked-in config trackable
+.nwave/*
+!.nwave/des-config.json
+!.nwave/local-config.json

@@ -2,12 +2,11 @@
 
 Write 'pure' cucumber test in Jest without syntax clutter 
 
-[![Build Status](https://github.com/b-yond-infinite-network/jest-cucumber-fusion/workflows/Continuous%20Integration/badge.svg)](https://github.com/b-yond-infinite-network/jest-cucumber-fusion/actions?query=workflow%3AIntegration)
-[![Codecov](https://codecov.io/gh/b-yond-infinite-network/jest-cucumber-fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/b-yond-infinite-network/jest-cucumber-fusion)
-[![Publish](https://github.com/b-yond-infinite-network/jest-cucumber-fusion/workflows/Publish/badge.svg)](https://github.com/b-yond-infinite-network/jest-cucumber-fusion/actions?query=workflow%3APublish)
+[![Build Status](https://github.com/gotreasa/jest-cucumber-fusion/workflows/Continuous%20Integration/badge.svg)](https://github.com/gotreasa/jest-cucumber-fusion/actions?query=workflow%3A%22Continuous+Integration%22)
+[![Codecov](https://codecov.io/gh/gotreasa/jest-cucumber-fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/gotreasa/jest-cucumber-fusion)
 
-[![npm downloads](https://img.shields.io/npm/dm/jest-cucumber-fusion)](https://www.npmjs.com/package/jest-cucumber-fusion)
-[![npm latest](https://img.shields.io/npm/v/jest-cucumber-fusion/latest.svg)](https://www.npmjs.com/package/jest-cucumber-fusion)
+[![npm downloads](https://img.shields.io/npm/dm/@g_package/jest-cucumber-fusion)](https://www.npmjs.com/package/@g_package/jest-cucumber-fusion)
+[![npm latest](https://img.shields.io/npm/v/@g_package/jest-cucumber-fusion/latest.svg)](https://www.npmjs.com/package/@g_package/jest-cucumber-fusion)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 
@@ -32,7 +31,7 @@ With Jest-Cucumber-Fusion, it really takes only the minimal code possible:
 ### Install Jest Cucumber Fusion:
 
 ```
-npm install jest-cucumber-fusion --save-dev
+npm install @g_package/jest-cucumber-fusion --save-dev
 ```
 
 ### Add a Feature file:
@@ -59,7 +58,7 @@ Scenario: Launching a SpaceX rocket
 ### Add a your Cucumber Step definition file and load Fusion
 ```javascript
 //filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( 'jest-cucumber-fusion' )
+const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 ```
 
@@ -67,7 +66,7 @@ const { Given, When, Then, And, But, Fusion } = require( 'jest-cucumber-fusion' 
 
 ```javascript
 //filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( 'jest-cucumber-fusion' )
+const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../src/rocket' )
 let rocket
@@ -78,7 +77,7 @@ let rocket
 
 ```javascript
 //filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( 'jest-cucumber-fusion' )
+const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../src/rocket' )
 let rocket
@@ -108,7 +107,7 @@ But( 'nobody should doubt me ever again', () => {
 You have to match it with your Cucumber Feature definition file:
 ```javascript
 //filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( 'jest-cucumber-fusion' )
+const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../src/rocket' )
 let rocket

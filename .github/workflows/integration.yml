@@ -54,6 +54,9 @@ jobs:
     - name: Testing
       run: npm test
 
+    - name: Type checking
+      run: npm run test-d
+
     - name: Code coverage
       uses: codecov/codecov-action@v7
       with:
