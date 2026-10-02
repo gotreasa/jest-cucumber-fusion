@@ -46,6 +46,8 @@ Feature: Scenario Outline verification
             | Sabaton. Great War   |
             | Cucumber for dummies |
 
+        Then I have 2 items for sale
+
     Scenario Outline: Using examples in sentance and in table
 
         Given I have 0 items for sale
