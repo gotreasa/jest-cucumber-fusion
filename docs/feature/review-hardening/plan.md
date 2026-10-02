@@ -6,6 +6,11 @@
 **Rigor:** `thorough` (opus agent + double sonnet review) — chosen because this is a published library with a silent-wrong-result bug (H1).
 **Workflow mode:** `atdd_pure` (classic is deprecated, ADR-028) — to be applied when the DELIVER waves run.
 
+> **Historical note (2026-10-02).** The rigor profiles, `workflow.mode` and agent-dispatch cadence above
+> describe the nWave generation this work ran under (July 2026). nWave removed them between 2026-09-02
+> and 2026-09-08; delivery now runs as single `des` steps (`des po`, `design`, `oracle`, `craft`,
+> `verify`, `integrate`). The record below stays as written. New work on this repo uses the step loop.
+
 ## Source of truth
 - Adjudicated findings: [`discuss/rca.md`](./discuss/rca.md) (root-cause work already done — do NOT re-run RCA).
 - Code under change: `src/index.js`, `src/index.d.ts`; tests under `test/specs/features/`.
@@ -38,6 +43,7 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 
 ## Decisions
 - **Scope for this PR (confirmed 2026-07-10): P0 + P1** (H1, T1, H2, M1, M2, M4, M5). Folded into the fork-tidy branch/PR #7 so all "house in order" + hardening work ships as **one** semantic-release patch (avoids a release per PR). P2/P3 deferred.
+  - **Correction (2026-10-02): it is a major, not a patch.** Three commits carry `!` (`7d7ffc7` H1, `dda1949` M1/M2/M4/M5, `a3b6c3e` M3), so with a merge-commit landing semantic-release cuts **2.0.0**. That is the right bump: ambiguous and duplicate step definitions now throw, and a second `Fusion()` starts with an empty registry.
 - Rigor **thorough**; order P0 first (H1 + T1 — the negative tests harden every later fix), then the P1 items.
 - Bug-fix flow (RCA → regression test → fix), not greenfield waves; RCA is `discuss/rca.md`.
 - **H1 contract:** when >1 step definition matches a step, **throw an ambiguity error** (mirrors Cucumber / jest-cucumber's automatic binding) rather than silently taking the first insertion-order match. Converts the silent-wrong-result into a loud failure; the current suite has no overlapping defs so nothing regresses.
@@ -59,6 +65,14 @@ Each item is a bug-fix mini-cycle: **DISTILL** (author a failing regression test
 - [x] **ALL ORIGINAL P2 + P3 ITEMS COMPLETE** (M3, L1, L2, T2, T3 + prettier debt), plus the newly-found L4.
 - [x] **Cycle 7 (L3 — docstring dropped by the injection path) DONE** (un-deferred by Gearoid, 2026-07-14). Fixed at the root: the capture-injection branch now forwards the step argument on PRESENCE (`!= null`), mirroring jest-cucumber's own test, instead of on TYPE (`Array.isArray`). 73 tests green. Vera found a **new, pre-existing** defect while examining — tracked as **L5**.
 - [ ] **L5 — NEW (found 2026-07-14 by Vera during the L3 examine).** An **empty docstring inside a scenario OUTLINE** is dropped: the step receives `["alpha"]` where `["alpha", ""]` is due. **Root cause is UPSTREAM in jest-cucumber, not in this wrapper** — `node_modules/jest-cucumber/dist/src/parsed-feature-loading.js:96-97` initialises `var stepArgument = null` and then gates the example-row substitution on `if (scenarioStep.stepArgument)`, a **truthiness** test; `""` is falsy, so an empty docstring is nulled out *before* our wrapper is ever called. We cannot fix it from `injectVariable` — the value is already gone. **Verified PRE-EXISTING, not a regression:** reproduced identically against the pre-fix guard on a real `npm pack` install. Fix would mean either an upstream PR to jest-cucumber or re-reading the parsed feature in the wrapper (a bigger change than the defect warrants). **Disposition (Gearoid, 2026-07-14): leave tracked, do not fix.** Rare shape (an *empty* docstring, inside an *outline*), the root cause is not ours to fix, and both available routes cost more than the defect — an upstream PR runs on jest-cucumber's release cadence, and a wrapper workaround would mean duplicating upstream's feature parsing to recover a value it already nulled. Revisit if a real user hits it.
+  - **Update (2026-10-02): L5 is now expected to close as a side effect of a planned follow-up.** Gearoid decided to stop depending on jest-cucumber (dormant: last npm release 4.5.0 on 2024-07-25, no merges since 2025-04-24; it also carries the consumer-visible `uuid` advisory GHSA-w5hq-g745-h8pq) and build on `jest` + `@cucumber/gherkin` directly, keeping the `Fusion()` options shape. That work starts from `master` **after this PR merges**. An empty docstring inside an outline should be one of its acceptance cases.
+- [x] **Synced with `master` (2026-10-02).** Merged `origin/master` in at `4e1e950` (Dependabot config and auto-merge workflow, Dependabot lockfile bumps, locked npm 11.21.0). No conflicts. After `npm ci`: **73 jest tests, 19 suites, 100% stmts; tsd green.**
+
+## Next (to land this PR)
+1. Gearoid confirms building on this branch is finished.
+2. Mark PR #7 ready for review; CI must be green on the merged head (`prettier`, `integration` are required by the `master` ruleset).
+3. Merge with a **merge commit** (not squash), so each conventional commit reaches semantic-release; expect **2.0.0** on npm.
+4. Then start the jest-cucumber replacement (see the L5 update above).
 
 ## Decisions — Cycle 3 (2026-07-13)
 
@@ -178,3 +192,4 @@ Signed: Koru (orchestrator), 2026-07-13.
 
 ## Caveat on nWave setup — RESOLVED
 Earlier note said no `nwave` CLI was available. **Correction (2026-07-10):** `des` (`~/.claude/bin/des`) and `nwave-ai` are installed, and global `~/.claude/settings.json` registers the DES PreToolUse hooks. The edit/write gate self-skips unless `.nwave/des/deliver-session.json` exists (none here), and freshness auto-skips on this developer checkout — so config is honoured and enforcement is available, but the bug-fix flow runs without the DELIVER-session gates engaging.
+(2026-10-02: the deliver-session gate described here no longer exists in the installed nWave; see the historical note at the top.)
