@@ -131,12 +131,15 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
     const registryForThisFeature = stepsDefinition;
 
     jestCucumber.defineFeature(feature, (testFn) => {
+      // jest-cucumber wraps the whole feature in ONE describe, so a hook registered here
+      // already runs around every test in it. Register each hook once per feature, never
+      // per scenario: N registrations would run every hook N times per test.
+      registerHooks(registryForThisFeature, beforeEach, afterEach);
+
       if (feature.scenarios.length > 0)
         matchJestTestSuiteWithCucumberFeature(
           registryForThisFeature,
           feature.scenarios,
-          beforeEach,
-          afterEach,
           testFn,
           false,
           failOnUnmatchedStep
@@ -146,8 +149,6 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
         matchJestTestSuiteWithCucumberFeature(
           registryForThisFeature,
           feature.scenarioOutlines,
-          beforeEach,
-          afterEach,
           testFn,
           true,
           failOnUnmatchedStep
@@ -161,18 +162,19 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
   }
 };
 
+const registerHooks = (featureRegistry, beforeEachFn, afterEachFn) => {
+  featureRegistry.before.forEach((beforeHook) => beforeEachFn(beforeHook));
+  featureRegistry.after.forEach((afterHook) => afterEachFn(afterHook));
+};
+
 const matchJestTestSuiteWithCucumberFeature = (
   featureRegistry,
   featureScenariosOrOutline,
-  beforeEachFn,
-  afterEachFn,
   testFn,
   isOutline,
   failOnUnmatchedStep
 ) => {
   featureScenariosOrOutline.forEach((currentScenarioOrOutline) => {
-    featureRegistry.before.forEach((beforeHook) => beforeEachFn(beforeHook));
-
     matchJestTestWithCucumberScenario(
       featureRegistry,
       currentScenarioOrOutline.title,
@@ -181,8 +183,6 @@ const matchJestTestSuiteWithCucumberFeature = (
       isOutline,
       failOnUnmatchedStep
     );
-
-    featureRegistry.after.forEach((afterHook) => afterEachFn(afterHook));
   });
 };
 

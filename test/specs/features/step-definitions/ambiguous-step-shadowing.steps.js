@@ -68,7 +68,8 @@ describe("H1 — ambiguous step definitions", () => {
 
     const runScenarioMatching = () => {
       // capturedCallback = (testFn) =>
-      //   matchJestTestSuiteWithCucumberFeature(scenarios, beforeEach, afterEach, testFn)
+      //   matchJestTestSuiteWithCucumberFeature(registry, scenarios, testFn, ...)
+      // (hooks are wired once per feature by registerHooks, outside this call: M6)
       mockState.capturedCallback((_title, scenarioBody) => {
         // scenarioBody performs the wrapper's step matching (findMatchingStep) synchronously.
         scenarioBody({
