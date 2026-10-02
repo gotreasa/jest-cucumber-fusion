@@ -1,0 +1,38 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # chore(deps) is not a release type, so a Dependabot merge never publishes
+    # a new npm version on its own.
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Minor and patch bumps land as one PR; majors stay as separate PRs so
+      # one breaking change cannot hold the rest back.
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - '*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      github-actions-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
