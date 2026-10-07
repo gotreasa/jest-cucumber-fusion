@@ -1,0 +1,6 @@
+{
+  "rootDir": ".",
+  "setupFiles": ["<rootDir>/setup-fusion.js"],
+  "testMatch": ["<rootDir>/*.fixture.js"],
+  "collectCoverage": false
+}

@@ -1,0 +1,113 @@
+# The jest describe titles and test names this package generated from its committed feature
+# files on 2.0.0, captured from a real run of the 2.0.0 tree (npx jest --coverage=false
+# --json) before jest-cucumber was removed. A consumer's CI history is keyed on these
+# strings, so they are the contract across the major.
+#
+# READ BY: test/specs/baseline/assert-test-names.js, which runs the repository suite and
+# fails unless every suite recorded here is still present and still produces exactly this
+# ordered list of names, repeats kept in their positions.
+#
+# THE POPULATION. The 2.0.0 run held 21 suites. The 9 below are every suite that calls
+# Fusion() on a committed .feature file and therefore has names that Fusion GENERATES. The
+# other 12 are excluded for a stated reason, so the count is a denominator and not a sample:
+#   ambiguous-step-shadowing, hook-error, l2-outline-edge-cases, l4-escaped-parens-outline,
+#   m1-before-hooks-clobber, m3-singleton-reset, m4-callsite-resolution and
+#   m5-errors-false-silent-skip  -- internal regression tests that stage their own feature
+#       and whose own names are deliberately rewritten when they move to the new internal
+#       seams;
+#   m2-duplicate-matcher, missing-feature-file, undefined-step  -- they drive refusals, so
+#       Fusion generates no describe or test from a feature file in them;
+#   fuzz-properties  -- its features are generated into a temporary directory from a
+#       fast-check seed, so its names are a property of the generator, not of a committed
+#       feature file. It asserts its own generated names itself and the whole-repository
+#       vector keeps it green.
+# A suite added by a later value has no entry here and is not compared.
+#
+# WHAT A READER SHOULD NOTICE. The order below is the 2.0.0 ORDER, not document order. 2.0.0
+# registers every plain scenario of a feature before any Examples row of its outlines, so in
+# language.steps.js the scenarios at language.feature:24 and :29 are named BEFORE the three
+# Examples rows of the outline at language.feature:12, even though the document puts the
+# outline first. Compiling pickles yields document order, so preserving this list is work,
+# not a by-product.
+
+suite: test/specs/features/step-definitions/basic-scenarios.steps.js
+describe: Rocket Launching
+test: Launching a SpaceX rocket
+test: Launching my ASCII rocket
+test: Launching my personal ASCII rocket
+test: Folding ourselves in 2D
+
+suite: test/specs/features/step-definitions/l3-step-argument-delivery.steps.js
+describe: Step arguments reaching a step definition
+test: A step matched on its captures receives the incident notes attached to it
+test: A step matched on its exact wording receives the incident notes attached to it
+test: A step matched on its captures receives the crew table attached to it
+test: A step matched on its captures with nothing attached does not receive a phantom extra argument
+test: A step matched on its captures receives empty incident notes attached to it
+test: A step of an outline receives the incident notes attached to it, written for rocket Falcon
+test: A step of an outline receives the incident notes attached to it, written for rocket Vega
+
+suite: test/specs/features/step-definitions/language.steps.js
+describe: Online verkopen
+test: t-shirt verkopen
+test: Boek kopen
+test: voorraad bijvullen
+test: Autographed Neil deGrasse Tyson book verkopen
+test: Rick Astley t-shirt verkopen
+test: An idea to replace EVERYTHING with blockchains verkopen
+
+suite: test/specs/features/step-definitions/m6-hooks-once-per-test.steps.js
+describe: Hooks run once per test
+test: first scenario
+test: second scenario
+test: third scenario
+test: outline row one
+test: outline row two
+describe: Hooks run once per test in an outline-only feature
+test: outline-only row one
+test: outline-only row two
+test: outline-only row three
+
+suite: test/specs/features/step-definitions/reuse-definition.steps.js
+describe: Rocket reuse
+test: Reusing a SpaceX rocket
+test: Reading the critics
+
+suite: test/specs/features/step-definitions/scenario-outline2.steps.js
+describe: Scenario Outline verification
+test: Complex Scenario
+test: Simple Scenario Outline. Buy item: Mist written by Stephen King
+test: Simple Scenario Outline. Buy item: Metallica. ReLoad.
+test: Complex Scenario Outline. 0
+test: Using examples in sentance and in table
+test: Using examples in sentance and in table
+
+suite: test/specs/features/step-definitions/scenario-outlines.steps.js
+describe: Online sales
+test: Selling a thing
+test: Selling an Autographed Neil deGrasse Tyson book
+test: Selling an Rick Astley t-shirt
+test: Selling an An idea to replace EVERYTHING with blockchains
+test: Selling all of one
+test: Selling all of one
+test: Selling all of one
+test: Additional regexp in outline line
+test: Additional regexp in outline line
+test: Additional regexp in outline line with non-string variables for Autographed Neil deGrasse Tyson book
+test: Additional regexp in outline line with non-string variables for Rick Astley t-shirt
+test: Additional regexp in outline line with non-string variables and static one in the middle for Autographed Neil deGrasse Tyson book
+test: Additional regexp in outline line with non-string variables and static one in the middle for Rick Astley t-shirt
+test: Additional regepx in outline line with non-string variable at the end for Autographed Neil deGrasse Tyson book
+test: Additional regepx in outline line with non-string variable at the end for Rick Astley t-shirt
+
+suite: test/specs/features/step-definitions/using-dynamic-values.steps.js
+describe: Getting rich writing software
+test: Depositing a paycheck
+test: Testing simple inception
+test: Using examples in step RegExp and step Table at the same time. First Scenario
+test: Using examples in step RegExp and step Table at the same time. Second Scenario
+
+suite: test/specs/features/step-definitions/using-gherkin-tables.steps.js
+describe: Todo List
+test: Adding an item to my todo list
+

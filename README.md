@@ -11,11 +11,13 @@ Write 'pure' cucumber test in Jest without syntax clutter
 
 
 ## Overview
-Build on top of [Jest-cucumber](https://github.com/bencompton/jest-cucumber), Jest-Cucumber-Fusion handle the writing of the corresponding Jest test steps using an uncluttered cucumber style.
+Jest-Cucumber-Fusion handle the writing of the corresponding Jest test steps using an uncluttered cucumber style.
 Instead of using `describe` and `it` blocks, you instead write a Jest test for each scenario, and then define `Given`, `When`, and `Then` step definitions inside of your Jest tests. 
 Jest-Cucumber-Fusion then allows you to link these Cucumber tests to your javascript Cucumber feature steps.
-Adding a `Fusion`call, the links between your Feature definition and your Steps definition is handled automatically and the necessary scaffolding for jest-cucumber is build behind the scene.
+Adding a `Fusion`call, the links between your Feature definition and your Steps definition is handled automatically and the necessary scaffolding is build behind the scene.
 Now use jest naturally in your project like you would use the native Cucumber library.
+
+The style of this package began with [Jest-cucumber](https://github.com/bencompton/jest-cucumber), which it was originally built on top of. Since version 3 it no longer depends on that package: it runs on Jest and [@cucumber/gherkin](https://github.com/cucumber/gherkin) directly, and owns the whole test lifecycle itself.
 
 ## Motivation
 
@@ -151,6 +153,28 @@ Since we're using jest, it is very easy to generate the code coverage of your Cu
     "collectCoverage": true
   }
 ```
+
+ 
+## Setting options once for a whole run
+
+Options can be passed to a single `Fusion` call:
+
+```javascript
+Fusion( 'rocket-launching.feature', { tagFilter: '@smoke and not @slow' } )
+```
+
+Or set once for every step definition file of a run, from a script listed in Jest's `setupFiles`:
+
+```javascript
+//jest-fusion-config.js
+const { setFusionConfiguration } = require( '@g_package/jest-cucumber-fusion' )
+
+setFusionConfiguration( { tagFilter: '@smoke and not @slow' } )
+```
+
+A per-call option still wins for its own file. See [Configuration options](./docs/AdditionalConfiguration.md) for every option and for the merge order.
+
+If you are coming from version 2, global configuration used to go through `jest-cucumber`'s own `setJestCucumberConfiguration`. That package is no longer a dependency, so the import moves to `setFusionConfiguration` from this package; the options object is the same shape.
 
  
 ## Additional Documentation 
