@@ -84,14 +84,73 @@ Raised by the architecture pass, then reproduced. Probe scripts in the job tmp d
       with mermaid-cli 11). Koru re-verified R1, #13, #22, #25, #30, D5, D-B, D10 (8 mock files,
       not 9 as the baseline said).
 - [x] Gearoid decides the open architecture items (D-A, D-B, D5, CJS pin, D2, D6, D7): all ruled.
-- [ ] Commit plan and diagrams (before `des po`: the tree is frozen from `des po` to `des integrate`).
-- [ ] `des po` (Request + values via `nw-product-owner`).
-- [ ] `des design --shared`, then per value: design, oracle, craft.
-- [ ] `des verify`, reviewer, examiner (with captured observations), `des integrate`.
-- [ ] Signed amend of the integrate commit to `feat!:` with BREAKING CHANGE (needs Gearoid's go).
-- [ ] Docs: README and `docs/AdditionalConfiguration.md` updated for the new config path.
-- [ ] PR, then release 3.0.0 via semantic-release on merge.
+- [x] Commit plan and diagrams: `85d54a3` (signed, after two 1Password approval retries).
+- [x] `des po` (Request + 5 values via `nw-product-owner`): brief `docs/feature/drop-jest-cucumber/brief.md`.
+- [x] `des design --shared`, then per value: design, oracle, craft. All five GREEN.
+- [x] `des verify`: candidate `9b2bca97`, 17 of 17 declared vectors exit 0 in a clean checkout.
+- [x] Reviewer (`nw-software-crafter-reviewer`): accepted, no blocking finding.
+- [x] Examiner (`nw-user-examiner`, source-blind): indeterminate twice, nothing contradicted (below).
+- [x] `des integrate`, then signed amend (Gearoid's go) to `e2b1445 feat!: replace jest-cucumber
+      with jest + @cucumber/gherkin` with a BREAKING CHANGE body; tree identical to `9b2bca97`.
+- [x] Docs: README and `docs/AdditionalConfiguration.md` updated (V5).
+- [ ] Push branch and open PR. **Held: Gearoid chose "nothing outward yet" on 2026-10-07.**
+- [ ] Release 3.0.0 via semantic-release on merge.
+
+## Delivery log (2026-10-07)
+
+Parked outside the repo while the tree was frozen, applied here after the amend.
+
+- **Values:** V1 walking skeleton (packed-tarball consumer, no jest-cucumber or uuid, names and
+  failing-step text byte-identical, L5); V2 unmatched-step refusal with Fusion-idiom snippets,
+  `errors: false` as a visible skip, duplicate titles; V3 `tagFilter`; V4 `scenarioNameTemplate`
+  on every test; V5 `setFusionConfiguration` and docs.
+- **Shared design:** two host review findings (names oracle scoped to Fusion-generated suites;
+  hard-coded counts removed) and one DES refusal (missing agreement party), all before binding.
+- **Real defects found on the way:** `src/configuration.js` replaced the whole `errors` object
+  (V2 fixed: key-wise merge); the crafter's own first cross-layer merge re-enabled a globally
+  disabled key (found by probe, fixed in V5); 2.0.0 registers plain scenarios before outline rows,
+  not document order (V1 honours it).
+- **Examiner evidence:** installed-host captures from the packed candidate, side by side with the
+  published 2.0.0: names-only diff empty, failing-step text diff empty, the same outline rows FAIL
+  on 2.0.0 (L5) and pass on the candidate, step received `note ["bread",""]`.
+- **Paid role turns:** about 24 (architect 10 incl. design rework, PO 1, acceptance designer 4,
+  crafter 5, reviewer 1, examiner 2 CLI runs at $0.59 and $0.77). No Jev calls.
+
+## Field traps measured in this delivery (candidates for `koru-nwave-rules` section 4)
+
+1. **Binding a later value's design moves earlier values' records.** Every value's record covers
+   its authority section, and every section is appended to the one
+   `docs/feature/<id>/architecture/brief.md`, so `des design --value N+1` flips value N to
+   `oracle=bytes moved craft=bytes moved`. `des verify` accepted it; no re-record was needed.
+2. **Never batch two values' craft in one role turn.** `RecordIdentity` hashes every shared or
+   prerequisite agreement-party file that is not the value's own target
+   (`des/application/delivery_continuation.py:3290-3333`), so crafting V4 and V5 together moved
+   each other's oracle identity (`OracleRecordMoved`). Repaired at zero turns by `des oracle`
+   re-records (accepted with `verdict=green`; original RED kept in the native logs).
+3. **The examiner packet must carry no package source path**: Jest stack traces do. Capture with
+   `jest --noStackTrace` (`ObservationPacketRefused: path_bearing`).
+4. **A role with only `Read` cannot expand a glob.** Give literal paths in reviewer briefs.
+5. **Role notifications truncate long results.** Recover JSON manifests verbatim from the
+   subagent transcript (`json.JSONDecoder().raw_decode` from the marker), never from the summary.
+
+## Open items and follow-ups
+
+- **Examiner indeterminate items** (no consumer-side capture; each asserted by an acceptance
+  oracle that `des verify` ran green): And/But binding; hooks once per test; Rule with its own
+  Background; `stepsMustMatchFeatureFile: false` alone; table/docString parameter in snippets;
+  outline rows never duplicates; malformed tag filter refusal; excluded unbound scenario skipped
+  once; excluded step functions never run; template on a tag-skipped test; throwing or non-string
+  template refusal; non-object setter refusal; second setter call replaces.
+- **Reviewer notes for the oracle owner** (not blocking): N1 the arch spec's scanner desyncs on a
+  quote inside a regex literal (`src/code-suggestion.js:33`; code verified clean); N2 stale
+  "eight names" prose in that spec; N3 the duplicate-count digit window in
+  `assert-validation-report.js`; N4 a hard-coded population literal in the V4 oracle; N5 the m5/m3
+  doubles re-implement the `errors` decision; J4 unbound-step de-duplication is unobserved.
+- **Reviewer's updated verdict** (same `accepted`, plus it verified the V4/V5 RED logs) could not
+  be recorded: DES keeps one result per sealed input.
+- Later releases: richer failing-step message with feature file and line (3.1); `jest` as a
+  peerDependency (R10); Node 24.9+ or ESM to follow the cucumber majors.
 
 ## Blockers
 
-None.
+None. Waiting on Gearoid's go to push and open the PR.
