@@ -151,6 +151,36 @@ Parked outside the repo while the tree was frozen, applied here after the amend.
 - Later releases: richer failing-step message with feature file and line (3.1); `jest` as a
   peerDependency (R10); Node 24.9+ or ESM to follow the cucumber majors.
 
+## Post-delivery probes (2026-10-08, on `b4b15b6`, disposable copies only)
+
+- **Mutation (Stryker 9.6.1, all 10 `src/*.js`): FAIL, 464 / 609 = 76.2% against 80%.**
+  Run 1 (Jest runner) was invalid evidence: it lost the active mutant in the oracles' child Jest
+  runs (proven on `configuration.js:78`: killed by hand, reported Survived) and filed 247
+  collection-time detections as RuntimeError. Run 2 used the command runner over the acceptance
+  set (whole suite plus the four behavioural report scripts): 463 killed, 1 timeout, 145
+  survived, 0 runtime errors. Of the survivors, 74 are WHY/HOW message prose that oracles do not
+  pin by design; most of the rest are defensive `|| []` fallbacks. Real gaps, smallest missing
+  observation each: malformed Gherkin never fed to Fusion (`feature-source.js:72,80`); header-only
+  data table never delivered (`step-argument.js:20`); case-only duplicate titles not
+  discriminated (`feature-source.js:137`, the N3 digit window); unbound-step de-duplication
+  unobserved (`code-suggestion.js:110-114`); asterisk and empty keyword refusals unobserved
+  (`keywords.js:38,50`); a non-Error throw from a step (`test-registration.js:70`); template
+  returning "" or throwing a non-Error (`scenario-name.js:82,92`); `setFusionConfiguration(null)`
+  (`configuration.js:57`); multi-digit capture in snippets (`code-suggestion.js:18`).
+- **Smoke: 41 / 41 pass** on Node 20.20.2, 22.23.3 and 24.21.0 (13 consumer journeys each, plus
+  plain `require` outside Jest) and two TypeScript consumer checks.
+- **Fuzz:** existing P1 to P5 at 2,000 cases: 15,928 / 15,928 pass. New F2 (tag filter vs model,
+  20,000), F3 (672 keywords across 80 dialects, exhaustive), F4 (tables and docstrings, 500), F5
+  (template vars, 500), F6 (errors merge vs model, 20,000) pass. **F1 (refusal, paste snippet,
+  bind) fails 243 / 500: two real snippet defects, both inherited from jest-cucumber's generator,
+  not regressions:** a decimal or signed number gets `(\d+)` so the snippet does not match its own
+  step (`3.14`, `-5`, `.5`); a `/` is not escaped, so the snippet is invalid JavaScript
+  (`a ratio of 1/2`). Cause: `src/code-suggestion.js:18-21,31`.
+- **Packaging:** no `files` field. The published 2.0.0 shipped a 10.4 MB `codecov` binary from
+  the CI checkout; 3.0.0 will too unless `files` is added. The candidate tarball also ships the
+  whole `test/` tree (111 files).
+
 ## Blockers
 
-None. Waiting on Gearoid's go to push and open the PR.
+None. Waiting on Gearoid's go to push and open the PR. Recommended before release: fix the two
+snippet defects and add a `files` allow-list.
