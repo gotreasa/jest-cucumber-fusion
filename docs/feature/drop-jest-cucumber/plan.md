@@ -160,9 +160,12 @@ Parked outside the repo while the tree was frozen, applied here after the amend.
   set (whole suite plus the four behavioural report scripts): 463 killed, 1 timeout, 145
   survived, 0 runtime errors. Of the survivors, 74 are WHY/HOW message prose that oracles do not
   pin by design; most of the rest are defensive `|| []` fallbacks. Real gaps, smallest missing
-  observation each: malformed Gherkin never fed to Fusion (`feature-source.js:72,80`); header-only
-  data table never delivered (`step-argument.js:20`); case-only duplicate titles not
-  discriminated (`feature-source.js:137`, the N3 digit window); unbound-step de-duplication
+  observation each: malformed Gherkin never fed to Fusion (`feature-source.js:72`; `:80`, the
+  compile refusal, is likely unreachable after a successful parse); header-only data table never
+  delivered (`step-argument.js:20`, which on inspection is an equivalent mutant: Gherkin cannot
+  produce a zero-row table). **Corrected 2026-10-08:** this list first named case-only
+  duplicate titles at `feature-source.js:137`; Stryker's two survivors there are drop-`.trim()`
+  and `toUpperCase`, both equivalent, so that was not a gap. Unbound-step de-duplication
   unobserved (`code-suggestion.js:110-114`); asterisk and empty keyword refusals unobserved
   (`keywords.js:38,50`); a non-Error throw from a step (`test-registration.js:70`); template
   returning "" or throwing a non-Error (`scenario-name.js:82,92`); `setFusionConfiguration(null)`
@@ -180,7 +183,49 @@ Parked outside the repo while the tree was frozen, applied here after the amend.
   the CI checkout; 3.0.0 will too unless `files` is added. The candidate tarball also ships the
   whole `test/` tree (111 files).
 
+## Follow-up fixes (Gearoid: "Yes, do the next steps", 2026-10-08)
+
+Route: direct test-first work plus one independent reviewer and a targeted mutation re-run, not a
+DES loop (mechanical fixes against settled decisions; the fuzz property is the oracle; the gap
+tests pin behaviour that already holds, so their proof is killing the named survivors).
+
+- [x] RED: `snippet-binds.steps.js` (9 named examples + 150 seeded property cases: refusal,
+      paste, bind) failed 86 of 235, only for decimal/signed/leading-dot numbers and `/` in a
+      regex snippet; integers and quoted strings already passed. `package-files.steps.js`
+      failed on non-runtime files.
+- [x] GREEN: `src/code-suggestion.js` keeps `(\d+)` for unsigned integers and suggests
+      `([-+]?\d*\.?\d+)` for any other detected number; `/` is escaped. `package.json`
+      `files: ["src/"]`: 14 files, 79.6 KB (2.0.0: 57 files, 10.6 MB). Snippet tests 318/318.
+- [x] Gap tests (`refusal-edges.steps.js`, green on arrival as characterisation): malformed
+      Gherkin refused by name with nothing registered; case-only duplicate titles one entry
+      "declared 3 times"; header-only table delivers `[]` (its guard at `step-argument.js:20`
+      is unreachable from Gherkin, an equivalent mutant, so this pins the promise only).
+- [x] Verify: 17 of 17 vectors exit 0; prettier clean on 96 project files; fuzz F1 500/500
+      (was 243 failing).
+- [x] Targeted Stryker (command runner, full acceptance set): `feature-source.js:72` parse
+      refusal now KILLED; `:80` compile refusal still survives (likely unreachable after a
+      successful parse); `:137` survivors are drop-`.trim()` and `toUpperCase`, both equivalent
+      (removing the case folding, which Stryker does not generate, fails the new test: measured
+      by hand).
+- [x] Independent review (`nw-software-crafter-reviewer`): accepted, no blocking finding. Acted
+      on: N1 U+2028/U+2029 still broke a regex snippet (reproduced: `Invalid regular expression:
+      missing /`; fixed by `\u` escapes, example added); N2 test comment over-claimed `:80`
+      (reworded); N3 the arity check was self-referential (named examples now pin the exact
+      snippet text); N6 `npm pack` ran twice (memoised; CI is ubuntu-only, so Windows does not
+      apply); N8 the 86 RED failures reconcile as 79 property + 6 examples + 1 packaging.
+      Noted, not acted on: N4 derived survivors (dedup, pluralisation, docstring/table params in
+      snippets); N7 README's relative `docs/` links dangle inside `node_modules` (npmjs.com
+      rewrites them).
+- [x] Re-run Stryker on `src/code-suggestion.js`: every targeted survivor killed (`:18` all 10
+      regex mutants including the multi-digit split, `:25`, `:26`, `:30` all 4); file score
+      89 / 107 = 83.2% (was 77.8%). Left: dedup at `:129-133` (J4) and pluralisation at `:156`.
+- [x] Final: 17 of 17 vectors exit 0; whole suite 32 suites, 771 tests; prettier clean.
+- [ ] Signed commits.
+- **Open, for Gearoid:** about 150 em dashes in code comments and test prose (new `src/`
+      modules and oracles from this delivery, plus older PR #7 regression tests). The ban lists
+      config, rule, reference, plan and docs files; code comments are not named, and the rules
+      say converge opportunistically, never in a sweep. Not swept.
+
 ## Blockers
 
-None. Waiting on Gearoid's go to push and open the PR. Recommended before release: fix the two
-snippet defects and add a `files` allow-list.
+None. Push and PR still held for Gearoid's go.
