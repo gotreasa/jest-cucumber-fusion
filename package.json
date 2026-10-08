@@ -4,6 +4,9 @@
   "description": "Write cucumber test as part of a jest run (including coverage)",
   "main": "src/index.js",
   "types": "src/index.d.ts",
+  "files": [
+    "src/"
+  ],
   "scripts": {
     "test": "jest --color",
     "test-d": "tsd",
