@@ -17,8 +17,17 @@
 // suggestion is already substituted for its Examples row and no angle brackets survive.
 const ARGUMENT_IN_STEP_TEXT = /([-+]?[0-9]*\.?[0-9]+)|"([^"<]+)"/g;
 
-const NUMBER_CAPTURE = "(\\d+)";
+// A plain unsigned integer keeps the familiar (\d+). Any other number the detection above
+// accepts (a sign, a decimal point, a leading dot) gets a capture that matches that same shape,
+// because (\d+) cannot match "3.14", "-5" or ".5" and the suggested matcher would then fail to
+// bind the very step it was suggested for. Inherited from jest-cucumber's generator; found by
+// fuzzing on 2026-10-08.
+const INTEGER_CAPTURE = "(\\d+)";
+const NUMBER_CAPTURE = "([-+]?\\d*\\.?\\d+)";
 const QUOTED_CAPTURE = '"(.*)"';
+
+const captureForNumber = (numberText) =>
+  /^\d+$/.test(numberText) ? INTEGER_CAPTURE : NUMBER_CAPTURE;
 
 const VERB_FOR_BUCKET = {
   given: "Given",
@@ -28,7 +37,16 @@ const VERB_FOR_BUCKET = {
   but: "But",
 };
 
-const escapedForRegex = (text) => text.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+// The matcher is emitted as a regex LITERAL, so "/" must be escaped too: unescaped it ends the
+// literal early and the suggested code is not valid JavaScript. The same holds for the two
+// Unicode line terminators, U+2028 and U+2029: Gherkin splits lines on \r?\n only, so they can
+// reach step text, and JavaScript forbids a line terminator inside a regex literal. They are
+// written as \u escapes, which match the same character.
+const escapedForRegex = (text) =>
+  text
+    .replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 
 const escapedForDoubleQuotes = (text) => text.replace(/[\\"]/g, "\\$&");
 
@@ -45,7 +63,8 @@ const argumentsInStepText = (stepText) => {
     found.push({
       start: match.index,
       end: match.index + match[0].length,
-      capture: match[1] === undefined ? QUOTED_CAPTURE : NUMBER_CAPTURE,
+      capture:
+        match[1] === undefined ? QUOTED_CAPTURE : captureForNumber(match[1]),
     });
     match = pattern.exec(stepText);
   }
