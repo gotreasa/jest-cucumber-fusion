@@ -1,8 +1,6 @@
-// Type definitions for jest-cucumber-fusion 0.6
-// Project: https://github.com/b-yond-infinite-network/jest-cucumber-fusion#readme
-// Definitions by: Pelle Johnsen <https://github.com/pjoe>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// Minimum TypeScript Version: 3.4
+// Type definitions for @g_package/jest-cucumber-fusion
+// Project: https://github.com/gotreasa/jest-cucumber-fusion#readme
+// Originally written by Pelle Johnsen <https://github.com/pjoe> for DefinitelyTyped.
 
 export type CallBack = (
   ...args: ReadonlyArray<string | Array<Record<string, string>>>
@@ -43,7 +41,7 @@ export function After(callback: () => void | Promise<void>): void;
  *
  * As a boolean, `errors` is shorthand: `true` turns every key on, `false` turns every key off.
  * As an object it merges KEY-WISE over the defaults, so naming one key says nothing about the
- * others — switching the step check off leaves the duplicate check exactly as it was.
+ * others. Switching the step check off leaves the duplicate check exactly as it was.
  */
 export interface FusionErrorOptions {
   stepsMustMatchFeatureFile?: boolean;
