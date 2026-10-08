@@ -11,8 +11,8 @@ const { findMatchingStep } = require("./step-matching");
 const { unmatchedStepRefusal } = require("./code-suggestion");
 const { nameForScenario } = require("./scenario-name");
 
-// BIND BEFORE REGISTERING. Every step of every scenario is matched up front, so a refusal —
-// an unmatched step, an ambiguous one, an unsupported keyword — leaves Fusion() on the way
+// BIND BEFORE REGISTERING. Every step of every scenario is matched up front, so a refusal
+// (an unmatched step, an ambiguous one, an unsupported keyword) leaves Fusion() on the way
 // out, synchronously, at collection time. Inside a describe body it would be reported as a
 // broken suite instead, and a consumer who wrapped Fusion() in a try/catch would never see
 // it (test/specs/features/step-definitions/undefined-step.steps.js drives exactly that).
@@ -28,7 +28,6 @@ const boundScenarios = (loadedFeature, featureRegistry) =>
 
     return {
       scenario,
-      title: scenario.title,
       // Read by truthiness and carried through untouched: a LoadedFeature staged without it,
       // as a test double's fabricated one is, reads as "not excluded".
       excludedByTagFilter: !!scenario.excludedByTagFilter,
@@ -71,7 +70,7 @@ const decorate = (stepText, stepArguments, failure) =>
   );
 
 // One test body: the scenario's steps, in order, each awaited before the next begins. A step
-// that throws or whose promise rejects ends the scenario there — running on would report a
+// that throws or whose promise rejects ends the scenario there: running on would report a
 // second, invented failure and hide the first.
 const runScenario = (scenario) => async () => {
   for (const step of scenario.steps) {
@@ -96,7 +95,7 @@ const registerFeature = (loadedFeature, featureRegistry, options) => {
 
   // THE errors DECISION, taken here because this is the only module from which either outcome
   // is reachable. With the step check on, one refusal names every unbound step of the feature
-  // and nothing is registered. With it off, the scenarios holding them become skipped tests —
+  // and nothing is registered. With it off, the scenarios holding them become skipped tests,
   // never passing ones, and never absent ones. Validation can be switched off; it is never
   // switched into silence.
   //
@@ -131,7 +130,7 @@ const registerFeature = (loadedFeature, featureRegistry, options) => {
       // ONE skip route, for either reason, and ONE name whichever route is taken. A scenario
       // the filter excluded and a scenario left unwired are both registered as a skipped test
       // under the name they would have carried had they run, and a scenario that is both is
-      // registered ONCE — two registrations would put two tests of one name in the report.
+      // registered ONCE: two registrations would put two tests of one name in the report.
       // Everything else runs: switching a check off, or filtering, costs the consumer only the
       // scenarios it actually names.
       if (scenario.excludedByTagFilter || scenario.unboundSteps.length > 0)

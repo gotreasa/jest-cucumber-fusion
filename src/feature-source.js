@@ -3,13 +3,13 @@
 // This is the ONLY module under src/ allowed to require the filesystem, the Gherkin parser or
 // the caller-stack reader, and that is an architectural law rather than a convention (see
 // test/specs/arch/dependency-direction.steps.js). It hands the rest of the package one plain
-// value — a LoadedFeature — so the core stays pure and the parser stays swappable.
+// value (a LoadedFeature), so the core stays pure and the parser stays swappable.
 //
 // LoadedFeature, the whole of what crosses back:
 //   { title, featureTags, scenarios: [ { title, excludedByTagFilter, tags,
 //                                        steps: [ { keyword, stepText, stepArgument } ] } ] }
 // `keyword` is already a registry bucket, `stepText` is already substituted for its Examples
-// row, and `stepArgument` is already the shape a step function receives — so nothing
+// row, and `stepArgument` is already the shape a step function receives, so nothing
 // downstream has to know a pickle exists. `excludedByTagFilter` is present only when a
 // tagFilter was given, and `featureTags` and `tags` are read only when a scenarioNameTemplate
 // is given; all three are read by presence or truthiness, so a value staged without them
@@ -55,8 +55,8 @@ const readFeatureText = (absoluteFeatureFilePath) => {
   return fs.readFileSync(absoluteFeatureFilePath, "utf8");
 };
 
-// Parsing and compiling are two steps rather than one so that a check over the parsed AST —
-// the duplicate declared-title check below — can refuse before any pickle work is done.
+// Parsing and compiling are two steps rather than one so that a check over the parsed AST
+// (the duplicate declared-title check below) can refuse before any pickle work is done.
 const parseFeature = (featureText) => {
   // One incrementing id source, shared with the compile below: it replaces the uuid v4 the
   // removed intermediary used, which is one of the two routes by which uuid reached a
@@ -82,21 +82,31 @@ const compilePickles = (document, absoluteFeatureFilePath, ids) => {
   }
 };
 
+// Every child of a feature, in document order, with a Rule's own children flattened in where
+// the Rule is declared. One walker for both views below, so a Rule-nesting fix is made once
+// rather than twice in two copies that have to be kept agreeing.
+//
+// A rule child is visited as well as descended into, not instead: that is what the two copies
+// did, and the traversal has to stay equivalent because the registration order read off it is
+// the 2.0.0 test-name contract.
+const eachChild = (children, visit) => {
+  (children || []).forEach((child) => {
+    if (child.rule) eachChild(child.rule.children, visit);
+    visit(child);
+  });
+};
+
 // Every AST step, by id, so a pickle step can be resolved back to the keyword a consumer
-// registered against. Rule children are descended into, because a Rule's Background and
-// scenarios carry steps of their own.
+// registered against. A Rule's Background and scenarios carry steps of their own, which is why
+// the walk descends.
 const astStepsById = (feature) => {
   const steps = new Map();
 
-  const descend = (children) => {
-    (children || []).forEach((child) => {
-      if (child.rule) descend(child.rule.children);
-      const node = child.background || child.scenario;
-      if (node) node.steps.forEach((step) => steps.set(step.id, step));
-    });
-  };
+  eachChild(feature.children, (child) => {
+    const node = child.background || child.scenario;
+    if (node) node.steps.forEach((step) => steps.set(step.id, step));
+  });
 
-  descend(feature.children);
   return steps;
 };
 
@@ -107,14 +117,10 @@ const astStepsById = (feature) => {
 const astScenarios = (feature) => {
   const scenarios = [];
 
-  const descend = (children) => {
-    (children || []).forEach((child) => {
-      if (child.rule) descend(child.rule.children);
-      if (child.scenario) scenarios.push(child.scenario);
-    });
-  };
+  eachChild(feature.children, (child) => {
+    if (child.scenario) scenarios.push(child.scenario);
+  });
 
-  descend(feature.children);
   return scenarios;
 };
 
@@ -128,7 +134,7 @@ const byId = (scenarios) =>
 // DECLARED titles, never generated test names. One Scenario Outline contributes exactly one
 // title however many Examples rows it has, which is the whole correctness of this check: a
 // check over generated names would reject test/specs/features/scenario-outlines.feature,
-// whose single outline produces three tests all named "Selling all of one" — three names the
+// whose single outline produces three tests all named "Selling all of one", three names the
 // 2.0.0 baseline records.
 const duplicatedTitles = (scenarios) => {
   const countByComparableTitle = new Map();
@@ -170,10 +176,16 @@ const refuseDuplicatedTitles = (featureTitle, duplicated) => {
   );
 };
 
-const keywordOfPickleStep = (pickleStep, stepsById, language) => {
-  const astStep = (pickleStep.astNodeIds || [])
-    .map((astNodeId) => stepsById.get(astNodeId))
+// The first of a pickle node's astNodeIds that names something in the given index wins. A
+// pickle step carries the ids of every AST node it was compiled from, and a pickle carries its
+// scenario's and, on an Examples row, that row's: only some of them are in any one index.
+const firstAstNodeOf = (pickleNode, byAstNodeId) =>
+  (pickleNode.astNodeIds || [])
+    .map((astNodeId) => byAstNodeId.get(astNodeId))
     .find((candidate) => candidate !== undefined);
+
+const keywordOfPickleStep = (pickleStep, stepsById, language) => {
+  const astStep = firstAstNodeOf(pickleStep, stepsById);
 
   if (!astStep)
     throw new Error(
@@ -191,7 +203,7 @@ const keywordOfPickleStep = (pickleStep, stepsById, language) => {
 
 // Reproduce the registration order the previous engine produced: within one feature, EVERY
 // plain scenario comes before ANY Examples row, each group in document order. Compiling
-// pickles yields document order, so this partition is the whole of the difference — and a
+// pickles yields document order, so this partition is the whole of the difference, and a
 // consumer's CI history is keyed on it (test/specs/baseline/test-names-2.0.0.txt).
 //
 // Rule-nested scenarios and outlines take part in the same two groups, flattened: the
@@ -201,9 +213,7 @@ const PLAIN_SCENARIOS_FIRST = 0;
 const EXAMPLES_ROWS_AFTER = 1;
 
 const scenarioOrder = (pickle, scenariosById) => {
-  const astScenario = (pickle.astNodeIds || [])
-    .map((astNodeId) => scenariosById.get(astNodeId))
-    .find((candidate) => candidate !== undefined);
+  const astScenario = firstAstNodeOf(pickle, scenariosById);
 
   return astScenario && (astScenario.examples || []).length > 0
     ? EXAMPLES_ROWS_AFTER
@@ -244,7 +254,7 @@ const loadFeature = (absoluteFeatureFilePath, options) => {
 
   // Refused before the pickles are compiled: nothing downstream can make sense of a feature
   // whose scenarios cannot be told apart, so the work is not worth doing. It stays ahead of
-  // the tags deliberately — a duplicated title is a property of the FILE, so a selection must
+  // the tags deliberately: a duplicated title is a property of the FILE, so a selection must
   // never be able to make a duplicate-title file acceptable.
   if (options.errors.scenariosMustMatchFeatureFile) {
     const duplicated = duplicatedTitles(scenarios);

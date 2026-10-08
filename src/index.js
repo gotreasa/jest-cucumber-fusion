@@ -78,14 +78,17 @@ const But = (regexpSentenceOrChainedObject, fnForDefinition) => {
   return defineAndChain("but", regexpSentenceOrChainedObject, fnForDefinition);
 };
 
+// The chained form: a StepChain handed back by an earlier verb, re-registered under a second
+// keyword. A single argument carrying a stepSentence is one of those; a matcher is not, and
+// the RegExp clause keeps a regex out even though a regex carries no stepSentence either.
+const isChainedStepObject = (candidate, fnForStep) =>
+  !fnForStep &&
+  candidate instanceof Object &&
+  Object.prototype.toString.call(candidate) !== "[object RegExp]" &&
+  candidate.stepSentence;
+
 const defineAndChain = (stepType, stepObjectOrSentence, fnForStep) => {
-  if (
-    !fnForStep &&
-    stepObjectOrSentence instanceof Object &&
-    Object.prototype.toString.call(stepObjectOrSentence) !==
-      "[object RegExp]" &&
-    stepObjectOrSentence.stepSentence
-  ) {
+  if (isChainedStepObject(stepObjectOrSentence, fnForStep)) {
     addDefinitionFunction(
       stepType,
       stepObjectOrSentence.stepSentence,
@@ -118,7 +121,7 @@ const Fusion = (featureFileToLoad, optionsForThisFeature) => {
       effectiveOptions
     );
 
-    // This feature binds the definitions and hooks registered for IT — captured before the
+    // This feature binds the definitions and hooks registered for IT, captured before the
     // registry is reset below, so the binding never depends on registration that came after.
     const registryForThisFeature = stepsDefinition;
 
@@ -128,7 +131,7 @@ const Fusion = (featureFileToLoad, optionsForThisFeature) => {
       effectiveOptions
     );
   } finally {
-    // Unconditional: Fusion() always leaves a clean slate — normal return OR throw. Rebinding
+    // Unconditional: Fusion() always leaves a clean slate (normal return OR throw). Rebinding
     // the module-level registry (never mutating it in place) keeps the object captured above
     // intact for whoever still holds it, while the next Fusion() starts empty and must
     // re-register.

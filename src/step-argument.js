@@ -6,7 +6,7 @@
 //
 // Two values have to survive, because a consumer wrote them down on purpose: the EMPTY string
 // from an empty docstring, and the EMPTY array from a header-only table. Both are falsy, so
-// every test here is for PRESENCE — never truthiness, never `.length`.
+// every test here is for PRESENCE, never truthiness, never `.length`.
 
 // `null` means "this step carries no argument", which is a different fact from an empty one.
 const NO_STEP_ARGUMENT = null;

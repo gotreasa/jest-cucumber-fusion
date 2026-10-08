@@ -66,15 +66,12 @@ const refuseUnusableName = (scenarioTitle, what, how) =>
       `HOW:  ${how}`
   );
 
-const nameForScenario = (loadedFeature, scenario, scenarioNameTemplate) => {
-  if (!scenarioNameTemplate) return scenario.title;
-
-  let answer;
-
+// Calling the untrusted template, and nothing else. Whatever it answers comes back as it is;
+// only a throw is turned into the refusal here, because that is the one outcome this function
+// cannot hand on.
+const answerFromTemplate = (loadedFeature, scenario, scenarioNameTemplate) => {
   try {
-    answer = scenarioNameTemplate(
-      templateVariablesFor(loadedFeature, scenario)
-    );
+    return scenarioNameTemplate(templateVariablesFor(loadedFeature, scenario));
   } catch (templateFailure) {
     throw refuseUnusableName(
       scenario.title,
@@ -88,6 +85,16 @@ const nameForScenario = (loadedFeature, scenario, scenarioNameTemplate) => {
         "may hold any character a feature file allows."
     );
   }
+};
+
+const nameForScenario = (loadedFeature, scenario, scenarioNameTemplate) => {
+  if (!scenarioNameTemplate) return scenario.title;
+
+  const answer = answerFromTemplate(
+    loadedFeature,
+    scenario,
+    scenarioNameTemplate
+  );
 
   if (typeof answer !== "string" || answer.length === 0)
     throw refuseUnusableName(

@@ -54,23 +54,16 @@ const escapedForDoubleQuotes = (text) => text.replace(/[\\"]/g, "\\$&");
 // indices rather than a sequence of string replacements: a replacement would rewrite the first
 // occurrence of the matched text wherever it sat, which is the wrong one as soon as a step
 // says the same number twice.
-const argumentsInStepText = (stepText) => {
-  const found = [];
-  const pattern = new RegExp(ARGUMENT_IN_STEP_TEXT.source, "g");
-
-  let match = pattern.exec(stepText);
-  while (match) {
-    found.push({
-      start: match.index,
-      end: match.index + match[0].length,
-      capture:
-        match[1] === undefined ? QUOTED_CAPTURE : captureForNumber(match[1]),
-    });
-    match = pattern.exec(stepText);
-  }
-
-  return found;
-};
+//
+// matchAll clones the pattern internally, so a shared lastIndex cannot leak between calls and
+// the module-level regex needs no defensive copy of its own.
+const argumentsInStepText = (stepText) =>
+  [...stepText.matchAll(ARGUMENT_IN_STEP_TEXT)].map((match) => ({
+    start: match.index,
+    end: match.index + match[0].length,
+    capture:
+      match[1] === undefined ? QUOTED_CAPTURE : captureForNumber(match[1]),
+  }));
 
 // An ANCHORED regex literal over the step's own text, with each detected argument replaced by
 // a capture group and everything around it escaped so it matches literally.
@@ -122,7 +115,7 @@ const starterCodeFor = (step) => {
   )}) => {});`;
 };
 
-// One step may be unbound in several scenarios of one feature — a Background step is unbound in
+// One step may be unbound in several scenarios of one feature: a Background step is unbound in
 // every one of them. The consumer writes ONE definition for it, so it earns one entry, kept
 // where it first appears.
 const distinctSteps = (unboundSteps) =>
