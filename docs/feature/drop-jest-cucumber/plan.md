@@ -226,6 +226,49 @@ tests pin behaviour that already holds, so their proof is killing the named surv
       config, rule, reference, plan and docs files; code comments are not named, and the rules
       say converge opportunistically, never in a sweep. Not swept.
 
+## Refactor (Gearoid, 2026-10-08: `/nw-refactor`, all of `src/`, RPP L1-L6, same branch)
+
+Rulings: scope all 11 `src/` modules; depth L1-L6; recast em dashes in the `src/` comments the
+pass touches (tests untouched, so theirs remain); land on this branch before the PR.
+Constraints: behaviour-preserving; tests NOT changed (a test needing a change means the refactor
+altered behaviour, so revert); procedural paradigm (ruled); the architecture law test (only
+`feature-source` reaches `@cucumber/*`, `fs`, `callsites`; only `test-registration` names a Jest
+global; exactly nine public exports); public API and 2.0.0-compatible names and texts unchanged.
+
+- [x] Baseline metrics (ESLint complexity rules on a copy of `src/`): 1,203 lines; 51 functions
+      with complexity >= 2, sum 142; max complexity 7 (`scenario-name.js`, the only one over 5);
+      longest function 29 lines; max depth 2; max params 5 (`step-matching.js`). Already lean,
+      so the burden of proof is on change.
+- [x] Architect pass (`nw-solution-architect`, read-only): 18 findings, 11 explicit
+      "leave alone"s, nothing earns a change at L6 (every candidate sits where the bound design
+      put it). `des code-fact` degraded to noisy text search for JavaScript (AST adapter is
+      Python-only), so caller facts rest on exhaustive grep plus whole-file reads. Plan kept in
+      the job tmp dir. Koru dropped F7 (keep the `starterCodeFor` export: the fuzz harness uses
+      it). Open for Gearoid: F4, the stale `src/index.d.ts` header (0.6, old author and URL),
+      untouched because `index.d.ts` is under the byte-identical constraint.
+- [x] `nw-software-crafter` `/nw-refactor` as one batch (F1, F3, F6, F9, F10, F12, F13, F14,
+      F16, F17): suite green on the first run, nothing reverted, no test touched (host-checked:
+      only `src/*.js` changed, `index.d.ts` untouched). Metrics after: max complexity 7 to 5,
+      functions over 5: 1 to 0, max params 5 to 3, `scenario-name.js` longest function 29 to
+      17, complexity sum 142 to 141, functions >= 2: 51 to 54 (extracted helpers), lines 1,203
+      to 1,208 (code -17, explanatory comments +22). 17 of 17 vectors exit 0 (host re-run).
+      Only em dash left in `src/` is `index.d.ts:46` (frozen). Note: `prettier --check .`
+      fails only on DES logs under `.nwave/` (no `.prettierignore` entry; pre-existing).
+- [ ] Re-verify. Done: 17 of 17 vectors exit 0; metrics after (above). Full Stryker,
+      command runner, run twice back to back: BEFORE (HEAD `66c9c73`) completed, 617 mutants,
+      477 killed, 2 timeouts, 138 survived = 77.6%; AFTER (refactored) was STOPPED by Claude
+      Code at 55% (333 of 605 tested, 67 survived) because the host ran critically low on
+      memory: indeterminate, no score. Not restarted without Gearoid's go (suggest
+      concurrency 3). Fuzz and smoke not yet re-run on the refactor, for the same reason.
+- [x] Independent review (`nw-software-crafter-reviewer`): accepted, 7 notes, none blocking.
+      All ten executed findings observably identical (checked `matchAll` vs the `exec` loop on
+      `lastIndex`, global flag, empty and non-string input; F9 traversal and rule-child visit;
+      F10 first-resolvable `astNodeId`; F16 read order). Only unreachable differences: a
+      different `TypeError` site for a non-string step text, and one extra stack frame. No
+      mutant newly survivable; nothing judged churn. Left as a note: `isFunctionForScenario`
+      keeps its old name (F17 was scoped to the lines F16 moved).
+- [ ] Signed `refactor:` commit. Push stays Gearoid's call.
+
 ## Blockers
 
-None. Push and PR still held for Gearoid's go.
+None. PR held for Gearoid's go.
