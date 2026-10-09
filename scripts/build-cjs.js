@@ -32,6 +32,13 @@ const result = await build({
   banner: {
     js: 'const __fusionModuleUrl = require("url").pathToFileURL(__filename).href;',
   },
+  // esbuild exports getters on a non-configurable object, which jest.spyOn cannot replace and a
+  // consumer cannot patch; 2.0.0's exports were plain writable values. The exports are
+  // functions that are never reassigned, so a plain copy loses nothing (finding F3 of PR #16
+  // review round 4; test/specs/packaging/commonjs-exports.steps.js).
+  footer: {
+    js: "module.exports = Object.assign({}, module.exports);",
+  },
   legalComments: "none",
   metafile: true,
   logLevel: "warning",
