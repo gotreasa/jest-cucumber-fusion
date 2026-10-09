@@ -242,6 +242,41 @@ describe("the dependency direction inside src/ is inward", () => {
     expect(offenders).toStrictEqual([]);
   });
 
+  test("a core module requires only other core modules and Node's util", () => {
+    const NOT_CORE = ["src/index.js", FEATURE_SOURCE, TEST_REGISTRATION];
+    const coreModules = theSourceTree
+      .map((each) => each.modulePath)
+      .filter((modulePath) => !NOT_CORE.includes(modulePath));
+    const isCoreModule = (target) =>
+      target.startsWith("./") &&
+      coreModules.includes(
+        `src/${target.slice(2)}${target.endsWith(".js") ? "" : ".js"}`
+      );
+    const isPureNodeModule = (target) => /^(node:)?util$/.test(target);
+
+    const offenders = theSourceTree
+      .filter((each) => coreModules.includes(each.modulePath))
+      .flatMap((each) =>
+        each.requires
+          .filter(
+            (target) => !isCoreModule(target) && !isPureNodeModule(target)
+          )
+          .map((target) => `${each.modulePath} requires ${target}`)
+      );
+
+    // WHAT: every require in a core module that is neither another core module nor util.
+    // WHY:  the dependency direction only ever points inward. A core module that required a
+    //       port, the public surface or any package would point outward, and the core would
+    //       stop being a set of plain functions over values. util is allowed because it is a
+    //       pure part of Node with no I/O: value-description.js uses util.inspect to name a
+    //       value a refusal was given (added by the PR #16 review fixes, 2026-10-09; until
+    //       then the core required nothing at all, a rule the docs stated but nothing checked).
+    // HOW:  move the work that needs the outside world into src/feature-source.js or
+    //       src/test-registration.js, and hand the core a plain value.
+    expect(coreModules.length).toBeGreaterThan(0);
+    expect(offenders).toStrictEqual([]);
+  });
+
   test(`only ${TEST_REGISTRATION} touches a Jest global`, () => {
     const offenders = [];
 

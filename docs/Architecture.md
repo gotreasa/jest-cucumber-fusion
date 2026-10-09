@@ -55,7 +55,7 @@ flowchart LR
 
 ## 3. Components
 
-This shows every module in `src/` and what requires what. The shape is deliberate: one module reaches the outside world, one module reaches Jest, and everything in between is a set of plain functions over plain values that require nothing at all. The `@cucumber/tag-expressions` parse function is required by `feature-source` and passed into `tag-filter` as an argument, which is why `tag-filter` can own tag matching without depending on the expression library itself.
+This shows every module in `src/` and what requires what. The shape is deliberate: one module reaches the outside world, one module reaches Jest, and everything in between is a set of plain functions over plain values that require nothing but each other and Node's `util`. The `@cucumber/tag-expressions` parse function is required by `feature-source` and passed into `tag-filter` as an argument, which is why `tag-filter` can own tag matching without depending on the expression library itself.
 
 ```mermaid
 flowchart TB
@@ -63,7 +63,8 @@ flowchart TB
     idx["index.js: the step verbs, the hooks, the registry and Fusion"]
   end
 
-  subgraph core["Pure core, no I/O and no Jest, requires nothing"]
+  subgraph core["Pure core, no I/O and no Jest"]
+    vd["value-description.js: how a refusal names a value it was given"]
     cfg["configuration.js: option defaults, the global layer and the merge"]
     kw["keywords.js: a dialect keyword onto one registry bucket"]
     sa["step-argument.js: a pickle argument into the shape a step receives"]
@@ -81,6 +82,8 @@ flowchart TB
   subgraph outside["Outside the package"]
     nfs["node fs"]
     npath["node path"]
+    nurl["node url"]
+    nutil["node util"]
     ncs["callsites"]
     cgherkin["@cucumber/gherkin"]
     cmessages["@cucumber/messages"]
@@ -92,11 +95,16 @@ flowchart TB
   idx --> fsrc
   idx --> treg
 
+  cfg --> vd
+  sn --> vd
+  vd --> nutil
+
   fsrc --> kw
   fsrc --> sa
   fsrc -->|"injects parse"| tf
   fsrc --> nfs
   fsrc --> npath
+  fsrc --> nurl
   fsrc --> ncs
   fsrc --> cgherkin
   fsrc --> cmessages
@@ -111,14 +119,15 @@ flowchart TB
 | Module | Responsibility | Requires |
 |---|---|---|
 | `index.js` | The public surface. Holds the module-level registry the verbs and hooks write into, refuses a duplicate matcher in the same keyword bucket, supports the chained form where a step chain returned by one verb is handed to another, and orchestrates one `Fusion` call. It exports no port. | `configuration`, `feature-source`, `test-registration` |
-| `configuration.js` | The option defaults, the global layer `setFusionConfiguration` writes, and the merge of defaults, then global, then per-call. `errors` merges key by key at every layer, so naming one validation never switches another off. Refuses a setter argument that is not an options object. | nothing |
-| `feature-source.js` | Driven port for everything outside the process. Resolves the feature path against the calling file, reads the bytes, parses the Gherkin, checks for duplicate declared scenario titles, builds the tag filter, compiles pickles, recovers each step's keyword, and returns one plain loaded-feature value. The only module that may touch the filesystem, the parser or the caller stack. | `fs`, `path`, `callsites`, `@cucumber/gherkin`, `@cucumber/messages`, `@cucumber/tag-expressions`, `keywords`, `step-argument`, `tag-filter` |
+| `configuration.js` | The option defaults, the global layer `setFusionConfiguration` writes, and the merge of defaults, then global, then per-call. `errors` merges key by key at every layer, so naming one validation never switches another off, and an option set to `undefined` counts as not set. Refuses a setter argument that is not an options object. | `value-description` |
+| `value-description.js` | Names a value a refusal was given, as its type and its JSON form, falling back to `util.inspect` for a value JSON cannot hold (a BigInt, a circular object, a function), and never throwing. | `util` |
+| `feature-source.js` | Driven port for everything outside the process. Resolves the feature path against the calling file, reads the bytes, parses the Gherkin, checks for duplicate declared scenario titles, builds the tag filter, compiles pickles, recovers each step's keyword, and returns one plain loaded-feature value. The only module that may touch the filesystem, the parser or the caller stack. | `fs`, `path`, `url`, `callsites`, `@cucumber/gherkin`, `@cucumber/messages`, `@cucumber/tag-expressions`, `keywords`, `step-argument`, `tag-filter` |
 | `keywords.js` | Maps an AST step keyword, in whatever dialect the feature declared, onto exactly one of the five registry buckets, or refuses. Compiled pickles throw the keyword away, so it has to be recovered and mapped before a lookup can be honest. | nothing |
 | `step-argument.js` | Turns a pickle's Gherkin argument into the shape a step function receives: a data table becomes an array of header-keyed row objects, a docstring becomes a string. An empty docstring and a header-only table survive as real values rather than as absence. | nothing |
-| `tag-filter.js` | Lowercases the expression and the scenario's tags, then answers whether that scenario is selected. Refuses an expression it cannot read instead of quietly selecting nothing. The parse function is injected. | nothing |
+| `tag-filter.js` | Lowercases the expression and the scenario's tags, then answers whether that scenario is selected. Refuses an expression it cannot read, or one with an operand that is not a tag (`smoke` for `@smoke`), instead of quietly selecting nothing. The parse function is injected. | nothing |
 | `step-matching.js` | Finds the one registered definition that owns a step, extracts its regex captures and appends the Gherkin argument when the step carries one. An unbound step is a returned result, so the caller can decide; two matching definitions are a refusal, because there is no reading under which Fusion could pick one. | nothing |
-| `scenario-name.js` | Produces the name of one test: the scenario's own title, or the answer from a `scenarioNameTemplate` called with the four documented variables. A template that throws, or that answers with anything other than a non-empty string, is refused. | nothing |
-| `code-suggestion.js` | Builds the starter code for an unmatched step, in Fusion's own verb idiom with a matcher over the step's own text, and the single numbered refusal that names every unbound step of a feature. | nothing |
+| `scenario-name.js` | Produces the name of one test: the scenario's own title, or the answer from a `scenarioNameTemplate` called with the four documented variables. A template that throws, or that answers with anything other than a non-empty string, is refused. | `value-description` |
+| `code-suggestion.js` | Builds the single refusal that names every unbound step of a feature. Steps of one shape (the same text apart from their values, such as the rows of an outline) share one entry and one starter definition, in Fusion's own verb idiom, whose captures cover every one of them, so pasting every snippet at once binds them all. | nothing |
 | `test-registration.js` | Driven port over the Jest runner. Binds every step and names every test before registering anything, then registers one `describe`, the hooks once per feature, and one `test` or `test.skip` per scenario. Owns the failing-step decoration. The only module that may name a Jest global. | `step-matching`, `code-suggestion`, `scenario-name`, Jest globals |
 
 ## 4. What happens when you call Fusion
@@ -208,6 +217,6 @@ These four rules are what make the shape above hold over time. They are not conv
 1. **Only `feature-source` reaches the outside world.** It is the one module that may require the filesystem, the Gherkin and messages packages, the tag-expressions package or the caller-stack reader. Everything else works on plain values, which is what keeps the parser swappable and the core readable without a file or a parser in the way.
 2. **Only `test-registration` touches a Jest global.** `describe`, `test`, `beforeEach` and `afterEach` are reachable from exactly one module, so registration behaviour can be understood and observed in one place.
 3. **`index.js` exports exactly nine names:** `Given`, `When`, `Then`, `And`, `But`, `Before`, `After`, `Fusion` and `setFusionConfiguration`. The two driven ports are internal module paths and are never exported, so an internal seam cannot quietly become part of the public contract.
-4. **The pure core modules require nothing at all.** `configuration`, `keywords`, `step-argument`, `tag-filter`, `step-matching`, `scenario-name` and `code-suggestion` have no imports, which is why the dependency direction only ever points inward.
+4. **The pure core modules require only each other and Node's `util`.** `configuration`, `keywords`, `step-argument`, `tag-filter`, `step-matching`, `scenario-name`, `code-suggestion` and `value-description` reach no port, no package and nothing with I/O, which is why the dependency direction only ever points inward. `util` is allowed because `util.inspect` is pure: `value-description` uses it to name a value a refusal was given.
 
 A fifth rule is worth stating even though it is about messages rather than modules: the text a consumer sees on a failure is part of the contract. The failing-step decoration, the missing-feature-file message, the Gherkin parse error, the duplicate step definition and duplicate title refusals, the ambiguous and unmatched step refusals, and the tag filter and name template refusals are all fixed text, so anything that greps your test output keeps working across a release.
