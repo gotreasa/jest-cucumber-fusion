@@ -186,3 +186,4 @@ If you are coming from version 2, global configuration used to go through `jest-
   * [Configuration options](./docs/AdditionalConfiguration.md)
   * [Running the examples](./docs/RunningTheExamples.md)
   * [Language](./docs/Language.md)
+  * [Architecture](./docs/Architecture.md)
