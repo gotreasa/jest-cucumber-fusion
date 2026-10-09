@@ -62,3 +62,22 @@ test("the package carries the entry point, its types and every source module", (
     .map((name) => `src/${name}`);
   expect(files).toEqual(expect.arrayContaining(sourceModules));
 });
+
+// The Node versions the package declares are Jest 30's own, because jest is a runtime dependency
+// and the CommonJS build runs on all of them. The ES module entry needs more (Node 20.11, for
+// the import attributes @cucumber/gherkin 42 uses), which docs/Migrating.md states. Found by the
+// PR #16 review round 4 (F2): no engines were declared, and the docs claimed Node 18 for both.
+test("the package declares the Node versions its runtime dependency jest supports", () => {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"),
+  );
+  const jestManifest = JSON.parse(
+    fs.readFileSync(
+      path.join(repositoryRoot, "node_modules", "jest", "package.json"),
+      "utf8",
+    ),
+  );
+  expect(manifest.engines && manifest.engines.node).toBe(
+    jestManifest.engines.node,
+  );
+});

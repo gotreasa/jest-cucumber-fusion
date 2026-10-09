@@ -68,7 +68,7 @@ const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumb
 
 ```
 
-Writing your steps as ES modules instead? Import the same names, and run Jest in its ES module mode (`NODE_OPTIONS=--experimental-vm-modules npx jest`):
+Writing your steps as ES modules instead? Import the same names, and run Jest in its ES module mode (`NODE_OPTIONS=--experimental-vm-modules npx jest`) on Node 20.11 or newer (CommonJS steps run on Node 18.14 and up):
 
 ```javascript
 //filename: rocket-launching.steps.mjs

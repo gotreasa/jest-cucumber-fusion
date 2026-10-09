@@ -9,6 +9,9 @@
     "src/",
     "dist/"
   ],
+  "engines": {
+    "node": "^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0"
+  },
   "scripts": {
     "pretest": "npm run build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --color",

@@ -42,9 +42,9 @@ What changes depends on where you start:
 
 ## Which Jest and Node versions work?
 
-Version 3 runs under the Jest your project already has. The same feature suite gave identical results under Jest 27.5, 29.7 and 30.5 on Node 22, and under Jest 30 on Node 18, 20, 22 and 24.
+Version 3 runs under the Jest your project already has. Steps files that `require` the package gave identical results under Jest 27.5, 29.7 and 30.5 on Node 22, and under Jest 30 on Node 18, 20, 22 and 24. The package declares Jest 30's own Node range (`^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0`).
 
-Your step files can stay CommonJS. Version 3 is written as ES modules on the latest Gherkin toolchain, and the package ships a CommonJS build beside them: `require` gets that build, so a steps file that `require`s the package works unchanged, with no Jest or Babel configuration. If you write your steps as ES modules, `import` gets the ES module source; run Jest in its ES module mode (`NODE_OPTIONS=--experimental-vm-modules`) for that.
+Your step files can stay CommonJS. Version 3 is written as ES modules on the latest Gherkin toolchain, and the package ships a CommonJS build beside them: `require` gets that build, so a steps file that `require`s the package works unchanged, with no Jest or Babel configuration. If you write your steps as ES modules, `import` gets the ES module source; run Jest in its ES module mode (`NODE_OPTIONS=--experimental-vm-modules`) for that, on **Node 20.11 or newer**: `@cucumber/gherkin` 42 uses import attributes, which Node 18 and 20.9 cannot parse (`SyntaxError: Unexpected token 'with'`, measured). Mixing the two styles in one project, for example a shared step library written as CommonJS used by step files written as ES modules, works: both copies share one step registry and one global configuration.
 
 Installing the package also brings its own copy of Jest 30, because `jest` is one of its dependencies. When your project uses an older Jest, npm installs that copy alongside yours, under the package's own `node_modules`, and your tests keep running on your version. It costs disk space only.
 
