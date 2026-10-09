@@ -683,8 +683,27 @@ Each fix failed first on its test, then passed:
       Node/Jest combinations; ES module, Babel and mixed consumers; TypeScript node16 CJS,
       node16 ESM and node10. Fuzz: ESM against CJS 150 wild cases 0 diffs; against 2.0.0 150
       cases 0 diffs; properties 599 of 599.
-- [ ] Push, and update the PR body (squash message: Node floor for ES modules, no Node 18
-      ESM claim; evidence counts; F1 and F3 no longer gaps). Gearoid's call.
+- [x] Pushed `aeb829b..c896e80` (Gearoid's go, 2026-10-10); CI green (integration,
+      Prettier). PR body rebuilt: a third-review-round section, shared registry, the ES module
+      floor (Node 20.11) in gaps, breaking changes and the squash message, `engines`, new
+      evidence counts; the body round-trips and every squash line is within 72.
+
+## 3.0.0-beta3 (Gearoid, 2026-10-10)
+
+- [x] beta1 and beta2 are no longer listed on npm (`time` still shows both), and npm never
+      reuses a version, so beta3. Staged as for beta2 from `c896e80`: stage
+      `b5c4fa71-13ce-47e1-a173-d8314ec6aa3b`, 19 files, 69.5 kB, shasum
+      `8d17b23b1ae00d1602ba2fb7bc94eef6fb764105`; version reverted with `npm version`, nothing
+      committed. Gearoid approved it with 2FA; `beta` points at it, `latest` stays 2.0.0.
+- [x] Berlin Clock: `3.0.0-beta3` installed from npm into a throwaway worktree of `main`
+      `19c1327` (Node 24.21, Jest 30.5.2), resolving to `dist/index.cjs`; no `jest-cucumber`,
+      and the only `uuid` is 14.0.2 under its own `jest-junit`. BDD 50, unit 85, pact consumer
+      16 and provider 1, every group identical test by test to 2.0.0; the Jest step of
+      `npm test` 14 suites, 152 tests, exit 0; OpenAPI and InSpec (29) pass. The unit group
+      alone misses the 100% line threshold (99.38%) exactly as 2.0.0 does; the provider
+      needed the main checkout's gitignored `.env` copied in. `publish:pact` not run.
+- [ ] Remove the Berlin Clock worktree `.claude/worktrees/fusion-3-beta` and its branch
+      `chore/jest-cucumber-fusion-3.0.0-beta3`: Gearoid's call.
 
 ## Blockers
 
