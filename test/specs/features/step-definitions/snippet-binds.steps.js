@@ -165,6 +165,26 @@ const EXAMPLES = [
     "a 3\u2028line",
     String.raw`Given(/^a (\d+)\u2028line$/, (arg0) => {});`,
   ],
+  // A line terminator inside a quoted argument: "." never matches one, so "(.*)" cannot bind
+  // the step it was suggested for. Found by the PR #16 adversarial review, 2026-10-09.
+  [
+    "when",
+    'I say "a\u2028b"',
+    String.raw`When(/^I say "([\s\S]*)"$/, (arg0) => {});`,
+  ],
+  [
+    "then",
+    'quoted "x\ry"',
+    String.raw`Then(/^quoted "([\s\S]*)"$/, (arg0) => {});`,
+  ],
+  // A lone carriage return survives Gherkin's \r?\n line split. Raw, it ends a string or a
+  // regex literal, so the suggested code did not compile.
+  [
+    "given",
+    "carriage\rreturn",
+    String.raw`Given("carriage\rreturn", () => {});`,
+  ],
+  ["and", "a 3\rline", String.raw`And(/^a (\d+)\rline$/, (arg0) => {});`],
 ];
 EXAMPLES.forEach(([keyword, stepText, expectedSnippet], index) => {
   const outcome = pasteAndBind(keyword, stepText, `example ${index}`);
@@ -244,5 +264,62 @@ fc.sample(fc.tuple(keywordArbitrary, stepTextArbitrary), {
     stepText
   )} binds after pasting`, () => {
     expectPastedSnippetToWork(outcome);
+  });
+});
+
+// Every snippet of ONE refusal, pasted together, must load. Outline rows and steps that differ
+// only by a number all suggest the same matcher, and two identical matchers under one verb are
+// refused as a duplicate definition, so the refusal must suggest each matcher once. A step with
+// a table and the same step without one differ only in their parameters, and still collide.
+// Found by the PR #16 adversarial review, 2026-10-09.
+describe("pasting every snippet of one refusal", () => {
+  const feature = writeFeature(
+    `Feature: snippet paste all\n` +
+      `  Scenario Outline: row <n>\n` +
+      `    Given I have <n> apples\n` +
+      `    When I eat <n>\n` +
+      `    Examples:\n` +
+      `      | n |\n` +
+      `      | 1 |\n` +
+      `      | 2 |\n` +
+      `  Scenario: with a table\n` +
+      `    Given I have 7 apples\n` +
+      `      | colour |\n` +
+      `      | red    |\n` +
+      `    Then I have 3 apples\n`
+  );
+  let refusal = null;
+  try {
+    Fusion(feature);
+  } catch (error) {
+    refusal = error;
+  }
+  const snippets = String(refusal && refusal.message)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^(Given|When|Then|And|But)\(/.test(line));
+
+  let pasteError = null;
+  try {
+    new Function(...Object.keys(REAL_VERBS), snippets.join("\n"))(
+      ...Object.values(REAL_VERBS)
+    );
+    Fusion(feature);
+  } catch (error) {
+    pasteError = String(error.message).split("\n")[0];
+  }
+
+  // First appearance in Fusion's registration order, which puts plain scenarios before outline
+  // rows (the order the 2.0.0 name baseline pins), so the Given with the table comes first.
+  test("suggests each matcher once per verb, at its first appearance", () => {
+    expect(snippets).toEqual([
+      String.raw`Given(/^I have (\d+) apples$/, (arg0, table) => {});`,
+      String.raw`Then(/^I have (\d+) apples$/, (arg0) => {});`,
+      String.raw`When(/^I eat (\d+)$/, (arg0) => {});`,
+    ]);
+  });
+
+  test("loads and binds every step when all of them are pasted", () => {
+    expect(pasteError).toBeNull();
   });
 });

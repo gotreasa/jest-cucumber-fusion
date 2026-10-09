@@ -25,9 +25,17 @@ const ARGUMENT_IN_STEP_TEXT = /([-+]?[0-9]*\.?[0-9]+)|"([^"<]+)"/g;
 const INTEGER_CAPTURE = "(\\d+)";
 const NUMBER_CAPTURE = "([-+]?\\d*\\.?\\d+)";
 const QUOTED_CAPTURE = '"(.*)"';
+// "." matches no line terminator, so a quoted argument holding one (a lone \r, U+2028 or
+// U+2029 all survive Gherkin's \r?\n line split) gets a capture that matches anything.
+const QUOTED_ANYTHING_CAPTURE = '"([\\s\\S]*)"';
 
 const captureForNumber = (numberText) =>
   /^\d+$/.test(numberText) ? INTEGER_CAPTURE : NUMBER_CAPTURE;
+
+const captureForQuoted = (quotedText) =>
+  /[\r\u2028\u2029]/.test(quotedText)
+    ? QUOTED_ANYTHING_CAPTURE
+    : QUOTED_CAPTURE;
 
 const VERB_FOR_BUCKET = {
   given: "Given",
@@ -41,14 +49,19 @@ const VERB_FOR_BUCKET = {
 // literal early and the suggested code is not valid JavaScript. The same holds for the two
 // Unicode line terminators, U+2028 and U+2029: Gherkin splits lines on \r?\n only, so they can
 // reach step text, and JavaScript forbids a line terminator inside a regex literal. They are
-// written as \u escapes, which match the same character.
-const escapedForRegex = (text) =>
+// written as \u escapes, which match the same character. A lone \r reaches step text the same
+// way and ends a regex or a string literal just as early, so it is written \r in both.
+const escapedLineTerminators = (text) =>
   text
-    .replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&")
+    .replace(/\r/g, "\\r")
     .replace(/\u2028/g, "\\u2028")
     .replace(/\u2029/g, "\\u2029");
 
-const escapedForDoubleQuotes = (text) => text.replace(/[\\"]/g, "\\$&");
+const escapedForRegex = (text) =>
+  escapedLineTerminators(text.replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&"));
+
+const escapedForDoubleQuotes = (text) =>
+  escapedLineTerminators(text.replace(/[\\"]/g, "\\$&"));
 
 // Every argument the step text carries, as {start, end, capture} in text order. One pass with
 // indices rather than a sequence of string replacements: a replacement would rewrite the first
@@ -62,7 +75,9 @@ const argumentsInStepText = (stepText) =>
     start: match.index,
     end: match.index + match[0].length,
     capture:
-      match[1] === undefined ? QUOTED_CAPTURE : captureForNumber(match[1]),
+      match[1] === undefined
+        ? captureForQuoted(match[2])
+        : captureForNumber(match[1]),
   }));
 
 // An ANCHORED regex literal over the step's own text, with each detected argument replaced by
@@ -100,32 +115,40 @@ const parametersFor = (argumentsFound, stepArgument) => {
   ]);
 };
 
+const matcherFor = (stepText, argumentsFound) =>
+  argumentsFound.length > 0
+    ? matcherRegexFor(stepText, argumentsFound)
+    : `"${escapedForDoubleQuotes(stepText)}"`;
+
+// The verb and matcher one step would be registered under: the identity Fusion refuses to
+// register twice.
+const definitionKeyFor = (step) =>
+  `${VERB_FOR_BUCKET[step.keyword]}(${matcherFor(
+    step.stepText,
+    argumentsInStepText(step.stepText)
+  )}`;
+
 // The starter code for one step: the verb for its keyword, a matcher for its text, and a step
 // function with the parameters the step implies and an empty body to fill in.
 const starterCodeFor = (step) => {
   const argumentsFound = argumentsInStepText(step.stepText);
-  const matcher =
-    argumentsFound.length > 0
-      ? matcherRegexFor(step.stepText, argumentsFound)
-      : `"${escapedForDoubleQuotes(step.stepText)}"`;
   const parameters = parametersFor(argumentsFound, step.stepArgument);
 
-  return `${VERB_FOR_BUCKET[step.keyword]}(${matcher}, (${parameters.join(
-    ", "
-  )}) => {});`;
+  return `${definitionKeyFor(step)}, (${parameters.join(", ")}) => {});`;
 };
 
-// One step may be unbound in several scenarios of one feature: a Background step is unbound in
-// every one of them. The consumer writes ONE definition for it, so it earns one entry, kept
-// where it first appears.
-const distinctSteps = (unboundSteps) =>
-  unboundSteps.filter(
-    (step, index) =>
-      unboundSteps.findIndex(
-        (earlier) =>
-          earlier.keyword === step.keyword && earlier.stepText === step.stepText
-      ) === index
+// One definition may be missing for several steps of one feature: a Background step is unbound
+// in every scenario, every row of an outline suggests the same matcher, and so do two steps that
+// differ only by a number. The consumer writes ONE definition for them, and pasting a second
+// identical matcher is refused as a duplicate, so they earn one entry, kept where the first
+// appears. Keyed on the verb and matcher, not the whole snippet: a step with a table and the
+// same step without one differ only in their parameters and would still collide.
+const distinctSteps = (unboundSteps) => {
+  const keys = unboundSteps.map(definitionKeyFor);
+  return unboundSteps.filter(
+    (step, index) => keys.indexOf(keys[index]) === index
   );
+};
 
 // The refusal for every unbound step of one feature, numbered, in feature order.
 //
