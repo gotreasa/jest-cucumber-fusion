@@ -635,6 +635,57 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
       152 tests; OpenAPI and InSpec (29) pass; clean `npm ci` passes. `publish:pact` not
       run. Worktree and branch removed at Gearoid's request.
 
+## Review round 4: the whole PR after the ESM move (Gearoid, 2026-10-10)
+
+Asked: "an adversarial review, a smoke test and a fuzz test of all of PR 16", then "Let's
+address F1 to F6". Review: general-purpose agent (Opus), read-only. Smoke: fresh `git archive`
+CI sequence; CommonJS smoke on 6 Node/Jest combinations; ESM, Babel and mixed consumers;
+TypeScript under node16 CJS, node16 ESM and node10. Fuzz: own properties 10,872/10,872;
+tag-filter and template properties 890/890; differential 200 cases 0 diffs, wild 36 all
+documented; new ESM-source against CJS-bundle differential, 300 cases, 0 diffs (each side's
+resolution confirmed). F1 to F3 reproduced by Koru independently.
+
+| ID | Sev | Finding | Fix |
+|----|-----|---------|-----|
+| F1 | major | step and hook registry is per copy: a `require`d shared CommonJS step library is invisible to an ESM step file (`No step definition matches`, hooks lost) | registry on the shared `globalThis` store with the options |
+| F2 | major (docs) | `import` fails on Node 18.19 and 20.9 (gherkin 42 import attributes); Migrating and the squash message claim Node 18 to 24; no `engines` | `engines >=18.14`; docs and squash say ESM needs Node 20.11+ |
+| F3 | minor | CommonJS exports are getter-only (esbuild): `jest.spyOn` fails with `Cannot redefine property`; 2.0.0 passed | bundle footer replaces them with plain writable values |
+| F6 | minor | husky `prepare` prints `.git can't be found` on stdout outside a git checkout, corrupting `npm pack --json` | run husky only inside a git checkout |
+| F4 | nit | stale comments (`configuration.js:9`, `feature-source.js:25`) | reword |
+| F5 | nit | architecture scanner misses `process.getBuiltinModule("x")` | read it as a dependency |
+
+Each fix failed first on its test, then passed:
+
+- [x] F1 `925d4ed`: `src/shared-state.js` holds the registry and the global options on
+      `globalThis` under `Symbol.for("@g_package/jest-cucumber-fusion@3")` (the major in the
+      key), created only when absent. RED: a fourth packaged consumer, a shared CommonJS step
+      library with a `Before` hook used by an ES module step file (`No step definition
+      matches`). `m2` now also clears the store, since `resetModules` no longer empties it.
+- [x] F3 `52d8974`: a bundle footer copies the exports into a plain object. RED:
+      `test/specs/packaging/commonjs-exports.steps.js` (getters, `Cannot redefine property`).
+- [x] F2 `ee66ab8`: `engines` mirrors Jest 30 (`^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0`),
+      pinned by a test; Migrating, README and RunningTheExamples state the ES module floor
+      (Node 20.11) and the contributor floor. Measured again: `import` fails on 18.19 and
+      20.9, works on 20.11 and 22; `require` works on all four.
+- [x] F6 `a0be5d5`: `scripts/prepare-hooks.js` calls husky's function and writes its message
+      to stderr. RED: `npm run prepare` outside a git checkout printed `.git can't be found`
+      on stdout; hooks still install in a checkout.
+- [x] F4 + F5 `82a7a06`: comments refreshed; the scanner reads `getBuiltinModule("x")` and
+      flags a computed one (a planted literal passed all 5 checks before, both forms are
+      caught after).
+- [x] Found while re-verifying, `29faf4d`: the F3 test loads `dist/index.cjs` through Jest's
+      loader, so the bundle was counted and line coverage fell to 15%. Coverage now measures
+      `src/**/*.js` only; back to 100% of lines.
+- [x] Re-verified: fresh `git archive` with NO `.git`: `npm ci`, lint, 45 suites with 1,096
+      passed and 3 skipped, tsd, 6 of 6 baselines (the packaged consumer now runs CommonJS, ES
+      module, mixed and shared-library consumers), secrets, Prettier. The reviewer's F1 and F3
+      repros pass on the packed tarball (19 files, 69.5 kB). CommonJS smoke 10 of 10 on 6
+      Node/Jest combinations; ES module, Babel and mixed consumers; TypeScript node16 CJS,
+      node16 ESM and node10. Fuzz: ESM against CJS 150 wild cases 0 diffs; against 2.0.0 150
+      cases 0 diffs; properties 599 of 599.
+- [ ] Push, and update the PR body (squash message: Node floor for ES modules, no Node 18
+      ESM claim; evidence counts; F1 and F3 no longer gaps). Gearoid's call.
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of
