@@ -531,9 +531,18 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
       option A): every src module requires exactly its Requires row in Architecture.md. RED
       first on `src/index.js requires util, unlisted`; planted `require ("path")`, computed
       `require(name)` and `require("url")` in index all caught (the old rules caught one).
-      Rule 2 kept with its honest reason, registration order. Open, not done: the review's
-      suggestion to move rule 2 to ESLint `no-restricted-globals` (its regex flags a core
-      `const it = 1` and misses `globalThis.describe`).
+      Rule 2 kept with its honest reason, registration order.
+- [x] `e881ab7` test(arch): rule 2's false alarms fixed (Gearoid: "Fix Rule 2's false
+      alarms"). Reproduced first: the text search flagged a core `const it` and a key `test:`
+      (`src/keywords.js names it, test`) and missed `globalThis.describe`. ESLint now enforces
+      it in `src/` outside test-registration (`no-restricted-globals`, plus
+      `no-restricted-properties` on `globalThis`/`global`), scope-aware. The arch test pins
+      the config by linting must-refuse and must-allow probes and the real tree; RED was the
+      three `globalThis`/`global` probes. Replayed plants: no alarm on the local and key, the
+      leak refused by lint and the test. Two Jest snags on the way: ESLint's config loader
+      uses a dynamic `import()` (the test requires the config and passes it), and Jest
+      injects a `jest` binding that collided with the config's `const jest` (renamed
+      `jestPlugin`).
 - [ ] PR #16 body still describes rule 4 as "the core requires only itself and util"; update
       it, and push `dd41e66`, `f9e8684` and this entry, when Gearoid says.
 
