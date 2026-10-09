@@ -409,6 +409,104 @@ its history, b-yond's included). The 6 baseline scripts pass, about 31s together
       expect, an unused variable in `src/` and an undeclared `describe`. Wired into
       lint-staged (`*.js`) and the CI `integration` job.
 
+## PR #16 adversarial review, smoke and fuzz (Gearoid, 2026-10-09)
+
+Asked: "run an adversarial review, a smoke test and fuzz tests on the PR 16", then "Let's
+address all 8". Evidence, all on `be4df4f` from the packed tarball, harnesses in the job scratch
+directory (not kept):
+
+- Smoke: suite 37 suites, 796 passed, 2 skipped; lint, tsd and the 6 baselines clean. A fresh
+  consumer (Background, Rule, two Examples, tables, docstrings, async and regex steps,
+  `setFusionConfiguration`, a template, one deliberate failure) held 10 of 10 on Node 18.19,
+  20.17, 22.22 and 24.11 with Jest 30, and on Node 22 with Jest 29.7 and 27.5.
+- Fuzz: existing properties on fresh seeds 8,968 of 8,968. Differential against npm 2.0.0
+  (both on Jest 29.7): 490 cases, 2,254 tests, zero differences in names, order, status,
+  failure text or step arguments; 270 "wild" cases differed only in finding F3. tagFilter
+  against an independent evaluator 300 of 300; 120 hostile template returns as specified.
+- Adversarial review: a fresh general-purpose agent (Opus), read-only. Its findings are
+  hypotheses; F2 and F4 were reproduced by Koru, F6 to F8 rest on its own runs.
+
+Route: direct test-first work, one commit per finding, then one independent reviewer, as in
+"Follow-up fixes" above (mechanical fixes against settled decisions).
+
+| ID | Sev | Finding | Fix |
+|----|-----|---------|-----|
+| F1 | major | `tagFilter: "smoke"` (no `@`) parses, selects nothing, Jest exits 0; 2.0.0 refused it | refuse a tag operand without `@` |
+| F2 | major | outline rows repeat one snippet; pasting both throws `Duplicate step definition` | de-duplicate by keyword plus snippet |
+| F3 | major (docs) | outline placeholders now substituted in docstrings and table cells in every case; Migrating says unchanged. **Corrected 2026-10-09:** first reported as "2.0.0 left them literal", which overstated it. 2.0.0 substituted them except for a regex-bound step whose own text held no placeholder (probed directly; all 36 wild diffs are that class) | keep the substitution (Cucumber standard; Koru's assumption), add a Migrating paragraph and the BREAKING CHANGE line |
+| F4 | minor | per-call `tagFilter: undefined` erases the global value | an `undefined` option means "not set" at every layer |
+| F5 | minor | a sticky (`/y`) matcher binds with `undefined` captures (shared `lastIndex`) | reset `lastIndex` before matching and capturing |
+| F6 | minor | snippet for step text with a line terminator or lone `\r` does not bind or compile | capture and escape them |
+| F7 | minor | `[f].forEach(Fusion)` resolves against the cwd and the message names the caller's directory | skip stack frames with no file name |
+| F8 | nit | BigInt or circular values crash the template and configuration refusals | describe them with `util.inspect` |
+
+Each fix went RED first on its new test, for the stated reason, then GREEN with the whole suite.
+
+- [x] F2 + F6 `d8d0d07` fix(snippet): entries keyed on verb plus matcher (keyed on the whole
+      snippet, a step with a table and the same step without one would still collide);
+      `"([\s\S]*)"` only when the quoted text holds a line terminator, so the familiar `"(.*)"`
+      stays for ordinary steps. RED 6 of 326. Snippet property on seed 4242 at 500 runs:
+      1,033 of 1,033. My first F2 expectation assumed feature order; Fusion lists plain
+      scenarios before outline rows (the 2.0.0 name order), so the expectation was corrected,
+      not the code.
+- [x] F1 `286d180` fix(tag-filter): operands read off the parsed tree; the refusal keeps the
+      `Could not parse tag filter` first line, names the operand as written and suggests
+      `@name`. Typings and AdditionalConfiguration say so. RED 2 of 6.
+- [x] F4 `fea5d17` fix(configuration): `keysThatAreSet` on both layers and inside `errors`
+      (the review found the layer case; the `errors: { key: undefined }` case is the same flaw
+      one level down and switched a check off). RED 3 of 3. commitlint warned that a body line
+      starting `errors:` reads as a trailer; left, since an amend is a rewrite.
+- [x] F5 `b946f0f` fix(step-matching): one `execFromStart` for the match and the captures.
+      RED via the `afterAll` assertion, exit 1.
+- [x] F7 `b180e9d` fix(feature-source): frames with no file name skipped. RED reproduced the
+      review's report exactly (resolved against the working directory).
+- [x] F8 `a63357d` fix(refusals): `src/value-description.js`, JSON first (the refusal text
+      tests already pin `string "x"`), `util.inspect` on a throw or `undefined`. RED 3 of 3;
+      a function case added to cover the `undefined` branch. Package is now 15 files.
+- [x] F3 `3608250` docs(migrating): paragraph in "What else changes when coming from version
+      2?", and a characterisation test. Not added to the 0.8.1 table: only 2.0.0 was measured.
+      The L3 regression test (`fc7e360`) already expected substitution, which is what exposed
+      the overstatement above.
+- [x] Re-verified on the HEAD tarball: whole suite 43 suites, 826 passed, 3 skipped; 6 of 6
+      baselines; tsd; ESLint; line coverage 100%. Smoke 10 of 10 on Node 18, 22, 24 with
+      Jest 30 and Node 22 with Jest 27. Property fuzz 818 of 818 (seed 31337, which held the
+      F1 failure) and 859 of 859 (seed 4711). Differential against 2.0.0: safe seed 909, 150
+      cases, 0 diffs; wild seed 707, 36 diffs, all 36 the documented F3 class.
+- [x] Independent review of the batch (general-purpose agent, Opus, read-only): no blocker,
+      no major; 6 minors and 3 nits, each with a reproduction it ran. Every one acted on:
+  - R1 + R2 `c88c894` fix(snippet): pasting all snippets could still be refused as AMBIGUOUS
+    (`(\d+)` beside the decimal capture; greedy `"(.*)"` spanning quotes, the second found by a
+    new paste-all property at seed 778), and the header counted entries, not steps. Steps are
+    grouped by shape with captures widened per position; the quoted capture is `"([^"]*)"`
+    (which also covers line terminators, so the F6 special case went); every step is named,
+    folded ones on `nor:` lines. AdditionalConfiguration's example regenerated from real output.
+    Paste-all property 0 failures in 4,401 and 4,427 (seeds 777 and 31, 1,200 runs).
+  - R3 + R4 `24f24d4` fix(tag-filter): operand named by whole token (`@Smoke and smoke`, `İ`),
+    parsed text as fallback (escaped space). Comments no longer say 2.0.0 refused every bare
+    operand: it refused a lone word, threw ReferenceError on `@smoke and not Slow` and accepted
+    `@nope and smoke` (the review's measurement). `286d180`'s message still says "2.0.0 refused
+    it"; correcting it needs a rewrite, so the squash message carries the accurate wording.
+  - `1337eeb` test(snippet): the repeated-step guard was untested; `starterCodeFor` was briefly
+    removed as dead, then restored because the 2026-10-08 refactor kept it on purpose for
+    out-of-repo probes; two raw U+2028 characters I had committed in test source made escapes.
+  - R5 `4865f9f` fix(feature-source): caller = first frame whose file is an absolute path or a
+    `file:` URL (ES modules), so `node:events`, vm and native frames are skipped. The `file:`
+    case was written after the fix, so it was not seen RED; the `node:events` case was.
+  - R7 + R8 `3ac16cf`: `lastIndex` reset after use too; `describeValue` never throws.
+  - R6 `109e393` docs(architecture): module table and graph; rule 4 ("the core requires
+    nothing", stated as checked but checked by no test) now reads "only each other and util"
+    and IS checked; a planted `require("path")` failed it. **For Gearoid:** the alternative was
+    to keep "requires nothing" literally true by copying the helper into two modules.
+  - R9 `51192b8` docs(configuration): `null` clears an option for one call (pinned by a test);
+    not added to `index.d.ts`, whose types do not accept `null`.
+- [x] Final verification on the HEAD tarball (15 files, 30.7 kB): suite 43 suites, 1,093
+      passed, 3 skipped; 6 of 6 baselines; tsd; ESLint; lines and functions 100%. Smoke 10 of
+      10 on Node 18 and 22 with Jest 30 and Node 22 with Jest 27. Properties 863 of 863
+      (seed 2026). Differential against 2.0.0: seed 1010, 150 cases, 0 diffs; wild seed 808,
+      35 diffs, all the documented F3 class.
+- [ ] PR body and squash message corrected: "33 suites, 774 tests"; "14 files, about 27 KB";
+      the F3 paragraph; the fixes above. Editing the PR and pushing are Gearoid's call.
+
 ## Blockers
 
 None. Draft PR #16 is open; pushing new commits is Gearoid's call.
