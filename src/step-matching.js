@@ -50,9 +50,18 @@ const findMatchingStep = (featureRegistry, currentStep) => {
   );
 };
 
+// A matcher with the global (g) or sticky (y) flag carries a `lastIndex` from one use to the
+// next, and a sticky one starts matching there. Testing a step and then reading its captures
+// each moved it, so a sticky matcher bound its step with no captures (finding F5 of the PR #16
+// review). Every use starts from the beginning of the step text instead.
+const execFromStart = (stepRegExp, stepText) => {
+  stepRegExp.lastIndex = 0;
+  return stepRegExp.exec(stepText);
+};
+
 const isFunctionForScenario = (stepText, stepDefinition) => {
   if (stepDefinition.stepRegExp)
-    return stepText.match(stepDefinition.stepRegExp);
+    return execFromStart(stepDefinition.stepRegExp, stepText) !== null;
 
   return stepText === stepDefinition.stepExpression;
 };
@@ -61,7 +70,7 @@ const boundStepFor = (stepDefinition, stepText, stepArgs) => {
   // A string matcher captures nothing; a regex matcher captures its groups out of the
   // concrete step text. Both may still carry a Gherkin argument.
   const captures = stepDefinition.stepRegExp
-    ? (stepDefinition.stepRegExp.exec(stepText) || []).slice(1)
+    ? (execFromStart(stepDefinition.stepRegExp, stepText) || []).slice(1)
     : [];
 
   // Forward the step's Gherkin argument on PRESENCE, never on its type. A type test drops
