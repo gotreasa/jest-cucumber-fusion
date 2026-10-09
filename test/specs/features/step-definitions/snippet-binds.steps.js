@@ -152,12 +152,12 @@ const EXAMPLES = [
   [
     "when",
     'I say "hello" twice',
-    String.raw`When(/^I say "(.*)" twice$/, (arg0) => {});`,
+    String.raw`When(/^I say "([^"]*)" twice$/, (arg0) => {});`,
   ],
   [
     "then",
     'it costs 4.20 for "a/b (c)" at 10',
-    String.raw`Then(/^it costs ([-+]?\d*\.?\d+) for "(.*)" at (\d+)$/, (arg0, arg1, arg2) => {});`,
+    String.raw`Then(/^it costs ([-+]?\d*\.?\d+) for "([^"]*)" at (\d+)$/, (arg0, arg1, arg2) => {});`,
   ],
   // U+2028 survives Gherkin's line split and may not appear raw inside a regex literal.
   [
@@ -165,17 +165,18 @@ const EXAMPLES = [
     "a 3\u2028line",
     String.raw`Given(/^a (\d+)\u2028line$/, (arg0) => {});`,
   ],
-  // A line terminator inside a quoted argument: "." never matches one, so "(.*)" cannot bind
-  // the step it was suggested for. Found by the PR #16 adversarial review, 2026-10-09.
+  // A line terminator inside a quoted argument: "." never matches one, so the old "(.*)" could
+  // not bind the step it was suggested for; the negated class does. Found by the PR #16
+  // adversarial review, 2026-10-09.
   [
     "when",
     'I say "a\u2028b"',
-    String.raw`When(/^I say "([\s\S]*)"$/, (arg0) => {});`,
+    String.raw`When(/^I say "([^"]*)"$/, (arg0) => {});`,
   ],
   [
     "then",
     'quoted "x\ry"',
-    String.raw`Then(/^quoted "([\s\S]*)"$/, (arg0) => {});`,
+    String.raw`Then(/^quoted "([^"]*)"$/, (arg0) => {});`,
   ],
   // A lone carriage return survives Gherkin's \r?\n line split. Raw, it ends a string or a
   // regex literal, so the suggested code did not compile.
@@ -321,5 +322,117 @@ describe("pasting every snippet of one refusal", () => {
 
   test("loads and binds every step when all of them are pasted", () => {
     expect(pasteError).toBeNull();
+  });
+});
+
+// Pasting every snippet of one feature's refusal, then calling Fusion again on it: the one
+// outcome a consumer cares about. Separate matchers for "1" and "1.5", or for a quoted argument
+// with and without a line terminator, both match the narrower step and are refused as
+// ambiguous, so steps of one shape share one definition whose captures cover all of them.
+// Found by the review of the PR #16 fixes, 2026-10-09.
+const pasteAllAndBind = (keyword, stepTexts, caseLabel) => {
+  const feature = writeFeature(
+    `Feature: paste all ${caseLabel}\n` +
+      stepTexts
+        .map(
+          (stepText, index) =>
+            `  Scenario: step ${index}\n    ${VERBS[keyword]} ${stepText}\n`
+        )
+        .join("")
+  );
+  const outcome = { message: "", snippets: [], pasteError: null };
+  try {
+    Fusion(feature);
+  } catch (refusal) {
+    outcome.message = String(refusal.message);
+  }
+  outcome.snippets = outcome.message
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^(Given|When|Then|And|But)\(/.test(line));
+  try {
+    new Function(...Object.keys(REAL_VERBS), outcome.snippets.join("\n"))(
+      ...Object.values(REAL_VERBS)
+    );
+    Fusion(feature);
+  } catch (error) {
+    outcome.pasteError = String(error.message).split("\n")[0];
+  }
+  return outcome;
+};
+
+describe("one definition per step shape", () => {
+  const outcome = pasteAllAndBind(
+    "given",
+    [
+      "I weigh 1 kilo",
+      "I weigh 1.5 kilo",
+      "I weigh 5 kilo",
+      'I say "a"',
+      'I say "b c"',
+    ],
+    "shapes"
+  );
+
+  test("counts and names every unbound step", () => {
+    expect(outcome.message).toMatch(/^Fusion found 5 steps /);
+    for (const stepText of [
+      "I weigh 1 kilo",
+      "I weigh 1.5 kilo",
+      "I weigh 5 kilo",
+      'I say "a"',
+      'I say "b c"',
+    ])
+      expect(outcome.message).toContain(`"${stepText}"`);
+  });
+
+  test("suggests one definition per shape, wide enough for every step in it", () => {
+    expect(outcome.snippets).toEqual([
+      String.raw`Given(/^I weigh ([-+]?\d*\.?\d+) kilo$/, (arg0) => {});`,
+      String.raw`Given(/^I say "([^"]*)"$/, (arg0) => {});`,
+    ]);
+  });
+
+  test("binds every step when all of them are pasted", () => {
+    expect(outcome.pasteError).toBeNull();
+  });
+});
+
+// A greedy "(.*)" spans several quoted arguments and the text between them, so the matcher for
+// the first step below also matched the second. Found by the paste-all property (seed 778),
+// 2026-10-09.
+describe("quoted captures stop at the closing quote", () => {
+  const outcome = pasteAllAndBind(
+    "given",
+    ['"a" "b"', '"a" "b" 3 "c"'],
+    "greedy quotes"
+  );
+
+  test("binds both steps when both are pasted", () => {
+    expect(outcome.snippets).toEqual([
+      String.raw`Given(/^"([^"]*)" "([^"]*)"$/, (arg0, arg1) => {});`,
+      String.raw`Given(/^"([^"]*)" "([^"]*)" (\d+) "([^"]*)"$/, (arg0, arg1, arg2, arg3) => {});`,
+    ]);
+    expect(outcome.pasteError).toBeNull();
+  });
+});
+
+fc.sample(
+  fc.tuple(
+    keywordArbitrary,
+    fc.uniqueArray(stepTextArbitrary, { minLength: 2, maxLength: 6 })
+  ),
+  { seed: SEED + 1, numRuns: Math.ceil(RUNS / 3) }
+).forEach(([keyword, stepTexts], index) => {
+  const outcome = pasteAllAndBind(
+    keyword,
+    stepTexts,
+    `property case ${index} (seed ${SEED + 1})`
+  );
+  test(`paste-all property case ${index} (seed ${SEED + 1}): ${JSON.stringify(
+    stepTexts
+  )} all bind`, () => {
+    expect(outcome.snippets.length).toBeGreaterThan(0);
+    expect(outcome.pasteError).toBeNull();
   });
 });

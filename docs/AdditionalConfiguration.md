@@ -29,16 +29,17 @@ Fusion( 'rocket-launching.feature', {
 
 ### `stepsMustMatchFeatureFile`
 
-On, a step with no registered definition is refused when the step definition file is collected, before any test is registered. One refusal names every unbound step of the feature, numbered, each with starter code in Fusion's own verb idiom that you can paste and fill in:
+On, a step with no registered definition is refused when the step definition file is collected, before any test is registered. One refusal names every unbound step of the feature, with starter code in Fusion's own verb idiom that you can paste and fill in. Steps that differ only in their values, such as the rows of a Scenario Outline, share one numbered entry and one definition, so you can paste every snippet at once:
 
 ```text
-Fusion found 2 steps in the feature "Rocket launching" that no registered step definition matches.
+Fusion found 3 steps in the feature "Rocket launching" that no registered step definition matches.
 
 WHY:  Fusion runs each step through the definition registered for that step's own
       Gherkin keyword, so a step with no definition has nothing to run and the
       scenario holding it cannot be reported honestly.
-HOW:  register a definition for each step below. The starter code under each one is
-      the verb, the matcher and the parameters that step needs. Or pass
+HOW:  register a definition for each entry below. The starter code under each one is
+      the verb, the matcher and the parameters its steps need, and one definition
+      binds every step its entry names. Or pass
       errors: { stepsMustMatchFeatureFile: false } to have the scenarios holding them
       reported as skipped tests instead.
 
@@ -46,7 +47,8 @@ HOW:  register a definition for each step below. The starter code under each one
      Given("the launch pad is clear", () => {});
 
   2. No step definition matches: "3 boosters are fuelled"
-     Given(/^(\d+) boosters are fuelled$/, (arg0) => {});
+     nor: "2 boosters are fuelled"
+     And(/^(\d+) boosters are fuelled$/, (arg0) => {});
 ```
 
 The verb is the one for that step's own Gherkin keyword, so an `And` step suggests `And`. A step whose text carries a number or a double-quoted value gets an anchored regular expression with a capture group and a parameter for each, and a step carrying a data table or a docstring gets a `table` or `docString` parameter after them.
