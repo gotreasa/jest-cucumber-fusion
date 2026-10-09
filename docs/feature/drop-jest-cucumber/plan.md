@@ -254,12 +254,23 @@ global; exactly nine public exports); public API and 2.0.0-compatible names and 
       to 1,208 (code -17, explanatory comments +22). 17 of 17 vectors exit 0 (host re-run).
       Only em dash left in `src/` is `index.d.ts:46` (frozen). Note: `prettier --check .`
       fails only on DES logs under `.nwave/` (no `.prettierignore` entry; pre-existing).
-- [ ] Re-verify. Done: 17 of 17 vectors exit 0; metrics after (above). Full Stryker,
-      command runner, run twice back to back: BEFORE (HEAD `66c9c73`) completed, 617 mutants,
-      477 killed, 2 timeouts, 138 survived = 77.6%; AFTER (refactored) was STOPPED by Claude
-      Code at 55% (333 of 605 tested, 67 survived) because the host ran critically low on
-      memory: indeterminate, no score. Not restarted without Gearoid's go (suggest
-      concurrency 3). Fuzz and smoke not yet re-run on the refactor, for the same reason.
+- [x] Re-verify on the committed refactor (HEAD `0b241c5`, Gearoid: "Do 1 and 2"):
+      - 17 of 17 vectors exit 0.
+      - Full Stryker, command runner: BEFORE (`66c9c73`) 617 mutants, 477 killed, 2 timeouts,
+        138 survived = 77.6%; AFTER (`0b241c5`) 605 mutants, 470 killed, 0 timeouts, 135
+        survived = 77.7%. Every file within a fraction of a point; `index.js` 82.7 to 83.6,
+        `scenario-name.js` 64.2 to 64.8. 12 fewer mutants because `matchAll` removed the regex
+        clone. The first AFTER attempt was stopped by Claude Code at 55% on low host memory;
+        cause: each of 6 Stryker workers ran Jest with its default 11 workers. Re-run at 3
+        Stryker workers with `jest --maxWorkers=2` completed in 22 minutes.
+      - Fuzz: new-surface properties 3,002 of 3,002 real checks (F1 500/500; F3 again fails
+        only the harness's own `> 1000` completeness flag, `failures: []`); existing P1-P5 at
+        2,000 cases 15,928/15,928; `snippet-binds` at 1,000 property cases 2,020/2,020.
+      - Smoke 41/41 on Node 20.20.2, 22.23.3, 24.21.0 plus TypeScript; tarball 14 files,
+        26.8 KB packed.
+- [x] F4 (Gearoid: go): `src/index.d.ts` header now names this package and repository,
+      keeps the original author's credit, drops the frozen 0.6 version and the unchecked
+      minimum TypeScript version; last `src/` em dash recast. `0b241c5`, tsd green.
 - [x] Independent review (`nw-software-crafter-reviewer`): accepted, 7 notes, none blocking.
       All ten executed findings observably identical (checked `matchAll` vs the `exec` loop on
       `lastIndex`, global flag, empty and non-string input; F9 traversal and rule-child visit;
@@ -267,7 +278,7 @@ global; exactly nine public exports); public API and 2.0.0-compatible names and 
       different `TypeError` site for a non-string step text, and one extra stack frame. No
       mutant newly survivable; nothing judged churn. Left as a note: `isFunctionForScenario`
       keeps its old name (F17 was scoped to the lines F16 moved).
-- [ ] Signed `refactor:` commit. Push stays Gearoid's call.
+- [x] Signed commits: `37dccbe` refactor, `0b241c5` types header. Push stays Gearoid's call.
 
 ## Blockers
 
