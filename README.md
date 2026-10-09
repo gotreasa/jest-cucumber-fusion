@@ -19,6 +19,8 @@ Now use jest naturally in your project like you would use the native Cucumber li
 
 The style of this package began with [Jest-cucumber](https://github.com/bencompton/jest-cucumber), which it was originally built on top of. Since version 3 it no longer depends on that package: it runs on Jest and [@cucumber/gherkin](https://github.com/cucumber/gherkin) directly, and owns the whole test lifecycle itself.
 
+This package continues [b-yond-infinite-network/jest-cucumber-fusion](https://github.com/b-yond-infinite-network/jest-cucumber-fusion), published on npm as `jest-cucumber-fusion` until version 0.8.1 in June 2021, and is now maintained and published as `@g_package/jest-cucumber-fusion`.
+
 ## Motivation
 
 Jest-cucumber is an amazing project but forces you to write a lot of repetitive scaffolding code to setup the link betwen Jest and Cucumber.
@@ -35,6 +37,8 @@ With Jest-Cucumber-Fusion, it really takes only the minimal code possible:
 ```
 npm install @g_package/jest-cucumber-fusion --save-dev
 ```
+
+Coming from `jest-cucumber-fusion` 0.8.x or from version 2 of this package? Your feature and step definition files keep their shape; the import name changes, and several behaviours that used to pass silently now fail with a message saying what to fix. [Migrating to version 3](./docs/Migrating.md) lists each change, observed under both versions.
 
 ### Add a Feature file:
 
@@ -187,3 +191,4 @@ If you are coming from version 2, global configuration used to go through `jest-
   * [Running the examples](./docs/RunningTheExamples.md)
   * [Language](./docs/Language.md)
   * [Architecture](./docs/Architecture.md)
+  * [Migrating to version 3](./docs/Migrating.md)
