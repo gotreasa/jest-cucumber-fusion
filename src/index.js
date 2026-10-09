@@ -46,23 +46,23 @@ const whatTheMatcherWas = (candidate) =>
 const refuseUnsupportedMatcher = (definitionType, candidate) =>
   new Error(
     `Unsupported step matcher: ${verbNamed(
-      definitionType
+      definitionType,
     )} was given ${whatTheMatcherWas(candidate)}.\n\n` +
       `WHY:  Fusion binds a step definition to the feature's steps by its matcher, and only\n` +
       `      a string or a regular expression can match a step's text. Any other matcher\n` +
       `      binds nothing, and the step would then fail as unbound, far from this call.\n` +
       `HOW:  pass the step's text, ${verbNamed(
-        definitionType
+        definitionType,
       )}("the shop is open", fn), or a regular\n` +
       `      expression, ${verbNamed(
-        definitionType
-      )}(/^(\\d+) items? in the basket$/, fn).`
+        definitionType,
+      )}(/^(\\d+) items? in the basket$/, fn).`,
   );
 
 const addDefinitionFunction = (
   definitionType,
   regexpSentence,
-  fnForDefinition
+  fnForDefinition,
 ) => {
   if (!isStepMatcher(regexpSentence))
     throw refuseUnsupportedMatcher(definitionType, regexpSentence);
@@ -89,7 +89,7 @@ const addDefinitionFunction = (
 const throwIfDuplicateMatcher = (definitionType, matcherKey) => {
   if (stepsDefinition[definitionType][matcherKey])
     throw new Error(
-      `Duplicate step definition: "${matcherKey}" is already registered for "${definitionType}"`
+      `Duplicate step definition: "${matcherKey}" is already registered for "${definitionType}"`,
     );
 };
 
@@ -97,7 +97,7 @@ const Given = (regexpSentenceOrChainedObject, fnForDefinition) => {
   return defineAndChain(
     "given",
     regexpSentenceOrChainedObject,
-    fnForDefinition
+    fnForDefinition,
   );
 };
 const When = (regexpSentenceOrChainedObject, fnForDefinition) => {
@@ -128,7 +128,7 @@ const defineAndChain = (stepType, stepObjectOrSentence, fnForStep) => {
     addDefinitionFunction(
       stepType,
       stepObjectOrSentence.stepSentence,
-      stepObjectOrSentence.stepFnDefinition
+      stepObjectOrSentence.stepFnDefinition,
     );
 
     return stepObjectOrSentence;
@@ -154,7 +154,7 @@ const Fusion = (featureFileToLoad, optionsForThisFeature) => {
 
     const loadedFeature = featureSource.loadFeature(
       absoluteFeatureFilePath,
-      effectiveOptions
+      effectiveOptions,
     );
 
     // This feature binds the definitions and hooks registered for IT, captured before the
@@ -164,7 +164,7 @@ const Fusion = (featureFileToLoad, optionsForThisFeature) => {
     testRegistration.registerFeature(
       loadedFeature,
       registryForThisFeature,
-      effectiveOptions
+      effectiveOptions,
     );
   } finally {
     // Unconditional: Fusion() always leaves a clean slate (normal return OR throw). Rebinding

@@ -52,7 +52,7 @@ module.exports = [
             object,
             property,
             message: ONLY_REGISTRATION_MAY,
-          }))
+          })),
         ),
       ],
     },

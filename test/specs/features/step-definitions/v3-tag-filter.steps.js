@@ -72,10 +72,10 @@ const { Given, When, Fusion } = require("../../../../src");
 const registerDefinitionsRecordingInto = (stepsThatRan) => {
   Given("the shop is open", () => stepsThatRan.push("open"));
   When(/^the selected shopper buys a (.+)$/, (item) =>
-    stepsThatRan.push(`selected:${item}`)
+    stepsThatRan.push(`selected:${item}`),
   );
   When(/^the excluded shopper buys a (.+)$/, (item) =>
-    stepsThatRan.push(`excluded:${item}`)
+    stepsThatRan.push(`excluded:${item}`),
   );
 };
 
@@ -142,9 +142,9 @@ test("a filter that cannot be parsed is refused at collection, naming the expres
     new RegExp(
       `^Could not parse tag filter "${A_FILTER_THAT_CANNOT_BE_PARSED.replace(
         /[.*+?^${}()|[\]\\]/g,
-        "\\$&"
-      )}"`
-    )
+        "\\$&",
+      )}"`,
+    ),
   );
 });
 
@@ -197,7 +197,7 @@ afterAll(() => {
   //       it excludes as skipped tests, which never run a body.
   expect(underTheFilter).toStrictEqual(THE_SELECTED_STEPS);
   expect(
-    underTheFilter.filter((each) => each.startsWith("excluded:"))
+    underTheFilter.filter((each) => each.startsWith("excluded:")),
   ).toStrictEqual([]);
 
   // WHAT: the same filter in another case ran the same bodies, in the same order.

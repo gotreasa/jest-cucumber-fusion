@@ -80,7 +80,7 @@ Then(
     table.forEach((row, index) => {
       expect(onlineSales.listedItems).toContain(table[index].Object);
     });
-  }
+  },
 );
 
 Fusion("../language.feature");

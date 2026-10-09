@@ -62,10 +62,10 @@ jest.mock("../../../../src/test-registration", () => ({
     expect(typeof options.errors.stepsMustMatchFeatureFile).toBe("boolean");
 
     const { findMatchingStep } = jest.requireActual(
-      "../../../../src/step-matching"
+      "../../../../src/step-matching",
     );
     const { unmatchedStepRefusal } = jest.requireActual(
-      "../../../../src/code-suggestion"
+      "../../../../src/code-suggestion",
     );
 
     const scenarios = loadedFeature.scenarios.map((scenario) => ({

@@ -84,10 +84,10 @@ jest.mock("../../../../src/test-registration", () => ({
     // the step check is on. Both are production modules, so the refusal observed below is the
     // real one.
     const { findMatchingStep } = jest.requireActual(
-      "../../../../src/step-matching"
+      "../../../../src/step-matching",
     );
     const { unmatchedStepRefusal } = jest.requireActual(
-      "../../../../src/code-suggestion"
+      "../../../../src/code-suggestion",
     );
 
     const unboundSteps = [];
@@ -97,7 +97,7 @@ jest.mock("../../../../src/test-registration", () => ({
         const result = findMatchingStep(featureRegistry, step);
         if (result.isBound) mockState.boundSteps.push(result);
         else unboundSteps.push(step);
-      })
+      }),
     );
 
     if (unboundSteps.length > 0 && options.errors.stepsMustMatchFeatureFile)
@@ -184,7 +184,7 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     // Feature 2 asks for the SAME step text, but nothing was re-registered after feature 1
     // loaded — so a clean registry cannot bind it, and Fusion refuses.
     expect(() =>
-      fuse(Fusion, featureWithOneScenario("second", SIGNED_IN))
+      fuse(Fusion, featureWithOneScenario("second", SIGNED_IN)),
     ).toThrow(/No step definition matches/);
 
     // NEGATIVE: the leaked definition must NOT have bound the second feature's step.
@@ -208,7 +208,7 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     // Feature 2 registers no hooks and no definitions of its own, so it refuses on its step —
     // but it still reaches registration, which is where a leaked hook would show.
     expect(() =>
-      fuse(Fusion, featureWithOneScenario("second", SIGNED_IN))
+      fuse(Fusion, featureWithOneScenario("second", SIGNED_IN)),
     ).toThrow(/No step definition matches/);
 
     // NEGATIVE: no hook from feature 1 may reach feature 2's registration.
@@ -243,7 +243,7 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     // The feature-source port fails to load the feature, so Fusion throws BEFORE reaching its
     // reset.
     mockState.loadFeatureError = new Error(
-      "ENOENT: no such file or directory, open 'missing.feature'"
+      "ENOENT: no such file or directory, open 'missing.feature'",
     );
     expect(() => Fusion("missing.feature")).toThrow(/ENOENT/);
     mockState.loadFeatureError = null;
@@ -283,7 +283,7 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     // unchanged: whatever Fusion throws, it leaves a clean slate.
     mockState.feature = featureWithOneScenario(
       "first",
-      "a step with NO matching definition"
+      "a step with NO matching definition",
     );
     expect(() => Fusion("first.feature")).toThrow(/No step definition matches/);
 

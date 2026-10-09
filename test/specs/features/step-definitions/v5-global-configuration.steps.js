@@ -43,7 +43,7 @@ const fixtureProject = path.join(
   "test",
   "specs",
   "fixtures",
-  "global-config"
+  "global-config",
 );
 
 const SKIPPED = "pending"; // what Jest calls a test registered through test.skip
@@ -63,14 +63,14 @@ const withoutAnsi = (text) =>
 // cannot be read, throws with WHAT / WHY / HOW so the value is adjudicated rather than passed.
 const childRunWith = (configurationFileName) => {
   const reportDirectory = fs.mkdtempSync(
-    path.join(os.tmpdir(), "fusion-global-config-")
+    path.join(os.tmpdir(), "fusion-global-config-"),
   );
   const reportFile = path.join(reportDirectory, "jest-report.json");
 
   const cannotObserve = (what, why, how) =>
     new Error(
       `WHAT: ${what}\nWHY:  ${why}\nHOW:  ${how}\n` +
-        `      configuration: ${configurationFileName}`
+        `      configuration: ${configurationFileName}`,
     );
 
   try {
@@ -89,7 +89,7 @@ const childRunWith = (configurationFileName) => {
         cwd: repositoryRoot,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
-      }
+      },
     );
 
     if (run.error)
@@ -97,14 +97,14 @@ const childRunWith = (configurationFileName) => {
         `a child jest could not be started: ${run.error.message}`,
         "a real run with a real setup script is the only evidence that setupFiles reaches " +
           "Fusion; nothing else observes it",
-        "install the dependencies (npm ci) and try again"
+        "install the dependencies (npm ci) and try again",
       );
 
     if (!fs.existsSync(reportFile))
       throw cannotObserve(
         "the child jest wrote no JSON report",
         "there are no recorded statuses to read, so nothing is observed either way",
-        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`
+        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`,
       );
 
     let report;
@@ -114,7 +114,7 @@ const childRunWith = (configurationFileName) => {
       throw cannotObserve(
         `the child's JSON report could not be parsed: ${unreadable.message}`,
         "an unparseable report is not evidence of a selection either way",
-        "run the same jest --config by hand and look at what it wrote"
+        "run the same jest --config by hand and look at what it wrote",
       );
     }
 
@@ -134,7 +134,7 @@ const childRunWith = (configurationFileName) => {
       suiteCount: (report.testResults || []).length,
       testCount: report.numTotalTests,
       everyName: (report.testResults || []).flatMap((suite) =>
-        suite.assertionResults.map((assertion) => assertion.title)
+        suite.assertionResults.map((assertion) => assertion.title),
       ),
       bySuite,
     };
@@ -166,12 +166,12 @@ test("a global set in a setup file configures a step definition file that never 
   // HOW:  merge the global layer between the defaults and the per-call options, and keep it in
   //       the module that owns the merge so that setupFiles writing it is enough.
   expect(
-    reportOf(theRunConfiguredFromASetupFile, "global-only.fixture.js")
+    reportOf(theRunConfiguredFromASetupFile, "global-only.fixture.js"),
   ).toStrictEqual(
     [
       `${THE_SELECTED_SCENARIO} [${PASSED}]`,
       `${THE_EXCLUDED_SCENARIO} [${SKIPPED}]`,
-    ].sort()
+    ].sort(),
   );
 });
 
@@ -183,12 +183,12 @@ test("a step definition file that passes its own option overrides the global for
   //       wrote in the file in front of them, which is the harder bug to diagnose of the two.
   // HOW:  apply the per-call options last.
   expect(
-    reportOf(theRunConfiguredFromASetupFile, "per-call-override.fixture.js")
+    reportOf(theRunConfiguredFromASetupFile, "per-call-override.fixture.js"),
   ).toStrictEqual(
     [
       `${THE_SELECTED_SCENARIO} [${SKIPPED}]`,
       `${THE_EXCLUDED_SCENARIO} [${PASSED}]`,
-    ].sort()
+    ].sort(),
   );
 });
 
@@ -205,11 +205,11 @@ test("one file's own option does not change another file's configuration", () =>
     suites: theRunConfiguredFromASetupFile.suiteCount,
     globalOnly: reportOf(
       theRunConfiguredFromASetupFile,
-      "global-only.fixture.js"
+      "global-only.fixture.js",
     ),
     perCallOverride: reportOf(
       theRunConfiguredFromASetupFile,
-      "per-call-override.fixture.js"
+      "per-call-override.fixture.js",
     ),
   }).toStrictEqual({
     exitStatus: 0,
@@ -240,7 +240,7 @@ test("a second setter call replaces the first global rather than merging into it
   expect({
     namesCarryingTheClearedTemplate:
       theRunConfiguredFromASetupFile.everyName.filter((name) =>
-        name.startsWith(THE_CLEARED_TEMPLATE_PREFIX)
+        name.startsWith(THE_CLEARED_TEMPLATE_PREFIX),
       ),
     namesReportedAtAll: theRunConfiguredFromASetupFile.everyName.length,
   }).toStrictEqual({

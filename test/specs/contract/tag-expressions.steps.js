@@ -49,10 +49,10 @@ const parse =
   required && typeof required.parse === "function"
     ? required.parse
     : typeof required === "function"
-    ? required
-    : required && typeof required.default === "function"
-    ? required.default
-    : null;
+      ? required
+      : required && typeof required.default === "function"
+        ? required.default
+        : null;
 
 const describeWhatWasFound = () => {
   if (loadFailure) return `require() threw: ${loadFailure.message}`;
@@ -78,7 +78,7 @@ const theAgreementIsObservable = () => {
         "(the majors past it publish ESM only and Jest on the supported Node line cannot " +
         "require them), regenerate package-lock.json, and require it from " +
         "src/feature-source.js -- the one module the architectural law lets reach the " +
-        "cucumber scope."
+        "cucumber scope.",
     );
 };
 
@@ -133,11 +133,11 @@ describe("the tag expression language tagFilter speaks", () => {
       parenthesisedAndUnsatisfied: satisfies("@a and (@b or @c)", ["@a"]),
       theValueTextFilterOnTheIncludedSet: satisfies(
         "@included and not @excluded",
-        ["@included"]
+        ["@included"],
       ),
       theValueTextFilterOnTheExcludedSet: satisfies(
         "@included and not @excluded",
-        ["@excluded"]
+        ["@excluded"],
       ),
       theValueTextFilterOnBoth: satisfies("@included and not @excluded", [
         "@included",

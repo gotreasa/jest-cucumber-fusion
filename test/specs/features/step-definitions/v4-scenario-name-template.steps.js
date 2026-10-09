@@ -65,7 +65,7 @@ const theCallThatNamed = (position, whatItShouldHaveNamed) => {
         "which is the option being inert for that test. On every Examples row that is " +
         "precisely what the previous engine did.\n" +
         "HOW:  ask src/scenario-name.js for a name once per scenario, Examples rows " +
-        "included, at the point each test is registered."
+        "included, at the point each test is registered.",
     );
   return call;
 };
@@ -154,7 +154,7 @@ test("a plain scenario is handed its own title and its own tags, and the feature
       featureTags: ["@shop"],
       scenarioTitle: "A shopper pays at the till",
       scenarioTags: ["@checkout"],
-    }
+    },
   );
 });
 
@@ -172,7 +172,7 @@ test("each Examples row is handed its own substituted title and its Examples set
     [
       theCallThatNamed(1, "the first Examples row"),
       theCallThatNamed(2, "the second Examples row"),
-    ].map(asComparable)
+    ].map(asComparable),
   ).toStrictEqual([
     {
       variablesHandedOver: THE_FOUR_VARIABLES,
@@ -200,7 +200,7 @@ test("a template that throws is refused at collection", () => {
   //       refusal before anything is registered.
   expect(refusalFromAThrowingTemplate).not.toBeNull();
   expect(firstLineOf(refusalFromAThrowingTemplate)).toContain(
-    THE_NAMING_REFUSAL_PHRASE
+    THE_NAMING_REFUSAL_PHRASE,
   );
   expect(refusalFromAThrowingTemplate.message).toContain(THE_TEMPLATE_FAILURE);
 });
@@ -217,7 +217,7 @@ test("a template that answers with something other than a non-empty string is re
   //       the refusal when it is not.
   expect(refusalFromANonStringTemplate).not.toBeNull();
   expect(firstLineOf(refusalFromANonStringTemplate)).toContain(
-    THE_NAMING_REFUSAL_PHRASE
+    THE_NAMING_REFUSAL_PHRASE,
   );
   expect(refusalFromANonStringTemplate.message).toContain("42");
 });

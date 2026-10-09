@@ -20,20 +20,20 @@ describe("missing feature file message", () => {
       `Feature file not found (${path.join(
         __dirname,
         "no-such-folder",
-        "missing.feature"
-      )})`
+        "missing.feature",
+      )})`,
     );
   });
 
   test("never presents the feature's own folder as the calling file's directory", () => {
     expect(refusal.message).not.toContain(
-      `which here is ${path.join(__dirname, "no-such-folder")}`
+      `which here is ${path.join(__dirname, "no-such-folder")}`,
     );
   });
 
   test("says what a relative path is resolved against", () => {
     expect(refusal.message).toContain(
-      "relative to the directory of the file that calls Fusion"
+      "relative to the directory of the file that calls Fusion",
     );
   });
 });

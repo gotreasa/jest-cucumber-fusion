@@ -25,9 +25,9 @@ const findMatchingStep = (featureRegistry, currentStep) => {
     (matcherKey) => {
       return isFunctionForScenario(
         stepText,
-        featureRegistry[bucket][matcherKey]
+        featureRegistry[bucket][matcherKey],
       );
-    }
+    },
   );
   if (matchingSteps.length === 0) return UNBOUND;
 
@@ -36,7 +36,7 @@ const findMatchingStep = (featureRegistry, currentStep) => {
       .map((matcherSource) => `"${matcherSource}"`)
       .join(", ");
     throw new Error(
-      `Ambiguous step definition: "${stepText}" matches ${matchingSteps.length} step definitions: ${competingMatchers}`
+      `Ambiguous step definition: "${stepText}" matches ${matchingSteps.length} step definitions: ${competingMatchers}`,
     );
   }
 
@@ -46,7 +46,7 @@ const findMatchingStep = (featureRegistry, currentStep) => {
   return boundStepFor(
     featureRegistry[bucket][matchingSteps[0]],
     stepText,
-    currentStep.stepArgument
+    currentStep.stepArgument,
   );
 };
 

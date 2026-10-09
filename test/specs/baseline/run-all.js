@@ -22,7 +22,7 @@ const failed = scripts.filter((name) => {
 
 if (failed.length > 0) {
   console.error(
-    `\n${failed.length} baseline script(s) failed: ${failed.join(", ")}`
+    `\n${failed.length} baseline script(s) failed: ${failed.join(", ")}`,
   );
   process.exit(1);
 }

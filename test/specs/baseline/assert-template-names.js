@@ -57,7 +57,7 @@ const withoutAnsi = (text) =>
 
 const childRun = (runName, fixtureFileName) => {
   const reportDirectory = fs.mkdtempSync(
-    path.join(os.tmpdir(), "fusion-template-names-")
+    path.join(os.tmpdir(), "fusion-template-names-"),
   );
   const reportFile = path.join(reportDirectory, "jest-report.json");
 
@@ -77,7 +77,7 @@ const childRun = (runName, fixtureFileName) => {
         cwd: repositoryRoot,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
-      }
+      },
     );
 
     if (run.error)
@@ -85,7 +85,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         `jest could not be started: ${run.error.message}`,
         "the names Jest records are the only evidence this script accepts",
-        "install the dependencies (npm ci) and try again"
+        "install the dependencies (npm ci) and try again",
       );
 
     if (!fs.existsSync(reportFile))
@@ -93,7 +93,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         "the child jest wrote no JSON report",
         "there are no recorded names to read, so nothing is observed either way",
-        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`
+        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`,
       );
 
     let report;
@@ -104,7 +104,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         `the JSON report could not be parsed: ${unreadable.message}`,
         "an unparseable report is not evidence that a test was named one thing or another",
-        `run jest with --testMatch "**/${fixtureFileName}" --json by hand`
+        `run jest with --testMatch "**/${fixtureFileName}" --json by hand`,
       );
     }
 
@@ -117,7 +117,7 @@ const childRun = (runName, fixtureFileName) => {
         "the testMatch is meant to select this one fixture; any other number means the run " +
           "did not observe the fixture it was asked about",
         `check that ${fixtureFileName} exists under test/specs/fixtures and that the ` +
-          "testMatch still selects it"
+          "testMatch still selects it",
       );
 
     const suite = report.testResults[0];
@@ -150,9 +150,9 @@ const theReportReads = (observed, expected, whyItMatters) =>
     ? []
     : [
         `the report reads\n          ${asReport(observed).join(
-          "\n          "
+          "\n          ",
         )}\n        and not\n          ${expected.join(
-          "\n          "
+          "\n          ",
         )}\n        ` + whyItMatters,
       ];
 
@@ -178,9 +178,9 @@ const refusedWithNoTestReported = (observed, whyItMatters) => {
   if (observed.tests.length !== 0)
     wrong.push(
       `${observed.tests.length} test(s) were reported: ${JSON.stringify(
-        asReport(observed)
+        asReport(observed),
       )}. A template that cannot produce a name leaves no honest name to register a test ` +
-        "under, so the refusal has to stop the file before any describe"
+        "under, so the refusal has to stop the file before any describe",
     );
 
   return wrong;
@@ -204,7 +204,7 @@ const RUNS = [
       ...theReportReads(
         observed,
         expectedReport(() => PASSED),
-        "A name that is not the template's output is the option being ignored for that test."
+        "A name that is not the template's output is the option being ignored for that test.",
       ),
     ],
   },
@@ -224,9 +224,9 @@ const RUNS = [
       ...theReportReads(
         observed,
         expectedReport((name) =>
-          name === THE_EXCLUDED_NAME ? SKIPPED : PASSED
+          name === THE_EXCLUDED_NAME ? SKIPPED : PASSED,
         ),
-        "Only the STATUS may differ from the unfiltered run; every name must be identical."
+        "Only the STATUS may differ from the unfiltered run; every name must be identical.",
       ),
     ],
   },
@@ -242,7 +242,7 @@ const RUNS = [
       refusedWithNoTestReported(
         observed,
         "A template that throws cannot name a test, and there is no honest name to fall " +
-          "back on."
+          "back on.",
       ),
   },
   {
@@ -258,7 +258,7 @@ const RUNS = [
       refusedWithNoTestReported(
         observed,
         "A test name has to be a non-empty string; anything else produces a test that " +
-          "cannot be reported or selected by name."
+          "cannot be reported or selected by name.",
       ),
   },
 ];
@@ -276,7 +276,7 @@ RUNS.forEach((run) => {
       `         ${run.fixture} -> exit ${observed.exitStatus}, ` +
       `${observed.tests.length} test(s): ${
         asReport(observed).join(", ") || "none"
-      }`
+      }`,
   );
 
   if (wrong.length > 0) failures.push({ run: run.name, wrong });
@@ -285,7 +285,7 @@ RUNS.forEach((run) => {
 if (failures.length > 0) {
   console.error(
     `\nscenarioNameTemplate does not name tests as the contract says. ` +
-      `${failures.length} of ${RUNS.length} child runs differ:\n`
+      `${failures.length} of ${RUNS.length} child runs differ:\n`,
   );
   failures.forEach((failure) => {
     console.error(`  - ${failure.run}`);
@@ -299,5 +299,5 @@ console.log(
   `\nAll ${RUNS.length} child runs hold: every test is reported under its templated name, ` +
     "each Examples row under its own substituted title, a skipped test keeps the name it " +
     "would have had if it ran, and a template that cannot produce a name is refused rather " +
-    "than naming a test something Jest cannot report."
+    "than naming a test something Jest cannot report.",
 );

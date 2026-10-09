@@ -28,18 +28,18 @@ const refusalOf = (callFusion) => {
 
 const asterisk = writeFeature(
   "asterisk.feature",
-  "Feature: Asterisk\n  Scenario: Uses an asterisk\n    * the shop is open\n"
+  "Feature: Asterisk\n  Scenario: Uses an asterisk\n    * the shop is open\n",
 );
 Given("the shop is open", () => {});
 const asteriskRefusal = refusalOf(() => Fusion(asterisk));
 
 const plain = writeFeature(
   "plain.feature",
-  "Feature: Plain\n  Scenario: Opening\n    Given the shop is open\n"
+  "Feature: Plain\n  Scenario: Opening\n    Given the shop is open\n",
 );
 Given("the shop is open", () => {});
 const emptyNameRefusal = refusalOf(() =>
-  Fusion(plain, { scenarioNameTemplate: () => "" })
+  Fusion(plain, { scenarioNameTemplate: () => "" }),
 );
 
 Given("the shop is open", () => {});
@@ -48,29 +48,29 @@ const thrownStringRefusal = refusalOf(() =>
     scenarioNameTemplate: () => {
       throw "the template gave up";
     },
-  })
+  }),
 );
 
 describe("refusals no other suite pinned", () => {
   test("an asterisk step is refused by name, with its dialect", () => {
     expect(asteriskRefusal).toMatch(
-      /^Unsupported step keyword: "\*" in the "en" Gherkin dialect\./
+      /^Unsupported step keyword: "\*" in the "en" Gherkin dialect\./,
     );
   });
 
   test("a template that returns the empty string is refused, naming it", () => {
     expect(emptyNameRefusal).toMatch(
-      /^An error occurred while executing a scenario name template/
+      /^An error occurred while executing a scenario name template/,
     );
     expect(emptyNameRefusal).toContain("the empty string");
   });
 
   test("a template that throws a non-Error is refused, naming what it threw", () => {
     expect(thrownStringRefusal).toMatch(
-      /^An error occurred while executing a scenario name template/
+      /^An error occurred while executing a scenario name template/,
     );
     expect(thrownStringRefusal).toContain(
-      "the scenarioNameTemplate threw: the template gave up"
+      "the scenarioNameTemplate threw: the template gave up",
     );
   });
 });

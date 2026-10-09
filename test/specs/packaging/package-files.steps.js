@@ -18,11 +18,11 @@ const packOnce = () => {
     {
       cwd: repositoryRoot,
       encoding: "utf8",
-    }
+    },
   );
   if (run.status !== 0)
     throw new Error(
-      `npm pack --dry-run failed (exit ${run.status}), so the package contents could not be read.\n${run.stderr}`
+      `npm pack --dry-run failed (exit ${run.status}), so the package contents could not be read.\n${run.stderr}`,
     );
   return JSON.parse(run.stdout)[0]
     .files.map((file) => file.path)
@@ -41,7 +41,7 @@ test("the package carries only runtime files", () => {
 test("the package carries the entry point, its types and every source module", () => {
   const files = packedFiles();
   expect(files).toEqual(
-    expect.arrayContaining(["package.json", "src/index.js", "src/index.d.ts"])
+    expect.arrayContaining(["package.json", "src/index.js", "src/index.d.ts"]),
   );
   const sourceModules = require("fs")
     .readdirSync(path.join(repositoryRoot, "src"))

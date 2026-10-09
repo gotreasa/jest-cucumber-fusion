@@ -34,14 +34,18 @@ const readProductionTree = () => {
   const listing = spawnSync(
     "npm",
     ["ls", "--omit=dev", "--all", "--json", "--long=false"],
-    { cwd: repositoryRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
+    {
+      cwd: repositoryRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    },
   );
 
   if (listing.error) {
     cannotObserve(
       `npm could not be run: ${listing.error.message}`,
       "the installed tree is the only honest source for what a consumer would get",
-      "run this where npm is on PATH"
+      "run this where npm is on PATH",
     );
   }
 
@@ -51,7 +55,7 @@ const readProductionTree = () => {
       "an empty answer is not evidence that the tree is clean",
       `install the dependencies (npm ci) and try again; npm said:\n${(
         listing.stderr || ""
-      ).trim()}`
+      ).trim()}`,
     );
   }
 
@@ -61,7 +65,7 @@ const readProductionTree = () => {
     return cannotObserve(
       `npm did not print JSON: ${unreadable.message}`,
       "an unparseable listing cannot be searched, so it proves nothing either way",
-      `run \`npm ls --omit=dev --all --json\` by hand and look at what it printed`
+      `run \`npm ls --omit=dev --all --json\` by hand and look at what it printed`,
     );
   }
 };
@@ -74,7 +78,7 @@ const walk = (node, trail, found, broken) => {
 
     if (child.missing || child.invalid) {
       broken.push(
-        `${route.join(" > ")} (${child.missing ? "missing" : "invalid"})`
+        `${route.join(" > ")} (${child.missing ? "missing" : "invalid"})`,
       );
     }
     if (FORBIDDEN.includes(name)) {
@@ -94,7 +98,7 @@ if (declared.length > 0 && !tree.dependencies) {
   cannotObserve(
     `package.json declares ${declared.length} production dependencies but the listing holds none`,
     "an uninstalled tree looks exactly like a clean one, and it is not the same claim",
-    "run npm ci first, then run this again"
+    "run npm ci first, then run this again",
   );
 }
 
@@ -105,36 +109,36 @@ walk(tree, [`${tree.name}@${tree.version}`], found, broken);
 if (broken.length > 0) {
   cannotObserve(
     `the listing records packages as missing or invalid:\n        ${broken.join(
-      "\n        "
+      "\n        ",
     )}`,
     "a partly installed tree cannot be searched exhaustively, so an absence in it means nothing",
-    "run npm ci to install the tree the lock file describes, then run this again"
+    "run npm ci to install the tree the lock file describes, then run this again",
   );
 }
 
 if (found.length > 0) {
   console.error(
-    "The production dependency tree still reaches an advisory carrier."
+    "The production dependency tree still reaches an advisory carrier.",
   );
   console.error(
     `  WHAT: ${
       found.length
-    } path(s) a consumer would install:\n        ${found.join("\n        ")}`
+    } path(s) a consumer would install:\n        ${found.join("\n        ")}`,
   );
   console.error(
-    "  WHY:  uuid carries GHSA-w5hq-g745-h8pq in runtime scope and jest-cucumber is the only"
+    "  WHY:  uuid carries GHSA-w5hq-g745-h8pq in runtime scope and jest-cucumber is the only",
   );
   console.error(
-    "        route to it. While either is in this tree, every consumer of this package"
+    "        route to it. While either is in this tree, every consumer of this package",
   );
   console.error(
-    "        inherits an advisory they cannot fix, which is the problem this work exists for."
+    "        inherits an advisory they cannot fix, which is the problem this work exists for.",
   );
   console.error(
-    "  HOW:  remove jest-cucumber from package.json dependencies, depend on the pinned"
+    "  HOW:  remove jest-cucumber from package.json dependencies, depend on the pinned",
   );
   console.error(
-    "        CommonJS cucumber line directly, and regenerate package-lock.json so npm ci in a"
+    "        CommonJS cucumber line directly, and regenerate package-lock.json so npm ci in a",
   );
   console.error("        clean checkout installs no uuid at all.");
   process.exit(1);
@@ -143,14 +147,14 @@ if (found.length > 0) {
 const countPackages = (node) =>
   Object.values(node.dependencies || {}).reduce(
     (total, child) => total + 1 + countPackages(child),
-    0
+    0,
   );
 
 console.log(
   "The production dependency tree holds no jest-cucumber and no uuid.\n" +
     `  packages searched: ${countPackages(
-      tree
+      tree,
     )} (production scope, whole tree)\n` +
     `  names refused:     ${FORBIDDEN.join(", ")}\n` +
-    `  root:              ${tree.name}@${tree.version}`
+    `  root:              ${tree.name}@${tree.version}`,
 );

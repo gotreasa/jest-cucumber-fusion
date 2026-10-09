@@ -96,7 +96,7 @@ const shapeOf = (step) => {
         `\u0000${argument.kind}\u0000`,
       consumedTo: argument.end,
     }),
-    { text: "", consumedTo: 0 }
+    { text: "", consumedTo: 0 },
   );
 
   return `${step.keyword}\u0000${
@@ -115,7 +115,7 @@ const matcherRegexFor = (stepText, argumentsFound) => {
         argument.capture,
       consumedTo: argument.end,
     }),
-    { source: "", consumedTo: 0 }
+    { source: "", consumedTo: 0 },
   );
 
   return `/^${
@@ -155,18 +155,18 @@ const starterCodeForShape = (steps) => {
     end: argument.end,
     capture: captureFor(
       argument.kind,
-      valuesByStep.map((values) => values[position].value)
+      valuesByStep.map((values) => values[position].value),
     ),
   }));
   const stepWithArgument = steps.find((step) => step.stepArgument != null);
   const parameters = parametersFor(
     argumentsFound,
-    stepWithArgument ? stepWithArgument.stepArgument : null
+    stepWithArgument ? stepWithArgument.stepArgument : null,
   );
 
   return `${VERB_FOR_BUCKET[steps[0].keyword]}(${matcherFor(
     steps[0].stepText,
-    argumentsFound
+    argumentsFound,
   )}, (${parameters.join(", ")}) => {});`;
 };
 
@@ -212,7 +212,7 @@ const unmatchedStepRefusal = (featureTitle, unboundSteps) => {
         .slice(1)
         .map((step) => `     nor: "${step.stepText}"\n`)
         .join("") +
-      `     ${starterCodeForShape(steps)}`
+      `     ${starterCodeForShape(steps)}`,
   );
 
   return new Error(
@@ -227,7 +227,7 @@ const unmatchedStepRefusal = (featureTitle, unboundSteps) => {
       `      binds every step its entry names. Or pass\n` +
       `      errors: { stepsMustMatchFeatureFile: false } to have the scenarios holding them\n` +
       `      reported as skipped tests instead.\n\n` +
-      `${entries.join("\n\n")}\n`
+      `${entries.join("\n\n")}\n`,
   );
 };
 

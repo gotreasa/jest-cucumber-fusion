@@ -42,13 +42,13 @@ jest.mock("../../../../src/test-registration", () => ({
     expect(featureRegistry).toBeDefined();
 
     const { findMatchingStep } = jest.requireActual(
-      "../../../../src/step-matching"
+      "../../../../src/step-matching",
     );
 
     loadedFeature.scenarios.forEach((scenario) =>
       scenario.steps.forEach((step) =>
-        mockState.boundSteps.push(findMatchingStep(featureRegistry, step))
-      )
+        mockState.boundSteps.push(findMatchingStep(featureRegistry, step)),
+      ),
     );
   }),
 }));
@@ -85,7 +85,7 @@ describe("H1 — ambiguous step definitions", () => {
     // the full contract signature (not a loose /ambig/i) so an incidental "ambiguous" in some
     // unrelated error cannot satisfy the assertion.
     expect(() => Fusion("../ambiguous-step-shadowing.feature")).toThrow(
-      /Ambiguous step definition.*matches \d+ step definitions/i
+      /Ambiguous step definition.*matches \d+ step definitions/i,
     );
 
     // NEGATIVE: neither competing definition was bound. Shadowing IS binding one of them, so a

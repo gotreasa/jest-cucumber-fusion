@@ -36,7 +36,7 @@ jest.mock("callsites", () => ({
 }));
 jest.mock("../../../../src/feature-source", () => {
   const realFeatureSource = jest.requireActual(
-    "../../../../src/feature-source"
+    "../../../../src/feature-source",
   );
 
   return {
@@ -77,7 +77,7 @@ describe("M4 — robust caller resolution", () => {
     Fusion("sample.feature");
 
     expect(mockState.loadedPath).toBe(
-      path.resolve("/virtual/user-project/step-definitions", "sample.feature")
+      path.resolve("/virtual/user-project/step-definitions", "sample.feature"),
     );
   });
 
@@ -96,7 +96,7 @@ describe("M4 — robust caller resolution", () => {
     Fusion("sample.feature");
 
     expect(mockState.loadedPath).toBe(
-      path.resolve("/virtual/esm-project/steps", "sample.feature")
+      path.resolve("/virtual/esm-project/steps", "sample.feature"),
     );
   });
 

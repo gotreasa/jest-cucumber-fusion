@@ -55,8 +55,8 @@ sample(sentence).forEach((stepText, caseIndex) => {
       `Feature: ${title("P1", caseIndex)}\n` +
         `  Scenario: string matcher\n` +
         `    Given p1 ${stepText}\n` +
-        `    Then p1 it ran once\n`
-    )
+        `    Then p1 it ran once\n`,
+    ),
   );
 });
 
@@ -71,10 +71,10 @@ sample(fc.tuple(word, fc.nat({ max: 1e6 }), word)).forEach(
       writeFeature(
         `Feature: ${title("P2", caseIndex)}\n` +
           `  Scenario: regex captures\n` +
-          `    When p2 take "${first}" then ${number} then "${last}"\n`
-      )
+          `    When p2 take "${first}" then ${number} then "${last}"\n`,
+      ),
     );
-  }
+  },
 );
 
 // P3: every outline row hands its own values to the step, in table order.
@@ -82,7 +82,7 @@ sample(
   fc.array(fc.tuple(word, fc.nat({ max: 9999 })), {
     minLength: 1,
     maxLength: 5,
-  })
+  }),
 ).forEach((rows, caseIndex) => {
   const seenRows = [];
   Given(/^p3 row "(.*)" (\d+)$/, (name, number) => {
@@ -104,8 +104,8 @@ sample(
         `    Then p3 the row was delivered\n\n` +
         `    Examples:\n` +
         `      | name | num |\n` +
-        `${examples}\n`
-    )
+        `${examples}\n`,
+    ),
   );
 });
 
@@ -118,12 +118,12 @@ const docLine = fc
       line.trim() === line &&
       !line.startsWith('"""') &&
       !line.startsWith("#") &&
-      !line.startsWith("@")
+      !line.startsWith("@"),
   );
 sample(
   fc
     .array(docLine, { minLength: 1, maxLength: 5 })
-    .filter((lines) => lines.join("").length > 0)
+    .filter((lines) => lines.join("").length > 0),
 ).forEach((lines, caseIndex) => {
   When(/^p4 I read the doc$/, (docString) => {
     expect(docString).toBe(lines.join("\n"));
@@ -135,8 +135,8 @@ sample(
       `Feature: ${title("P4", caseIndex)}\n` +
         `  Scenario: docstring\n` +
         `    When p4 I read the doc\n` +
-        `      """\n${docBody}\n      """\n`
-    )
+        `      """\n${docBody}\n      """\n`,
+    ),
   );
 });
 
@@ -163,8 +163,8 @@ sample(fc.stringMatching(/^[a-z][a-zA-Z0-9]{0,10}$/)).forEach(
           `    Then p5 the call was bound\n\n` +
           `    Examples:\n` +
           `      | f |\n` +
-          `      | ${functionName}() |\n`
-      )
+          `      | ${functionName}() |\n`,
+      ),
     );
-  }
+  },
 );

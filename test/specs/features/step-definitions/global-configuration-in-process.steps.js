@@ -38,7 +38,7 @@ const tagged = writeFeature(
   "tagged.feature",
   "Feature: Tagged shop\n" +
     "  @included\n  Scenario: Selected\n    Given the included step\n" +
-    "  @excluded\n  Scenario: Excluded\n    Given the excluded step\n"
+    "  @excluded\n  Scenario: Excluded\n    Given the excluded step\n",
 );
 const registerTaggedSteps = (label) => {
   Given("the included step", () => ran.push(`${label}: included`));
@@ -61,23 +61,23 @@ const unbound = writeFeature(
   "unbound.feature",
   "Feature: Half written\n" +
     "  Scenario: Bound\n    Given the included step\n" +
-    "  Scenario: Unbound\n    Given a step nobody wrote\n"
+    "  Scenario: Unbound\n    Given a step nobody wrote\n",
 );
 Given("the included step", () => ran.push("step check off: bound"));
 const stepCheckOff = refusalFrom(() =>
-  Fusion(unbound, { errors: { stepsMustMatchFeatureFile: false } })
+  Fusion(unbound, { errors: { stepsMustMatchFeatureFile: false } }),
 );
 
 // errors: undefined is the default, so the unbound step is refused.
 Given("the included step", () => ran.push("errors undefined: bound"));
 const errorsUndefined = refusalFrom(() =>
-  Fusion(unbound, { errors: undefined })
+  Fusion(unbound, { errors: undefined }),
 );
 
 describe("setFusionConfiguration in-process", () => {
   test("refuses a string, null and an array, naming what it was given", () => {
     expect(refusals.string).toContain(
-      'WHAT: it was given string "not an object".'
+      'WHAT: it was given string "not an object".',
     );
     expect(refusals.null).toContain("WHAT: it was given object null.");
     expect(refusals.array).toContain('WHAT: it was given object ["@smoke"].');
@@ -86,9 +86,9 @@ describe("setFusionConfiguration in-process", () => {
       Object.entries(refusals)
         .filter(
           ([, message]) =>
-            !/^setFusionConfiguration needs an options object\./.test(message)
+            !/^setFusionConfiguration needs an options object\./.test(message),
         )
-        .map(([kind]) => kind)
+        .map(([kind]) => kind),
     ).toEqual([]);
   });
 
@@ -98,7 +98,7 @@ describe("setFusionConfiguration in-process", () => {
 
   test("errors: undefined keeps the default step check", () => {
     expect(errorsUndefined).toMatch(
-      /^Fusion found 1 step in the feature "Half written"/
+      /^Fusion found 1 step in the feature "Half written"/,
     );
   });
 
@@ -111,7 +111,7 @@ describe("setFusionConfiguration in-process", () => {
         "global replaced: excluded",
         "global replaced: included",
         "step check off: bound",
-      ].sort()
+      ].sort(),
     );
   });
 });

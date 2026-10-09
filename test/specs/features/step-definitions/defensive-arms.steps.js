@@ -21,7 +21,7 @@ const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-defensive-"));
 const feature = path.join(featureDir, "valid.feature");
 fs.writeFileSync(
   feature,
-  "Feature: Valid\n  Scenario: Opening\n    Given the shop is open\n"
+  "Feature: Valid\n  Scenario: Opening\n    Given the shop is open\n",
 );
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 
@@ -45,10 +45,10 @@ describe("defensive arms", () => {
       throw "the parser gave up";
     };
     expect(() => tagFilterFor("@a and", parserThrowingAString)).toThrow(
-      'Could not parse tag filter "@a and".'
+      'Could not parse tag filter "@a and".',
     );
     expect(() => tagFilterFor("@a and", parserThrowingAString)).toThrow(
-      "the tag expression parser could not read it: the parser gave up"
+      "the tag expression parser could not read it: the parser gave up",
     );
   });
 
@@ -62,12 +62,12 @@ describe("defensive arms", () => {
 
   test("keywords: a keyword no bucket holds is refused, with and without a dialect", () => {
     expect(() =>
-      bucketForKeyword("Perhaps ", gherkin.dialects.en, "en")
+      bucketForKeyword("Perhaps ", gherkin.dialects.en, "en"),
     ).toThrow(
-      'Unsupported step keyword: "Perhaps" in the "en" Gherkin dialect.'
+      'Unsupported step keyword: "Perhaps" in the "en" Gherkin dialect.',
     );
     expect(() => bucketForKeyword("* ", gherkin.dialects.en)).toThrow(
-      /^Unsupported step keyword: "\*"\. Fusion binds step definitions by keyword/
+      /^Unsupported step keyword: "\*"\. Fusion binds step definitions by keyword/,
     );
   });
 
@@ -76,7 +76,7 @@ describe("defensive arms", () => {
       throw new Error("compiler fault");
     });
     expect(() => loadFeature(feature, mergeFusionOptions({}))).toThrow(
-      "Error parsing feature Gherkin: compiler fault"
+      "Error parsing feature Gherkin: compiler fault",
     );
   });
 
@@ -86,10 +86,10 @@ describe("defensive arms", () => {
       realCompile(...args).map((pickle) => ({
         ...pickle,
         steps: pickle.steps.map((step) => ({ ...step, astNodeIds: ["nope"] })),
-      }))
+      })),
     );
     expect(() => loadFeature(feature, mergeFusionOptions({}))).toThrow(
-      'Unresolvable step: "the shop is open" carries no astNodeId'
+      'Unresolvable step: "the shop is open" carries no astNodeId',
     );
   });
 });

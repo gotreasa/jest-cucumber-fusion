@@ -46,7 +46,7 @@ const templateVariablesFor = (loadedFeature, scenario) => {
     featureTags,
     scenarioTitle: scenario.title,
     scenarioTags: tagsThatReachedTheScenario.filter(
-      (tagName) => !featureTags.includes(tagName)
+      (tagName) => !featureTags.includes(tagName),
     ),
   };
 };
@@ -63,7 +63,7 @@ const refuseUnusableName = (scenarioTitle, what, how) =>
       `      produce one leaves no honest name to fall back on. Naming this test from its raw\n` +
       `      title while its siblings keep their templated names would give a report that\n` +
       `      looks complete and cannot be compared with the next run.\n` +
-      `HOW:  ${how}`
+      `HOW:  ${how}`,
   );
 
 // Calling the untrusted template, and nothing else. Whatever it answers comes back as it is;
@@ -82,7 +82,7 @@ const answerFromTemplate = (loadedFeature, scenario, scenarioNameTemplate) => {
       }`,
       "make the template total over the four variables it is handed: featureTitle, " +
         "featureTags, scenarioTitle and scenarioTags. A tag list may be empty, and a title " +
-        "may hold any character a feature file allows."
+        "may hold any character a feature file allows.",
     );
   }
 };
@@ -93,7 +93,7 @@ const nameForScenario = (loadedFeature, scenario, scenarioNameTemplate) => {
   const answer = answerFromTemplate(
     loadedFeature,
     scenario,
-    scenarioNameTemplate
+    scenarioNameTemplate,
   );
 
   if (typeof answer !== "string" || answer.length === 0)
@@ -101,7 +101,7 @@ const nameForScenario = (loadedFeature, scenario, scenarioNameTemplate) => {
       scenario.title,
       `the scenarioNameTemplate returned ${describeWhatCameBack(answer)}.`,
       "return a non-empty string. A missing return answers undefined, which produces a test " +
-        "that cannot be reported or selected by name."
+        "that cannot be reported or selected by name.",
     );
 
   return answer;

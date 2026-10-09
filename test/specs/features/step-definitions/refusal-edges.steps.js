@@ -54,8 +54,8 @@ Given("the shop is open", () => {});
 const notGherkin = refusalOf(
   writeFeature(
     "not-gherkin.feature",
-    "Feature: A shop\n  Scenario: Opening\n    Given the shop is open\n  this line is not Gherkin\n"
-  )
+    "Feature: A shop\n  Scenario: Opening\n    Given the shop is open\n  this line is not Gherkin\n",
+  ),
 );
 
 Given("the shop is open", () => {});
@@ -65,8 +65,8 @@ const caseOnlyDuplicates = refusalOf(
     "Feature: A shop with one title in three spellings\n" +
       "  Scenario: Refunding a shirt\n    Given the shop is open\n" +
       "  Scenario: refunding a SHIRT\n    Given the shop is open\n" +
-      "  Scenario: REFUNDING A SHIRT\n    Given the shop is open\n"
-  )
+      "  Scenario: REFUNDING A SHIRT\n    Given the shop is open\n",
+  ),
 );
 
 let headerOnly = "not called";
@@ -79,8 +79,8 @@ Fusion(
     "Feature: A shop with an empty stock list\n" +
       "  Scenario: Reading an empty list\n" +
       "    Given the stock list is\n" +
-      "      | product | count |\n"
-  )
+      "      | product | count |\n",
+  ),
 );
 
 describe("refusal edges", () => {

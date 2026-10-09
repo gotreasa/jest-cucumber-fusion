@@ -86,7 +86,7 @@ const compileTheFeature = () => {
   const ids = messages.IdGenerator.incrementing();
   const parser = new gherkin.Parser(
     new gherkin.AstBuilder(ids),
-    new gherkin.GherkinClassicTokenMatcher()
+    new gherkin.GherkinClassicTokenMatcher(),
   );
   const document = parser.parse(FEATURE);
   return {
@@ -115,7 +115,7 @@ const theAgreementIsObservable = () => {
         `  ${loadFailure.message}\n` +
         "WHY:  this package requires the compiler synchronously inside the consumer's Jest, so " +
         "a compiler that cannot be required leaves every pickle fact below unobserved.\n" +
-        "HOW:  pin the cucumber dependencies to the last CommonJS-loadable line, exactly."
+        "HOW:  pin the cucumber dependencies to the last CommonJS-loadable line, exactly.",
     );
   if (compileFailure)
     throw new Error(
@@ -124,7 +124,7 @@ const theAgreementIsObservable = () => {
         "WHY:  the parse and compile API is half of this agreement; if its shape moved, nothing " +
         "below is evidence of anything.\n" +
         "HOW:  check the Parser / AstBuilder / GherkinClassicTokenMatcher / compile surface of " +
-        "the pinned version against the call above."
+        "the pinned version against the call above.",
     );
 };
 
@@ -190,7 +190,7 @@ describe("the pickle facts this package depends on hold for the installed Gherki
       "the launch pad is clear",
     ]);
     expect(
-      stepTextsOf(pickleNamed("A grounded rocket is inspected")[0])
+      stepTextsOf(pickleNamed("A grounded rocket is inspected")[0]),
     ).toStrictEqual([
       "the ground crew is on station",
       "the inspection log is open",
@@ -216,8 +216,8 @@ describe("the pickle facts this package depends on hold for the installed Gherki
     ]);
     expect(
       falcon.steps[3].argument.dataTable.rows.map((row) =>
-        row.cells.map((cell) => cell.value)
-      )
+        row.cells.map((cell) => cell.value),
+      ),
     ).toStrictEqual([
       ["rocket", "engine"],
       ["Falcon", "3"],
@@ -249,11 +249,11 @@ describe("the pickle facts this package depends on hold for the installed Gherki
     // HOW:  read pickle.tags; do not re-derive a scenario's tags from the AST.
     expect(
       pickleNamed("An incident is filed for rocket Falcon")[0].tags.map(
-        (tag) => tag.name
-      )
+        (tag) => tag.name,
+      ),
     ).toStrictEqual(["@fusion", "@outline", "@rows"]);
     expect(
-      pickleNamed("Repeated title")[0].tags.map((tag) => tag.name)
+      pickleNamed("Repeated title")[0].tags.map((tag) => tag.name),
     ).toStrictEqual(["@fusion"]);
   });
 
@@ -267,7 +267,7 @@ describe("the pickle facts this package depends on hold for the installed Gherki
     compiled.pickles.forEach((pickle) => {
       pickle.steps.forEach((step) => {
         const astStepId = (step.astNodeIds || []).find((id) =>
-          keywords.has(id)
+          keywords.has(id),
         );
         if (!astStepId) {
           unresolved.push(`${pickle.name} / ${step.text}`);
@@ -293,7 +293,7 @@ describe("the pickle facts this package depends on hold for the installed Gherki
       unresolved: [],
       stepsExamined: compiled.pickles.reduce(
         (total, pickle) => total + pickle.steps.length,
-        0
+        0,
       ),
     });
     expect(recovered).toContain("Given");
@@ -301,7 +301,7 @@ describe("the pickle facts this package depends on hold for the installed Gherki
     expect(
       compiled.pickles
         .flatMap((pickle) => pickle.steps)
-        .every((step) => step.type === "Context")
+        .every((step) => step.type === "Context"),
     ).toBe(true);
   });
 });

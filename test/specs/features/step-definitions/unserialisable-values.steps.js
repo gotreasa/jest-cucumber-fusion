@@ -11,12 +11,12 @@ const path = require("path");
 const { Given, Fusion, setFusionConfiguration } = require("../../../../src");
 
 const featureDir = fs.mkdtempSync(
-  path.join(os.tmpdir(), "fusion-unserialisable-")
+  path.join(os.tmpdir(), "fusion-unserialisable-"),
 );
 const feature = path.join(featureDir, "unserialisable.feature");
 fs.writeFileSync(
   feature,
-  "Feature: Unserialisable\n  Scenario: Opening\n    Given the shop is open\n"
+  "Feature: Unserialisable\n  Scenario: Opening\n    Given the shop is open\n",
 );
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 
@@ -68,20 +68,20 @@ describe("refusals naming a value JSON cannot serialise", () => {
   // "function undefined".
   test("a template answering a function is named as that function", () => {
     expect(outcomes.templateFunction).toContain(
-      "function [Function: aFunction]"
+      "function [Function: aFunction]",
     );
   });
 
   test("a template answering a value nothing can print still gets the template refusal", () => {
     expect(outcomes.templateUnprintable).toContain(
-      "object (a value that cannot be printed)"
+      "object (a value that cannot be printed)",
     );
     expect(outcomes.templateUnprintable).toContain("WHAT:");
   });
 
   test("setFusionConfiguration given a BigInt gets its own refusal", () => {
     expect(outcomes.configurationBigInt).toContain(
-      "WHAT: it was given bigint 10n."
+      "WHAT: it was given bigint 10n.",
     );
   });
 });

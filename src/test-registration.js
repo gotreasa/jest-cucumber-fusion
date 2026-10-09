@@ -53,9 +53,9 @@ const namedScenarios = (loadedFeature, scenarios, scenarioNameTemplate) =>
       name: nameForScenario(
         loadedFeature,
         scenario.scenario,
-        scenarioNameTemplate
+        scenarioNameTemplate,
       ),
-    })
+    }),
   );
 
 // The failing-step decoration, byte for byte as it has always read: the step's text in double
@@ -66,7 +66,7 @@ const decorate = (stepText, stepArguments, failure) =>
   new Error(
     `Failing step: "${stepText}"\n\n` +
       `Step arguments: ${JSON.stringify(stepArguments)}\n\n` +
-      `Error: ${failure && failure.message ? failure.message : failure}`
+      `Error: ${failure && failure.message ? failure.message : failure}`,
   );
 
 // One test body: the scenario's steps, in order, each awaited before the next begins. A step
@@ -115,7 +115,7 @@ const registerFeature = (loadedFeature, featureRegistry, options) => {
   const named = namedScenarios(
     loadedFeature,
     scenarios,
-    options.scenarioNameTemplate
+    options.scenarioNameTemplate,
   );
 
   // A feature with no scenarios registers no describe at all, and therefore no hooks: an

@@ -20,7 +20,7 @@ const refusal = (expression, why) =>
       `HOW:  write a tag name as @name, and combine names with the operators "and", "or" and\n` +
       `      "not", grouping with parentheses "(" and ")". For example:\n` +
       `        @smoke and not @slow\n` +
-      `        @shop and (@included or @draft)`
+      `        @shop and (@included or @draft)`,
   );
 
 const refuseUnparseableExpression = (expression, parseFailure) =>
@@ -30,7 +30,7 @@ const refuseUnparseableExpression = (expression, parseFailure) =>
       parseFailure && parseFailure.message ? parseFailure.message : parseFailure
     }\n` +
       `      The expression is lowercased before it is parsed, because tag matching ignores\n` +
-      `      case, so the text quoted above may differ in case from what you wrote.`
+      `      case, so the text quoted above may differ in case from what you wrote.`,
   );
 
 const refuseUntaggedOperand = (expression, operand) =>
@@ -38,7 +38,7 @@ const refuseUntaggedOperand = (expression, operand) =>
     expression,
     `"${operand}" is not a tag. Every tag Fusion reads from a feature file starts with "@",\n` +
       `      so "${operand}" could never match, and the filter would quietly select no\n` +
-      `      scenario. Did you mean "@${operand}"?`
+      `      scenario. Did you mean "@${operand}"?`,
   );
 
 // Every operand of a parsed expression, read off its tree: an operand node carries its text as
@@ -79,7 +79,7 @@ const tagFilterFor = (expression, parseExpression) => {
   }
 
   const untagged = operandsOf(parsed).find(
-    (operand) => !operand.startsWith("@")
+    (operand) => !operand.startsWith("@"),
   );
   if (untagged !== undefined)
     throw refuseUntaggedOperand(expression, asWritten(expression, untagged));

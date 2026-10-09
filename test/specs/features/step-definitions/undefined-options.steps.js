@@ -21,7 +21,7 @@ fs.writeFileSync(
     "    Given the shop is open\n\n" +
     "  @wip\n" +
     "  Scenario: Not written yet\n" +
-    "    Given a step nobody wrote\n"
+    "    Given a step nobody wrote\n",
 );
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 

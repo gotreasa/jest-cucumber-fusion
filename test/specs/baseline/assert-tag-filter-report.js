@@ -60,7 +60,7 @@ const withoutAnsi = (text) =>
 // failed run leaves nothing behind in the tree.
 const childRun = (runName, fixtureFileName) => {
   const reportDirectory = fs.mkdtempSync(
-    path.join(os.tmpdir(), "fusion-tag-filter-report-")
+    path.join(os.tmpdir(), "fusion-tag-filter-report-"),
   );
   const reportFile = path.join(reportDirectory, "jest-report.json");
 
@@ -80,7 +80,7 @@ const childRun = (runName, fixtureFileName) => {
         cwd: repositoryRoot,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
-      }
+      },
     );
 
     if (run.error)
@@ -88,7 +88,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         `jest could not be started: ${run.error.message}`,
         "the status Jest records is the only evidence this script accepts",
-        "install the dependencies (npm ci) and try again"
+        "install the dependencies (npm ci) and try again",
       );
 
     if (!fs.existsSync(reportFile))
@@ -96,7 +96,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         "the child jest wrote no JSON report",
         "there is no recorded status to read, so nothing is observed either way",
-        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`
+        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`,
       );
 
     let report;
@@ -107,7 +107,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         `the JSON report could not be parsed: ${unreadable.message}`,
         "an unparseable report is not evidence of a skip, a pass or a refusal",
-        `run jest with --testMatch "**/${fixtureFileName}" --json by hand`
+        `run jest with --testMatch "**/${fixtureFileName}" --json by hand`,
       );
     }
 
@@ -120,7 +120,7 @@ const childRun = (runName, fixtureFileName) => {
         "the testMatch is meant to select this one fixture; any other number means the run " +
           "did not observe the fixture it was asked about",
         `check that ${fixtureFileName} exists under test/specs/fixtures and that the ` +
-          "testMatch still selects it"
+          "testMatch still selects it",
       );
 
     const suite = report.testResults[0];
@@ -166,12 +166,12 @@ const onePassedOneSkipped = (observed) => [
     [
       `${THE_SELECTED_SCENARIO} [${PASSED}]`,
       `${THE_EXCLUDED_SCENARIO} [${SKIPPED}]`,
-    ].sort()
+    ].sort(),
   )
     ? []
     : [
         `the report reads ${JSON.stringify(
-          asReport(observed)
+          asReport(observed),
         )}, not one passed test for ` +
           `"${THE_SELECTED_SCENARIO}" and one skipped test for "${THE_EXCLUDED_SCENARIO}". ` +
           "An excluded scenario reported as PASSED is a lie, one that is absent hides the " +
@@ -221,27 +221,27 @@ const RUNS = [
       if (observed.exitStatus === 0)
         wrong.push(
           "the child run exited 0. An expression that cannot be read must not produce a " +
-            "run that merely selects nothing"
+            "run that merely selects nothing",
         );
       if (observed.suiteStatus !== "failed")
         wrong.push(
-          `the suite status was "${observed.suiteStatus}", not "failed"`
+          `the suite status was "${observed.suiteStatus}", not "failed"`,
         );
       if (observed.tests.length !== 0)
         wrong.push(
           `${observed.tests.length} test(s) were reported: ${JSON.stringify(
-            asReport(observed)
-          )}. A refusal must stop the file before any describe`
+            asReport(observed),
+          )}. A refusal must stop the file before any describe`,
         );
       if (
         !observed.failureText.includes(
-          `Could not parse tag filter "${THE_MALFORMED_EXPRESSION}"`
+          `Could not parse tag filter "${THE_MALFORMED_EXPRESSION}"`,
         )
       )
         wrong.push(
           "what Jest reported does not carry the line Could not parse tag filter followed " +
             `by "${THE_MALFORMED_EXPRESSION}", so the consumer is not told which of their ` +
-            "expressions could not be read"
+            "expressions could not be read",
         );
 
       return wrong;
@@ -261,34 +261,34 @@ const RUNS = [
     judge: (observed) => {
       const wrong = ranCleanly(observed);
       const skippedOne = observed.tests.filter(
-        (each) => each.name === THE_EXCLUDED_UNWIRED_SCENARIO
+        (each) => each.name === THE_EXCLUDED_UNWIRED_SCENARIO,
       );
 
       if (skippedOne.length !== 1)
         wrong.push(
           `"${THE_EXCLUDED_UNWIRED_SCENARIO}" appears ${skippedOne.length} time(s) in the ` +
             "report, not once. Excluded and unwired are two reasons to skip one scenario, " +
-            "and they have to share one registration"
+            "and they have to share one registration",
         );
       if (skippedOne.length === 1 && skippedOne[0].status !== SKIPPED)
         wrong.push(
-          `"${THE_EXCLUDED_UNWIRED_SCENARIO}" was ${skippedOne[0].status}, not ${SKIPPED}`
+          `"${THE_EXCLUDED_UNWIRED_SCENARIO}" was ${skippedOne[0].status}, not ${SKIPPED}`,
         );
 
       const sibling = observed.tests.filter(
-        (each) => each.name === THE_SELECTED_SCENARIO
+        (each) => each.name === THE_SELECTED_SCENARIO,
       );
       if (sibling.length !== 1 || sibling[0].status !== PASSED)
         wrong.push(
           `"${THE_SELECTED_SCENARIO}" is not the single passed test it should be; the report ` +
-            `reads ${JSON.stringify(asReport(observed))}`
+            `reads ${JSON.stringify(asReport(observed))}`,
         );
 
       if (observed.failureText.includes("No step definition matches"))
         wrong.push(
           "an unmatched-step refusal was raised even though the only unbound step is in a " +
             "scenario the filter excluded. A consumer who excluded a scenario is not asking " +
-            "for its steps to be bound"
+            "for its steps to be bound",
         );
 
       return wrong;
@@ -309,7 +309,7 @@ RUNS.forEach((run) => {
       `         ${run.fixture} -> exit ${observed.exitStatus}, ` +
       `${observed.tests.length} test(s): ${
         asReport(observed).join(", ") || "none"
-      }`
+      }`,
   );
 
   if (wrong.length > 0) failures.push({ run: run.name, wrong });
@@ -318,7 +318,7 @@ RUNS.forEach((run) => {
 if (failures.length > 0) {
   console.error(
     `\ntagFilter does not behave as the contract says. ` +
-      `${failures.length} of ${RUNS.length} child runs differ:\n`
+      `${failures.length} of ${RUNS.length} child runs differ:\n`,
   );
   failures.forEach((failure) => {
     console.error(`  - ${failure.run}`);
@@ -332,5 +332,5 @@ console.log(
   `\nAll ${RUNS.length} child runs hold: the excluded scenario is reported skipped under its ` +
     "own name while its sibling passes, the same filter in another case selects the same " +
     "scenarios, an unparseable expression is refused rather than quietly selecting nothing, " +
-    "and an excluded scenario nobody wired is skipped once and never refused."
+    "and an excluded scenario nobody wired is skipped once and never refused.",
 );

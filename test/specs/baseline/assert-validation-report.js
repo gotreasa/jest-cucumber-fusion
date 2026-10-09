@@ -55,7 +55,7 @@ const withoutAnsi = (text) =>
 // failed run leaves nothing behind in the tree.
 const childRun = (runName, fixtureFileName) => {
   const reportDirectory = fs.mkdtempSync(
-    path.join(os.tmpdir(), "fusion-validation-report-")
+    path.join(os.tmpdir(), "fusion-validation-report-"),
   );
   const reportFile = path.join(reportDirectory, "jest-report.json");
 
@@ -75,7 +75,7 @@ const childRun = (runName, fixtureFileName) => {
         cwd: repositoryRoot,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
-      }
+      },
     );
 
     if (run.error) {
@@ -83,7 +83,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         `jest could not be started: ${run.error.message}`,
         "the status Jest records is the only evidence this script accepts",
-        "install the dependencies (npm ci) and try again"
+        "install the dependencies (npm ci) and try again",
       );
     }
     if (!fs.existsSync(reportFile)) {
@@ -91,7 +91,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         "the child jest wrote no JSON report",
         "there is no recorded status to read, so nothing is observed either way",
-        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`
+        `check the child output:\n${(run.stderr || run.stdout || "").trim()}`,
       );
     }
 
@@ -103,7 +103,7 @@ const childRun = (runName, fixtureFileName) => {
         runName,
         `the JSON report could not be parsed: ${unreadable.message}`,
         "an unparseable report is not evidence of a skip, a pass or a refusal",
-        `run jest with --testMatch "**/${fixtureFileName}" --json by hand`
+        `run jest with --testMatch "**/${fixtureFileName}" --json by hand`,
       );
     }
 
@@ -116,7 +116,7 @@ const childRun = (runName, fixtureFileName) => {
         "the testMatch is meant to select this one fixture; any other number means the run " +
           "did not observe the fixture it was asked about",
         `check that ${fixtureFileName} exists under test/specs/fixtures and that the ` +
-          "testMatch still selects it"
+          "testMatch still selects it",
       );
     }
 
@@ -166,9 +166,9 @@ const refusedAtCollection = (observed) => {
       `${observed.tests.length} test(s) ran: ${observed.tests
         .map((each) => `"${each.name}" (${each.status})`)
         .join(
-          ", "
+          ", ",
         )}. A refusal must stop the file before any describe, so no ` +
-        "test of it is registered and none is fabricated to carry the failure"
+        "test of it is registered and none is fabricated to carry the failure",
     );
   return wrong;
 };
@@ -182,12 +182,12 @@ const everyTestPassed = (observed) => {
           .trim()
           .split("\n")
           .slice(0, 6)
-          .join("\n        ")
+          .join("\n        "),
     );
   observed.tests
     .filter((each) => each.status !== PASSED)
     .forEach((each) =>
-      wrong.push(`"${each.name}" was ${each.status}, not ${PASSED}`)
+      wrong.push(`"${each.name}" was ${each.status}, not ${PASSED}`),
     );
   return wrong;
 };
@@ -209,12 +209,12 @@ const RUNS = [
         wrong.push(
           'the refusal does not carry the line No step definition matches: "the shop is ' +
             'closed", which is the phrase undefined-step.steps.js and two seam regressions ' +
-            "match on"
+            "match on",
         );
       if (!/Given\(\s*"the shop is closed"\s*,/.test(message))
         wrong.push(
           "the refusal carries no starter code in Fusion's verb idiom for that step: no " +
-            'Given("the shop is closed", ...) appears in what Jest reported'
+            'Given("the shop is closed", ...) appears in what Jest reported',
         );
       if (!/=>/.test(message))
         wrong.push("the starter code carries no step function to paste");
@@ -241,7 +241,7 @@ const RUNS = [
               .trim()
               .split("\n")
               .slice(0, 6)
-              .join("\n        ")
+              .join("\n        "),
         );
 
       const unwired = statusOf(observed, "Closing the shop");
@@ -253,17 +253,17 @@ const RUNS = [
             (unwired === PASSED
               ? "A scenario whose step binds nothing reported as PASSED is the silent pass " +
                 "this value exists to make impossible."
-              : "It has to be present and skipped, not absent.")
+              : "It has to be present and skipped, not absent."),
         );
       if (sibling !== PASSED)
         wrong.push(
           `"Opening the shop" was ${sibling}, not ${PASSED}. Switching the check off must ` +
-            "cost the consumer only the scenarios that are genuinely unwired."
+            "cost the consumer only the scenarios that are genuinely unwired.",
         );
       if (observed.tests.length !== 2)
         wrong.push(
           `the run reported ${observed.tests.length} tests, not the 2 scenarios the feature ` +
-            "declares"
+            "declares",
         );
 
       return wrong;
@@ -286,14 +286,14 @@ const RUNS = [
               .trim()
               .split("\n")
               .slice(0, 6)
-              .join("\n        ")
+              .join("\n        "),
         );
 
       const unwired = statusOf(observed, "Closing the shop");
       const sibling = statusOf(observed, "Opening the shop");
       const keyWiseMerge = statusOf(
         observed,
-        "naming one errors key leaves the key the consumer did not name alone"
+        "naming one errors key leaves the key the consumer did not name alone",
       );
 
       if (unwired !== SKIPPED)
@@ -303,7 +303,7 @@ const RUNS = [
       if (keyWiseMerge !== PASSED)
         wrong.push(
           `the fixture's own key-wise-merge test was ${keyWiseMerge}, not ${PASSED}: naming ` +
-            "stepsMustMatchFeatureFile did not leave scenariosMustMatchFeatureFile alone"
+            "stepsMustMatchFeatureFile did not leave scenariosMustMatchFeatureFile alone",
         );
 
       return wrong;
@@ -326,17 +326,17 @@ const RUNS = [
       if (!nearTheTitle(message, "selling a shirt", 3))
         wrong.push(
           'the refusal does not name "Selling a shirt" together with the 3 times it is ' +
-            "declared (two at feature level, one inside the Rule, one differing only in case)"
+            "declared (two at feature level, one inside the Rule, one differing only in case)",
         );
       if (!nearTheTitle(message, "refunding a shirt", 2))
         wrong.push(
           'the refusal does not name "Refunding a shirt" together with the 2 times it is ' +
-            "declared, so it is not naming every duplicated title in one message"
+            "declared, so it is not naming every duplicated title in one message",
         );
       if (!message.includes("scenariosMustMatchFeatureFile"))
         wrong.push(
           "the refusal does not tell the consumer that scenariosMustMatchFeatureFile accepts " +
-            "the file, so it states a problem without a way forward"
+            "the file, so it states a problem without a way forward",
         );
 
       return wrong;
@@ -365,9 +365,9 @@ const RUNS = [
       )
         wrong.push(
           `the accepted file produced ${names.length} tests ${JSON.stringify(
-            names
+            names,
           )}, not the five scenarios it declares. Accepting the file means registering ` +
-            "every one of them, repeats and all"
+            "every one of them, repeats and all",
         );
 
       return wrong;
@@ -392,8 +392,8 @@ const RUNS = [
       )
         wrong.push(
           `the run reported ${names.length} test(s) ${JSON.stringify(
-            names
-          )}, not the three identically named Examples rows the outline declares`
+            names,
+          )}, not the three identically named Examples rows the outline declares`,
         );
 
       return wrong;
@@ -416,7 +416,7 @@ RUNS.forEach((run) => {
         observed.tests
           .map((each) => `${each.name} [${each.status}]`)
           .join(", ") || "none"
-      }`
+      }`,
   );
 
   if (wrong.length > 0) failures.push({ run: run.name, wrong });
@@ -425,7 +425,7 @@ RUNS.forEach((run) => {
 if (failures.length > 0) {
   console.error(
     `\nThe errors option does not behave as the contract says. ` +
-      `${failures.length} of ${RUNS.length} child runs differ:\n`
+      `${failures.length} of ${RUNS.length} child runs differ:\n`,
   );
   failures.forEach((failure) => {
     console.error(`  - ${failure.run}`);
@@ -439,5 +439,5 @@ console.log(
   `\nAll ${RUNS.length} child runs hold: an unbound step is refused with the code that would ` +
     "bind it, switching the check off reports the scenario skipped and never passed, a " +
     "duplicated declared title is refused by default and accepted when the key says so, and " +
-    "an outline's repeated row names are not duplicates."
+    "an outline's repeated row names are not duplicates.",
 );

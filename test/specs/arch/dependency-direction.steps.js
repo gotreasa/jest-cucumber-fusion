@@ -163,7 +163,7 @@ const theSourceTree = everyJavaScriptFileUnder(sourceRoot).map((absolute) => {
       .join("/"),
     requires: requireTargetsIn(stripped(source, { blankStrings: false })),
     unreadableRequires: unreadableRequiresIn(
-      stripped(source, { blankStrings: false })
+      stripped(source, { blankStrings: false }),
     ),
   };
 });
@@ -179,7 +179,7 @@ describe("the dependency direction inside src/ is inward", () => {
     // HOW:  keep src/index.js where package.json points `main`.
     expect(theSourceTree.length).toBeGreaterThan(0);
     expect(theSourceTree.map((each) => each.modulePath)).toContain(
-      "src/index.js"
+      "src/index.js",
     );
   });
 
@@ -221,7 +221,7 @@ describe("the dependency direction inside src/ is inward", () => {
             .map((name) => name.replace(/`/g, ""))
             .sort(),
         ];
-      })
+      }),
     );
     // The same names from the code: "./keywords" is listed as keywords, "node:fs" as fs.
     const asListed = (target) =>
@@ -238,11 +238,11 @@ describe("the dependency direction inside src/ is inward", () => {
       const unused = expected.filter((name) => !actual.includes(name));
       return [
         ...unlisted.map(
-          (name) => `${each.modulePath} requires ${name}, unlisted`
+          (name) => `${each.modulePath} requires ${name}, unlisted`,
         ),
         ...unused.map(
           (name) =>
-            `${each.modulePath} is listed as requiring ${name}, but does not`
+            `${each.modulePath} is listed as requiring ${name}, but does not`,
         ),
         ...(each.unreadableRequires > 0
           ? [
@@ -253,7 +253,7 @@ describe("the dependency direction inside src/ is inward", () => {
     });
     const rowsWithoutAFile = Object.keys(listed).filter(
       (modulePath) =>
-        !theSourceTree.some((each) => each.modulePath === modulePath)
+        !theSourceTree.some((each) => each.modulePath === modulePath),
     );
 
     // WHAT: every difference between what a module requires and what the table says it does.
@@ -294,30 +294,30 @@ describe("the dependency direction inside src/ is inward", () => {
     const refused = {
       "a bare describe": await jestGlobalErrors(
         'describe("x", () => {});\n',
-        CORE
+        CORE,
       ),
       "globalThis.describe": await jestGlobalErrors(
         'globalThis.describe("x", () => {});\n',
-        CORE
+        CORE,
       ),
       "global.test": await jestGlobalErrors(
         'global.test("x", () => {});\n',
-        CORE
+        CORE,
       ),
       "globalThis.beforeEach": await jestGlobalErrors(
         "globalThis.beforeEach(() => {});\n",
-        CORE
+        CORE,
       ),
     };
     const allowed = {
       "a local named it, a key named test and a regex test":
         await jestGlobalErrors(
           'const it = /x/;\nmodule.exports = { test: it.test("x") };\n',
-          CORE
+          CORE,
         ),
       "describe in the registration port": await jestGlobalErrors(
         'describe("x", () => {});\n',
-        PORT
+        PORT,
       ),
     };
     // The real tree, file by file through lintText: lintFiles' own file search also reaches a
@@ -329,12 +329,12 @@ describe("the dependency direction inside src/ is inward", () => {
             await jestGlobalErrors(
               fs.readFileSync(
                 path.join(repositoryRoot, each.modulePath),
-                "utf8"
+                "utf8",
               ),
-              path.join(repositoryRoot, each.modulePath)
+              path.join(repositoryRoot, each.modulePath),
             )
-          ).map((error) => `${each.modulePath} ${error}`)
-        )
+          ).map((error) => `${each.modulePath} ${error}`),
+        ),
       )
     ).flat();
 
@@ -348,10 +348,10 @@ describe("the dependency direction inside src/ is inward", () => {
     //       the only module that registers anything. The rules live in eslint.config.js.
     expect({
       notRefused: Object.keys(refused).filter(
-        (probe) => refused[probe].length === 0
+        (probe) => refused[probe].length === 0,
       ),
       wronglyRefused: Object.keys(allowed).filter(
-        (probe) => allowed[probe].length > 0
+        (probe) => allowed[probe].length > 0,
       ),
       realTree,
     }).toStrictEqual({ notRefused: [], wronglyRefused: [], realTree: [] });
@@ -368,7 +368,7 @@ describe("the dependency direction inside src/ is inward", () => {
     // HOW:  export the step verbs, the hooks and Fusion. Keep src/feature-source.js and
     //       src/test-registration.js internal module paths, reached by require, never exports.
     expect(Object.keys(publicSurface).sort()).toStrictEqual(
-      [...PUBLIC_EXPORTS].sort()
+      [...PUBLIC_EXPORTS].sort(),
     );
   });
 });

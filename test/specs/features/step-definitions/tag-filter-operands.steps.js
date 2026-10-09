@@ -17,7 +17,7 @@ const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-operands-"));
 const feature = path.join(featureDir, "operands.feature");
 fs.writeFileSync(
   feature,
-  "Feature: Operands\n  @smoke\n  Scenario: Opening\n    Given the shop is open\n"
+  "Feature: Operands\n  @smoke\n  Scenario: Opening\n    Given the shop is open\n",
 );
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 
@@ -55,17 +55,17 @@ describe("tag filter operands", () => {
 
   test("a bare word anywhere in the expression is refused", () => {
     expect(outcomes.bareInsideAnExpression).toMatch(
-      /^Could not parse tag filter "@smoke and not Slow"\.\n/
+      /^Could not parse tag filter "@smoke and not Slow"\.\n/,
     );
     expect(outcomes.bareInsideAnExpression).toContain('"Slow" is not a tag');
   });
 
   test("the bare operand is named as written, as a whole token", () => {
     expect(outcomes.bareAfterTheSameWordTagged).toContain(
-      '"smoke" is not a tag'
+      '"smoke" is not a tag',
     );
     expect(outcomes.bareAfterTheSameWordTagged).toContain(
-      'Did you mean "@smoke"?'
+      'Did you mean "@smoke"?',
     );
     expect(outcomes.bareAfterADottedCapitalI).toContain('"smoke" is not a tag');
   });

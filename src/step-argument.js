@@ -25,8 +25,8 @@ const asRowObjects = (dataTable) => {
     cellValues(row).reduce(
       (rowObject, value, columnIndex) =>
         Object.assign(rowObject, { [columnNames[columnIndex]]: value }),
-      {}
-    )
+      {},
+    ),
   );
 };
 

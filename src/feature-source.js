@@ -64,7 +64,7 @@ const readFeatureText = (absoluteFeatureFilePath) => {
     throw new Error(
       `Feature file not found (${absoluteFeatureFilePath})` +
         `. Fusion resolves a feature path relative to the directory of the file that calls` +
-        ` Fusion, so check the path from there.`
+        ` Fusion, so check the path from there.`,
     );
 
   return fs.readFileSync(absoluteFeatureFilePath, "utf8");
@@ -79,7 +79,7 @@ const parseFeature = (featureText) => {
   const ids = messages.IdGenerator.incrementing();
   const parser = new gherkin.Parser(
     new gherkin.AstBuilder(ids),
-    new gherkin.GherkinClassicTokenMatcher()
+    new gherkin.GherkinClassicTokenMatcher(),
   );
 
   try {
@@ -172,7 +172,7 @@ const duplicatedTitles = (scenarios) => {
 const refuseDuplicatedTitles = (featureTitle, duplicated) => {
   const entries = duplicated.map(
     (each, index) =>
-      `  ${index + 1}. "${each.title}" is declared ${each.count} times`
+      `  ${index + 1}. "${each.title}" is declared ${each.count} times`,
   );
 
   throw new Error(
@@ -187,7 +187,7 @@ const refuseDuplicatedTitles = (featureTitle, duplicated) => {
       `HOW:  rename one of each pair, or pass\n` +
       `      errors: { scenariosMustMatchFeatureFile: false } to accept the file as it\n` +
       `      stands. A Scenario Outline counts once however many Examples rows it has, so\n` +
-      `      repeated ROW names are never this refusal.`
+      `      repeated ROW names are never this refusal.`,
   );
 };
 
@@ -206,13 +206,13 @@ const keywordOfPickleStep = (pickleStep, stepsById, language) => {
     throw new Error(
       `Unresolvable step: "${pickleStep.text}" carries no astNodeId that names a step of` +
         ` the parsed feature, so the Gherkin keyword it was written with cannot be` +
-        ` recovered and Fusion cannot tell which step definitions may bind it.`
+        ` recovered and Fusion cannot tell which step definitions may bind it.`,
     );
 
   return bucketForKeyword(
     astStep.keyword,
     gherkin.dialects[language],
-    language
+    language,
   );
 };
 
@@ -237,7 +237,7 @@ const scenarioOrder = (pickle, scenariosById) => {
 
 const inRegistrationOrder = (pickles, scenariosById) =>
   [PLAIN_SCENARIOS_FIRST, EXAMPLES_ROWS_AFTER].flatMap((group) =>
-    pickles.filter((pickle) => scenarioOrder(pickle, scenariosById) === group)
+    pickles.filter((pickle) => scenarioOrder(pickle, scenariosById) === group),
   );
 
 // The tag set a filter is evaluated against is the compiled pickle's own, which already unions

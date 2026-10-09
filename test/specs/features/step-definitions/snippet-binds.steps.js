@@ -42,7 +42,7 @@ const REAL_VERBS = { Given, When, Then, And, But };
 const snippetFor = (refusal, stepText) => {
   const lines = String(refusal.message).split("\n");
   const entry = lines.findIndex((line) =>
-    line.includes(`No step definition matches: "${stepText}"`)
+    line.includes(`No step definition matches: "${stepText}"`),
   );
   return entry === -1 ? null : lines[entry + 1].trim();
 };
@@ -54,7 +54,7 @@ const declaredBy = (snippet) => {
   const recordAs = (verb) => (matcher, stepFunction) =>
     Object.assign(declared, { verb, matcher, arity: stepFunction.length });
   new Function(...Object.keys(REAL_VERBS), snippet)(
-    ...Object.keys(REAL_VERBS).map(recordAs)
+    ...Object.keys(REAL_VERBS).map(recordAs),
   );
   return declared;
 };
@@ -71,7 +71,7 @@ const pasteAndBind = (keyword, stepText, caseLabel) => {
     `Feature: snippet ${caseLabel}\n` +
       `  Scenario: the suggested code binds its own step\n` +
       `    Given the snippet test starts\n` +
-      `    ${VERBS[keyword]} ${stepText}\n`
+      `    ${VERBS[keyword]} ${stepText}\n`,
   );
 
   Given("the snippet test starts", () => {});
@@ -190,7 +190,7 @@ const EXAMPLES = [
 EXAMPLES.forEach(([keyword, stepText, expectedSnippet], index) => {
   const outcome = pasteAndBind(keyword, stepText, `example ${index}`);
   test(`the suggested code for ${JSON.stringify(
-    stepText
+    stepText,
   )} is exactly ${expectedSnippet}, compiles and binds its own step`, () => {
     expect(outcome.snippet).toBe(expectedSnippet);
     expectPastedSnippetToWork(outcome);
@@ -240,15 +240,15 @@ const token = fc.oneof(
       "&",
       "%",
       "é",
-      "日本"
+      "日本",
     ),
-  }
+  },
 );
 const stepTextArbitrary = fc
   .array(token, { minLength: 1, maxLength: 7 })
   .map((parts) => parts.join(" ").replace(/\s+/g, " ").trim())
   .filter(
-    (text) => text.length > 0 && !/^[#|]/.test(text) && !text.startsWith('"""')
+    (text) => text.length > 0 && !/^[#|]/.test(text) && !text.startsWith('"""'),
   );
 const keywordArbitrary = fc.constantFrom("given", "when", "then", "and", "but");
 
@@ -259,10 +259,10 @@ fc.sample(fc.tuple(keywordArbitrary, stepTextArbitrary), {
   const outcome = pasteAndBind(
     keyword,
     stepText,
-    `property case ${index} (seed ${SEED})`
+    `property case ${index} (seed ${SEED})`,
   );
   test(`property case ${index} (seed ${SEED}): ${JSON.stringify(
-    stepText
+    stepText,
   )} binds after pasting`, () => {
     expectPastedSnippetToWork(outcome);
   });
@@ -287,7 +287,7 @@ describe("pasting every snippet of one refusal", () => {
       `    Given I have 7 apples\n` +
       `      | colour |\n` +
       `      | red    |\n` +
-      `    Then I have 3 apples\n`
+      `    Then I have 3 apples\n`,
   );
   let refusal = null;
   try {
@@ -303,7 +303,7 @@ describe("pasting every snippet of one refusal", () => {
   let pasteError = null;
   try {
     new Function(...Object.keys(REAL_VERBS), snippets.join("\n"))(
-      ...Object.values(REAL_VERBS)
+      ...Object.values(REAL_VERBS),
     );
     Fusion(feature);
   } catch (error) {
@@ -336,9 +336,9 @@ const pasteAllAndBind = (keyword, stepTexts, caseLabel) => {
       stepTexts
         .map(
           (stepText, index) =>
-            `  Scenario: step ${index}\n    ${VERBS[keyword]} ${stepText}\n`
+            `  Scenario: step ${index}\n    ${VERBS[keyword]} ${stepText}\n`,
         )
-        .join("")
+        .join(""),
   );
   const outcome = { message: "", snippets: [], pasteError: null };
   try {
@@ -352,7 +352,7 @@ const pasteAllAndBind = (keyword, stepTexts, caseLabel) => {
     .filter((line) => /^(Given|When|Then|And|But)\(/.test(line));
   try {
     new Function(...Object.keys(REAL_VERBS), outcome.snippets.join("\n"))(
-      ...Object.values(REAL_VERBS)
+      ...Object.values(REAL_VERBS),
     );
     Fusion(feature);
   } catch (error) {
@@ -374,7 +374,7 @@ describe("one definition per step shape", () => {
     // The repeat is unbound in a second scenario too, as a Background step is in every one:
     // named once.
     [...STEP_TEXTS, "I weigh 1 kilo"],
-    "shapes"
+    "shapes",
   );
 
   test("counts and names every unbound step, each once", () => {
@@ -383,8 +383,8 @@ describe("one definition per step shape", () => {
     // One assertion over the list, so a failure names every step the message misses at once.
     expect(
       STEP_TEXTS.filter(
-        (stepText) => !outcome.message.includes(`"${stepText}"`)
-      )
+        (stepText) => !outcome.message.includes(`"${stepText}"`),
+      ),
     ).toEqual([]);
   });
 
@@ -409,9 +409,9 @@ test("starterCodeFor gives one step's starter code, as the refusal does", () => 
       keyword: "given",
       stepText: "I weigh 1.5 kilo",
       stepArgument: [],
-    })
+    }),
   ).toBe(
-    String.raw`Given(/^I weigh ([-+]?\d*\.?\d+) kilo$/, (arg0, table) => {});`
+    String.raw`Given(/^I weigh ([-+]?\d*\.?\d+) kilo$/, (arg0, table) => {});`,
   );
 });
 
@@ -422,7 +422,7 @@ describe("quoted captures stop at the closing quote", () => {
   const outcome = pasteAllAndBind(
     "given",
     ['"a" "b"', '"a" "b" 3 "c"'],
-    "greedy quotes"
+    "greedy quotes",
   );
 
   test("binds both steps when both are pasted", () => {
@@ -437,17 +437,17 @@ describe("quoted captures stop at the closing quote", () => {
 fc.sample(
   fc.tuple(
     keywordArbitrary,
-    fc.uniqueArray(stepTextArbitrary, { minLength: 2, maxLength: 6 })
+    fc.uniqueArray(stepTextArbitrary, { minLength: 2, maxLength: 6 }),
   ),
-  { seed: SEED + 1, numRuns: Math.ceil(RUNS / 3) }
+  { seed: SEED + 1, numRuns: Math.ceil(RUNS / 3) },
 ).forEach(([keyword, stepTexts], index) => {
   const outcome = pasteAllAndBind(
     keyword,
     stepTexts,
-    `property case ${index} (seed ${SEED + 1})`
+    `property case ${index} (seed ${SEED + 1})`,
   );
   test(`paste-all property case ${index} (seed ${SEED + 1}): ${JSON.stringify(
-    stepTexts
+    stepTexts,
   )} all bind`, () => {
     expect(outcome.snippets.length).toBeGreaterThan(0);
     expect(outcome.pasteError).toBeNull();

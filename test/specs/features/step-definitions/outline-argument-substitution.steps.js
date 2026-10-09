@@ -13,7 +13,7 @@ const path = require("path");
 const { When, Fusion } = require("../../../../src");
 
 const featureDir = fs.mkdtempSync(
-  path.join(os.tmpdir(), "fusion-substitution-")
+  path.join(os.tmpdir(), "fusion-substitution-"),
 );
 const feature = path.join(featureDir, "substitution.feature");
 fs.writeFileSync(
@@ -33,17 +33,17 @@ fs.writeFileSync(
     "      | <n> |\n\n" +
     "    Examples:\n" +
     "      | n |\n" +
-    "      | 8 |\n"
+    "      | 8 |\n",
 );
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 
 const received = [];
 When(/^a regex step with no placeholder "([^"]*)" and a table$/, (...args) =>
-  received.push(args)
+  received.push(args),
 );
 When(
   /^a regex step with no placeholder "([^"]*)" and a docstring$/,
-  (...args) => received.push(args)
+  (...args) => received.push(args),
 );
 When("a string step with a table", (...args) => received.push(args));
 Fusion(feature);

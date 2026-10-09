@@ -40,7 +40,7 @@ const defaultOptions = () => ({
 // every key agree with it.
 const keysThatAreSet = (options) =>
   Object.fromEntries(
-    Object.entries(options).filter(([, value]) => value !== undefined)
+    Object.entries(options).filter(([, value]) => value !== undefined),
   );
 
 // What ONE layer's `errors` contributes, in the three forms a consumer may write it:
@@ -80,7 +80,7 @@ const refuseNonOptionObject = (whatItWasGiven) =>
       `HOW:  pass the same object a Fusion() call accepts, for example\n` +
       `      setFusionConfiguration({ tagFilter: "@smoke and not @slow" }). The accepted keys\n` +
       `      are errors, tagFilter, scenarioNameTemplate and loadRelativePath; an unknown key\n` +
-      `      is ignored, exactly as it is per call.`
+      `      is ignored, exactly as it is per call.`,
   );
 
 // Refused here, at the call, because that is the one place and time the consumer can act: a
@@ -108,7 +108,7 @@ const errorsAcross = (layers) =>
       Object.prototype.hasOwnProperty.call(layer, "errors")
         ? Object.assign(merged, errorsNamedBy(layer.errors))
         : merged,
-    everyValidation(true)
+    everyValidation(true),
   );
 
 const mergeFusionOptions = (perCallOptions) => {
@@ -118,7 +118,7 @@ const mergeFusionOptions = (perCallOptions) => {
   const merged = Object.assign(
     defaultOptions(),
     keysThatAreSet(globalOptions),
-    keysThatAreSet(perCall)
+    keysThatAreSet(perCall),
   );
 
   return Object.assign(merged, {

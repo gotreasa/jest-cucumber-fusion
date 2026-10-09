@@ -24,8 +24,8 @@ const refuseUnsupportedKeyword = (keyword, language) => {
     `Unsupported step keyword: "${asComparable(keyword)}"` +
       (language ? ` in the "${language}" Gherkin dialect` : "") +
       `. Fusion binds step definitions by keyword, and only ${BUCKETS.join(
-        ", "
-      )} have a registry to bind in. Rewrite the step with one of those keywords.`
+        ", ",
+      )} have a registry to bind in. Rewrite the step with one of those keywords.`,
   );
 };
 
@@ -43,8 +43,9 @@ const bucketForKeyword = (keyword, dialect, language) => {
       .map(asComparable)
       .some(
         (dialectKeyword) =>
-          dialectKeyword !== UNBUCKETED_KEYWORD && dialectKeyword === comparable
-      )
+          dialectKeyword !== UNBUCKETED_KEYWORD &&
+          dialectKeyword === comparable,
+      ),
   );
 
   if (!bucket) refuseUnsupportedKeyword(keyword, language);

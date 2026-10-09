@@ -65,7 +65,7 @@ const run = (step, command, argv, options) => {
       step,
       `${command} could not be run: ${result.error.message}`,
       "the journey cannot be walked at all, so nothing is proved either way",
-      `run this where ${command} is on PATH`
+      `run this where ${command} is on PATH`,
     );
   }
 
@@ -77,7 +77,7 @@ const packTheRepository = (into) => {
     "npm pack",
     "npm",
     ["pack", "--json", `--pack-destination=${into}`],
-    { cwd: repositoryRoot }
+    { cwd: repositoryRoot },
   );
 
   if (packed.status !== 0) {
@@ -85,7 +85,7 @@ const packTheRepository = (into) => {
       "npm pack",
       `npm pack exited ${packed.status}`,
       "without a tarball there is nothing for a consumer to install",
-      `npm said:\n${(packed.stderr || packed.stdout || "").trim()}`
+      `npm said:\n${(packed.stderr || packed.stdout || "").trim()}`,
     );
   }
 
@@ -97,7 +97,7 @@ const packTheRepository = (into) => {
       "npm pack",
       `npm pack did not print JSON: ${unreadable.message}`,
       "the tarball has to be identified exactly, or a later step might install a different one",
-      "run `npm pack --json` by hand and look at what it printed"
+      "run `npm pack --json` by hand and look at what it printed",
     );
   }
 
@@ -112,7 +112,7 @@ const packTheRepository = (into) => {
         filename || "no filename"
       } but no such file exists in ${into}`,
       "an unidentified tarball cannot be the subject of the rest of the journey",
-      "check the npm version supports --pack-destination (npm 7 and above)"
+      "check the npm version supports --pack-destination (npm 7 and above)",
     );
   }
 
@@ -130,8 +130,8 @@ const writeTheConsumerProject = (projectDirectory) => {
         jest: { testMatch: ["**/*.steps.js"] },
       },
       null,
-      2
-    )}\n`
+      2,
+    )}\n`,
   );
 
   fs.writeFileSync(
@@ -144,7 +144,7 @@ const writeTheConsumerProject = (projectDirectory) => {
       '    When a consumer buys 2 of "Rick Astley t-shirt"',
       "    Then the shop has taken 2 orders",
       "",
-    ].join("\n")
+    ].join("\n"),
   );
 
   fs.writeFileSync(
@@ -171,7 +171,7 @@ const writeTheConsumerProject = (projectDirectory) => {
       "",
       'Fusion("sales.feature");',
       "",
-    ].join("\n")
+    ].join("\n"),
   );
 };
 
@@ -185,7 +185,7 @@ const treeOf = (projectDirectory) => {
       "npm ls in the consumer project",
       "npm printed nothing",
       "an empty answer is not evidence that the consumer tree is clean",
-      `npm said:\n${(listing.stderr || "").trim()}`
+      `npm said:\n${(listing.stderr || "").trim()}`,
     );
   }
 
@@ -196,7 +196,7 @@ const treeOf = (projectDirectory) => {
       "npm ls in the consumer project",
       `npm did not print JSON: ${unreadable.message}`,
       "an unparseable listing cannot be searched, so it proves nothing either way",
-      "run `npm ls --all --json` in the consumer project by hand"
+      "run `npm ls --all --json` in the consumer project by hand",
     );
   }
 };
@@ -210,7 +210,7 @@ const forbiddenRoutesIn = (tree) => {
       const route = [...trail, `${name}@${child.version || "?"}`];
       if (child.missing || child.invalid) {
         broken.push(
-          `${route.join(" > ")} (${child.missing ? "missing" : "invalid"})`
+          `${route.join(" > ")} (${child.missing ? "missing" : "invalid"})`,
         );
       }
       if (FORBIDDEN.includes(name)) routes.push(route.join(" > "));
@@ -244,14 +244,14 @@ const install = run(
   ["install", "--no-audit", "--no-fund", tarball],
   {
     cwd: projectDirectory,
-  }
+  },
 );
 if (install.status !== 0) {
   cannotObserve(
     "npm install of the tarball",
     `npm install exited ${install.status}`,
     "a consumer who cannot install the package tells us nothing about what the package does",
-    `npm said:\n${(install.stderr || install.stdout || "").trim()}`
+    `npm said:\n${(install.stderr || install.stdout || "").trim()}`,
   );
 }
 
@@ -259,14 +259,14 @@ const installed = path.join(
   projectDirectory,
   "node_modules",
   manifest.name,
-  "package.json"
+  "package.json",
 );
 if (!fs.existsSync(installed)) {
   cannotObserve(
     "npm install of the tarball",
     `${manifest.name} is not present in the consumer project after install`,
     "there is no installed package to drive, so the journey stops here",
-    "check the package name and the tarball contents"
+    "check the package name and the tarball contents",
   );
 }
 
@@ -274,7 +274,7 @@ const consumerJest = path.join(
   projectDirectory,
   "node_modules",
   ".bin",
-  "jest"
+  "jest",
 );
 if (!fs.existsSync(consumerJest)) {
   cannotObserve(
@@ -283,7 +283,7 @@ if (!fs.existsSync(consumerJest)) {
     "the promise is that installing this package is enough to run a feature file; without a " +
       "runner that promise cannot be observed at all",
     "keep jest a dependency of this package, or state the peer requirement and give the " +
-      "consumer project its own jest"
+      "consumer project its own jest",
   );
 }
 
@@ -293,7 +293,7 @@ const consumerRun = run(
   ["--coverage=false"],
   {
     cwd: projectDirectory,
-  }
+  },
 );
 
 const { routes, broken } = forbiddenRoutesIn(treeOf(projectDirectory));
@@ -302,10 +302,10 @@ if (broken.length > 0) {
   cannotObserve(
     "npm ls in the consumer project",
     `the listing records packages as missing or invalid:\n        ${broken.join(
-      "\n        "
+      "\n        ",
     )}`,
     "a partly installed tree cannot be searched exhaustively, so an absence in it means nothing",
-    "install again and re-run"
+    "install again and re-run",
   );
 }
 
@@ -320,7 +320,7 @@ if (consumerRun.status !== 0) {
       "    HOW:  ship every source file the public surface requires inside the tarball, and keep\n" +
       "          every runtime dependency loadable by require under the consumer's jest.\n" +
       "    The consumer run said:\n" +
-      `${(consumerRun.stderr || consumerRun.stdout || "").trim()}`
+      `${(consumerRun.stderr || consumerRun.stdout || "").trim()}`,
   );
 }
 
@@ -332,7 +332,7 @@ if (routes.length > 0) {
       "          route to it. This is the tree a consumer audits, so a clean repository tree with\n" +
       "          a dirty installed tree is still the defect the Request exists to remove.\n" +
       "    HOW:  remove jest-cucumber from this package's dependencies and regenerate\n" +
-      "          package-lock.json, then pack again."
+      "          package-lock.json, then pack again.",
   );
 }
 
@@ -347,10 +347,10 @@ console.log(
     "advisory carrier.\n" +
     `  consumer suite:   exit 0 (${path.relative(
       projectDirectory,
-      consumerJest
+      consumerJest,
     )})\n` +
     `  names refused:    ${FORBIDDEN.join(
-      ", "
+      ", ",
     )}, absent from the whole installed tree\n` +
-    "  temporary project removed."
+    "  temporary project removed.",
 );

@@ -96,7 +96,7 @@ const openerFor = (stepText) => `${OPENER}${stepText}"`;
 
 const explain = (what, why, how) =>
   new Error(
-    `WHAT: ${what}\nWHY:  ${why}\nHOW:  ${how}\n\nThe refusal read:\n${refusalText}`
+    `WHAT: ${what}\nWHY:  ${why}\nHOW:  ${how}\n\nThe refusal read:\n${refusalText}`,
   );
 
 const entryIndexFor = (stepText) => refusalText.indexOf(openerFor(stepText));
@@ -110,7 +110,7 @@ const entryFor = (stepText) => {
       "one refusal has to name every unbound step in the feature; a consumer who fixes the " +
         "one step it did name pays another full run to be told about the next.",
       "collect every step that binds nothing while binding the feature, then refuse once " +
-        "with all of them."
+        "with all of them.",
     );
 
   const after = refusalText.slice(at + openerFor(stepText).length);
@@ -145,7 +145,7 @@ const suggestionFor = (stepText) => {
         "leaving them to work out the matcher and the parameters is the message they already " +
         "had.",
       "emit the verb for that step's own keyword, a matcher for its text, and a step " +
-        "function with a parameter for each argument the step implies."
+        "function with a parameter for each argument the step implies.",
     );
 
   const snippet = entry.slice(at);
@@ -175,7 +175,7 @@ const suggestionFor = (stepText) => {
     "a consumer pastes this. It has to be a verb call whose matcher is either a double-quoted " +
       "string or an ANCHORED slash-delimited regex, followed by a step function.",
     'emit Verb("exact text", () => {}) for a step with no detectable argument, or ' +
-      "Verb(/^text with (capture)$/, (arg) => {}) for one that has them."
+      "Verb(/^text with (capture)$/, (arg) => {}) for one that has them.",
   );
 };
 
@@ -195,7 +195,7 @@ const capturesOf = (suggestion, stepText) => {
         "matcher gets a definition that binds this one sentence and hands over no argument. " +
         "The regex is the whole reason the suggestion is worth pasting.",
       "detect a number or a double-quoted substring in the step text and replace each with a " +
-        "capture group in an anchored slash-delimited regex."
+        "capture group in an anchored slash-delimited regex.",
     );
 
   const matched = asCompiledRegExp(suggestion.matcher.literal).exec(stepText);
@@ -207,7 +207,7 @@ const capturesOf = (suggestion, stepText) => {
       "starter code that does not bind the step it was offered for is worse than no starter " +
         "code: the consumer pastes it, the step stays unbound, and the refusal now lies.",
       "build the matcher from the step's own text, escaping it and replacing only the " +
-        "detected arguments with capture groups."
+        "detected arguments with capture groups.",
     );
 
   return matched.slice(1);
@@ -257,8 +257,8 @@ test("one refusal names every unbound step of the feature, in feature order, and
   const misnumbered = THE_UNBOUND_STEPS.filter(
     (stepText, index) =>
       !new RegExp(`(^|[^0-9])${index + 1}([^0-9]|$)`).test(
-        markerBefore(stepText)
-      )
+        markerBefore(stepText),
+      ),
   );
   expect(misnumbered).toStrictEqual([]);
 });

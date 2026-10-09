@@ -90,7 +90,7 @@ Then(
     //       wrong arguments.
     // HOW:  match the definition against the row's SUBSTITUTED step text and take its groups.
     expect(argumentsTheStepReceived).toStrictEqual([colourFromThisRow, state]);
-  }
+  },
 );
 
 Then(/^the access step received "(.+)"$/, (codeFromThisRow) => {
@@ -111,7 +111,7 @@ Then(
       channelFromThisRow,
       release,
     ]);
-  }
+  },
 );
 
 Fusion("../l2-outline-edge-cases.feature");

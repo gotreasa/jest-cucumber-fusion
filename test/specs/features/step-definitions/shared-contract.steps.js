@@ -64,10 +64,10 @@ const forwardOrRecord = (globalName, recorderKey) =>
     (...whateverThePackagePassed) =>
       registrationRecorder
         ? registrationRecorder[recorderKey || globalName](
-            ...whateverThePackagePassed
+            ...whateverThePackagePassed,
           )
         : realJestGlobals[globalName](...whateverThePackagePassed),
-    realJestGlobals[globalName]
+    realJestGlobals[globalName],
   );
 
 global.describe = forwardOrRecord("describe");
@@ -154,28 +154,28 @@ const registerTheStepDefinitions = (observations, { rosterMustFail } = {}) => {
   });
 
   Given(/^the launch pad is clear$/, (...argumentsReceived) =>
-    ran("given:launch pad", ...argumentsReceived)
+    ran("given:launch pad", ...argumentsReceived),
   );
 
   // Keyword scoping. The same sentence is registered under two keywords on purpose: the And
   // step must reach the And definition and the But step the But definition, never the other
   // one. A shadow that runs shows up in the step log as given:countdown / and:weather hold.
   And(/^the countdown has been announced$/, (...argumentsReceived) =>
-    ran("and:countdown", ...argumentsReceived)
+    ran("and:countdown", ...argumentsReceived),
   );
   Given(/^the countdown has been announced$/, (...argumentsReceived) =>
-    ran("given:countdown", ...argumentsReceived)
+    ran("given:countdown", ...argumentsReceived),
   );
   But(/^the weather hold has been lifted$/, (...argumentsReceived) =>
-    ran("but:weather hold", ...argumentsReceived)
+    ran("but:weather hold", ...argumentsReceived),
   );
   And(/^the weather hold has been lifted$/, (...argumentsReceived) =>
-    ran("and:weather hold", ...argumentsReceived)
+    ran("and:weather hold", ...argumentsReceived),
   );
 
   // The Rule's own Background. Only the scenarios inside the Rule may run it.
   Given("the inspection log is open", (...argumentsReceived) =>
-    ran("given:inspection log", ...argumentsReceived)
+    ran("given:inspection log", ...argumentsReceived),
   );
 
   // A capture and a data table on one step.
@@ -187,7 +187,7 @@ const registerTheStepDefinitions = (observations, { rosterMustFail } = {}) => {
   // A capture and an EMPTY docstring on one step, inside a Scenario Outline.
   Given(
     /^an incident is filed for rocket "(.+)" with these notes:$/,
-    (...argumentsReceived) => ran("given:incident", ...argumentsReceived)
+    (...argumentsReceived) => ran("given:incident", ...argumentsReceived),
   );
 
   Then(
@@ -207,7 +207,7 @@ const registerTheStepDefinitions = (observations, { rosterMustFail } = {}) => {
         "and:countdown",
         "but:weather hold",
       ]);
-    }
+    },
   );
 
   Then(
@@ -221,7 +221,7 @@ const registerTheStepDefinitions = (observations, { rosterMustFail } = {}) => {
         "given:inspection log",
         "given:crew roster",
       ]);
-    }
+    },
   );
 
   And(
@@ -237,7 +237,7 @@ const registerTheStepDefinitions = (observations, { rosterMustFail } = {}) => {
         "2",
         THE_CREW_ROSTER,
       ]);
-    }
+    },
   );
 
   Then(
@@ -252,7 +252,7 @@ const registerTheStepDefinitions = (observations, { rosterMustFail } = {}) => {
         rocket,
         "",
       ]);
-    }
+    },
   );
 };
 
@@ -301,13 +301,13 @@ test("a failing step reports its text, its arguments and the original error, and
   const inspection = whatFusionRegistered.tests.find(
     (each) =>
       each.testName ===
-      "An inspection reads the crew roster attached to its step"
+      "An inspection reads the crew roster attached to its step",
   );
   expect(inspection).toBeDefined();
 
   const failure = await inspection.testBody().then(
     () => null,
-    (thrown) => thrown
+    (thrown) => thrown,
   );
 
   // WHAT: the decoration, byte for byte — the failing step's text in double quotes, the JSON
@@ -320,7 +320,7 @@ test("a failing step reports its text, its arguments and the original error, and
   expect(failure.message).toBe(
     'Failing step: "2 crew are listed on the roster:"\n\n' +
       'Step arguments: ["2",[{"Name":"Ada","Role":"pilot"},{"Name":"Grace","Role":"engineer"}]]\n\n' +
-      `Error: ${ROSTER_FAILURE}`
+      `Error: ${ROSTER_FAILURE}`,
   );
 
   // WHAT / WHY / HOW: the scenario stopped at the step that threw. Running the rest of a
@@ -336,7 +336,7 @@ test("a failing step reports its text, its arguments and the original error, and
 test("a missing feature file names the absolute path Fusion looked for", () => {
   const pathItMustName = path.resolve(
     __dirname,
-    "../does-not-exist-shared-contract.feature"
+    "../does-not-exist-shared-contract.feature",
   );
 
   let refusal = null;
@@ -354,7 +354,7 @@ test("a missing feature file names the absolute path Fusion looked for", () => {
   // deliberately not pinned here, because the authority records that suffix as still open.
   expect(refusal).not.toBeNull();
   expect(refusal.message).toContain(
-    `Feature file not found (${pathItMustName})`
+    `Feature file not found (${pathItMustName})`,
   );
 });
 
@@ -370,6 +370,6 @@ afterAll(() => {
     Array.from({ length: liveRun.testsThatRan }, () => [
       "before",
       "after",
-    ]).flat()
+    ]).flat(),
   );
 });

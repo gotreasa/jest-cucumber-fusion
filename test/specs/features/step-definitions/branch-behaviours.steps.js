@@ -53,7 +53,7 @@ const recordRegistrations = (callFusion) => {
 // errors: true switches every check on, so an unbound step is refused.
 const unbound = writeFeature(
   "unbound.feature",
-  "Feature: Half written\n  Scenario: Unbound\n    Given a step nobody wrote\n"
+  "Feature: Half written\n  Scenario: Unbound\n    Given a step nobody wrote\n",
 );
 const errorsTrueRefusal = refusalOf(() => Fusion(unbound, { errors: true }));
 
@@ -64,7 +64,7 @@ const twoDuplicates = writeFeature(
     "  Scenario: Alpha\n    Given the shop is open\n" +
     "  Scenario: Alpha\n    Given the shop is open\n" +
     "  Scenario: Beta\n    Given the shop is open\n" +
-    "  Scenario: Beta\n    Given the shop is open\n"
+    "  Scenario: Beta\n    Given the shop is open\n",
 );
 Given("the shop is open", () => {});
 const pluralRefusal = refusalOf(() => Fusion(twoDuplicates));
@@ -77,13 +77,13 @@ const noFeatureRegistered = recordRegistrations(() => Fusion(noFeature));
 const opened = [];
 Given("the shop is open", () => opened.push("opened"));
 const duplicatesAccepted = recordRegistrations(() =>
-  Fusion(twoDuplicates, { errors: { scenariosMustMatchFeatureFile: false } })
+  Fusion(twoDuplicates, { errors: { scenariosMustMatchFeatureFile: false } }),
 );
 
 // A step that throws a string, not an Error.
 const throwing = writeFeature(
   "throwing.feature",
-  "Feature: Thrower\n  Scenario: Throws a string\n    Given the step throws a string\n"
+  "Feature: Thrower\n  Scenario: Throws a string\n    Given the step throws a string\n",
 );
 Given("the step throws a string", () => {
   throw "the till is jammed";
@@ -101,13 +101,13 @@ Fusion(writeFeature("empty-registry.feature", "# nothing to bind\n"));
 describe("branch behaviours no other suite pinned", () => {
   test("errors: true switches every check on", () => {
     expect(errorsTrueRefusal).toMatch(
-      /^Fusion found 1 step in the feature "Half written"/
+      /^Fusion found 1 step in the feature "Half written"/,
     );
   });
 
   test("two duplicated titles are reported in the plural", () => {
     expect(pluralRefusal).toMatch(
-      /^Duplicate scenario title: 2 titles are declared more than once in the feature "Twice over"\./
+      /^Duplicate scenario title: 2 titles are declared more than once in the feature "Twice over"\./,
     );
   });
 
@@ -132,28 +132,28 @@ describe("branch behaviours no other suite pinned", () => {
     await expect(onlyTest.body()).rejects.toThrow(
       'Failing step: "the step throws a string"\n\n' +
         "Step arguments: []\n\n" +
-        "Error: the till is jammed"
+        "Error: the till is jammed",
     );
   });
 
   test("a matcher that is neither a string nor a RegExp is refused at the call", () => {
     expect(matcherRefusals.number).toMatch(
-      /^Unsupported step matcher: Given was given number 42\./
+      /^Unsupported step matcher: Given was given number 42\./,
     );
     expect(matcherRefusals.object).toMatch(
-      /^Unsupported step matcher: When was given object \{ text: 'the shop opens' \}\./
+      /^Unsupported step matcher: When was given object \{ text: 'the shop opens' \}\./,
     );
     expect(matcherRefusals.undefined).toMatch(
-      /^Unsupported step matcher: Given was given undefined\./
+      /^Unsupported step matcher: Given was given undefined\./,
     );
     // One assertion over every refusal, so a failure names each case that misses the advice.
     expect(
       Object.entries(matcherRefusals)
         .filter(
           ([, message]) =>
-            !String(message).includes("a string or a regular expression")
+            !String(message).includes("a string or a regular expression"),
         )
-        .map(([kind]) => kind)
+        .map(([kind]) => kind),
     ).toEqual([]);
   });
 });

@@ -60,7 +60,7 @@ describe("M1 — every registered Before hook runs", () => {
     // Every before hook the wrapper handed across the registration seam, run in the order it
     // handed them over.
     mockState.registryHandedToThePort.before.forEach((wiredHook) =>
-      wiredHook()
+      wiredHook(),
     );
 
     expect(hookRunLog).toEqual(["before-1", "before-2"]);

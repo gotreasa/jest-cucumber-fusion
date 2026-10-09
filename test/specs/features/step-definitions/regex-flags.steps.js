@@ -25,7 +25,7 @@ fs.writeFileSync(
     "    Examples:\n" +
     "      | n |\n" +
     "      | 1 |\n" +
-    "      | 2 |\n"
+    "      | 2 |\n",
 );
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 

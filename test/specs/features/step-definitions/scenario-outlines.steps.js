@@ -17,7 +17,7 @@ Given(
   /^I have an Item named '<ThatCouldLookLikeAnOutlineVariable>'$/,
   (item) => {
     onlineSales.listItem("Autographed Neil deGrasse Tyson book");
-  }
+  },
 );
 
 When(/^I sell the (.*)$/, (item) => {
@@ -45,7 +45,7 @@ When(
   (item, expectedSalesPrice) => {
     salesPrice = onlineSales.sellItem(item);
     if (salesPrice) salesPrice = parseInt(expectedSalesPrice);
-  }
+  },
 );
 
 When(
@@ -57,7 +57,7 @@ When(
     } else {
       salesPrice = null;
     }
-  }
+  },
 );
 
 When(
@@ -69,7 +69,7 @@ When(
     } else {
       salesPrice = null;
     }
-  }
+  },
 );
 
 When(
@@ -81,7 +81,7 @@ When(
     } else {
       salesPrice = null;
     }
-  }
+  },
 );
 
 When(
@@ -93,7 +93,7 @@ When(
     } else {
       salesPrice = null;
     }
-  }
+  },
 );
 
 Then(/^I should still get \$(\d+)$/, (expectedSalesPrice) => {
@@ -104,7 +104,7 @@ Then(
   /^the (\d+)(?:th|d|nd|rd|st) item (\d+)(?:th|d|nd|rd|st) price has a price amount of (\d+) which is a '(\w*)'$/,
   (indexItem, indexPrice, amountPrice, typePrice) => {
     expect(salesPrice).toBe(parseInt(amountPrice));
-  }
+  },
 );
 
 Fusion("../scenario-outlines.feature");
