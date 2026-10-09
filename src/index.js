@@ -8,6 +8,7 @@ import { inspect } from "util";
 import { mergeFusionOptions, setFusionConfiguration } from "./configuration.js";
 import * as featureSource from "./feature-source.js";
 import * as testRegistration from "./test-registration.js";
+import { shared, replaceShared } from "./shared-state.js";
 
 const emptyStepsDefinition = () => ({
   given: {},
@@ -19,10 +20,12 @@ const emptyStepsDefinition = () => ({
   after: [],
 });
 
-// Module-level registry. Rebuilt from the empty shape above once a feature has been
-// loaded, so a second Fusion() in the same module starts from a clean slate rather
+// The registry the verbs and hooks write into. It lives in src/shared-state.js, not in a module
+// variable, so that a step file using one copy of the dual package (import) and a shared step
+// library using the other (require) register into the same one. Rebuilt from the empty shape
+// above once a feature has been loaded, so a second Fusion() starts from a clean slate rather
 // than inheriting the previous feature's step definitions and hooks.
-let stepsDefinition = emptyStepsDefinition();
+const stepsDefinition = () => shared("steps", emptyStepsDefinition);
 
 const isRegExp = (candidate) =>
   Object.prototype.toString.call(candidate) === "[object RegExp]";
@@ -64,17 +67,17 @@ const addDefinitionFunction = (
   if (!isStepMatcher(regexpSentence))
     throw refuseUnsupportedMatcher(definitionType, regexpSentence);
 
-  if (stepsDefinition[definitionType]) {
+  if (stepsDefinition()[definitionType]) {
     if (isRegExp(regexpSentence)) {
       throwIfDuplicateMatcher(definitionType, regexpSentence.source);
-      stepsDefinition[definitionType][regexpSentence.source] = {
+      stepsDefinition()[definitionType][regexpSentence.source] = {
         stepRegExp: regexpSentence,
         stepExpression: null,
         stepFn: fnForDefinition,
       };
     } else {
       throwIfDuplicateMatcher(definitionType, regexpSentence);
-      stepsDefinition[definitionType][regexpSentence] = {
+      stepsDefinition()[definitionType][regexpSentence] = {
         stepRegExp: null,
         stepExpression: regexpSentence,
         stepFn: fnForDefinition,
@@ -84,7 +87,7 @@ const addDefinitionFunction = (
 };
 
 const throwIfDuplicateMatcher = (definitionType, matcherKey) => {
-  if (stepsDefinition[definitionType][matcherKey])
+  if (stepsDefinition()[definitionType][matcherKey])
     throw new Error(
       `Duplicate step definition: "${matcherKey}" is already registered for "${definitionType}"`,
     );
@@ -137,10 +140,10 @@ const defineAndChain = (stepType, stepObjectOrSentence, fnForStep) => {
 };
 
 const Before = (fnDefinition) => {
-  stepsDefinition.before.push(fnDefinition);
+  stepsDefinition().before.push(fnDefinition);
 };
 const After = (fnDefinition) => {
-  stepsDefinition.after.push(fnDefinition);
+  stepsDefinition().after.push(fnDefinition);
 };
 
 const Fusion = (featureFileToLoad, optionsForThisFeature) => {
@@ -156,7 +159,7 @@ const Fusion = (featureFileToLoad, optionsForThisFeature) => {
 
     // This feature binds the definitions and hooks registered for IT, captured before the
     // registry is reset below, so the binding never depends on registration that came after.
-    const registryForThisFeature = stepsDefinition;
+    const registryForThisFeature = stepsDefinition();
 
     testRegistration.registerFeature(
       loadedFeature,
@@ -164,11 +167,10 @@ const Fusion = (featureFileToLoad, optionsForThisFeature) => {
       effectiveOptions,
     );
   } finally {
-    // Unconditional: Fusion() always leaves a clean slate (normal return OR throw). Rebinding
-    // the module-level registry (never mutating it in place) keeps the object captured above
-    // intact for whoever still holds it, while the next Fusion() starts empty and must
-    // re-register.
-    stepsDefinition = emptyStepsDefinition();
+    // Unconditional: Fusion() always leaves a clean slate (normal return OR throw). Replacing
+    // the shared registry (never mutating it in place) keeps the object captured above intact
+    // for whoever still holds it, while the next Fusion() starts empty and must re-register.
+    replaceShared("steps", emptyStepsDefinition());
   }
 };
 

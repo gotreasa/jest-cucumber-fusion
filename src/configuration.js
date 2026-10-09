@@ -6,12 +6,15 @@
 // setFusionConfiguration, and the options passed to one Fusion() call. The per-call layer wins,
 // which is the precedence the documentation has always stated.
 //
-// WHY A MODULE-LEVEL VARIABLE IS SAFE HERE. Jest builds a fresh module registry for each test
-// file and runs setupFiles inside it, so the global a setup script sets is visible to that
-// file's Fusion calls and cannot reach another file. It is per-file configuration, not shared
-// mutable state, and that is the whole reason this option can be set in one place.
+// WHERE THE GLOBAL LAYER LIVES, AND WHY IT IS PER FILE. In src/shared-state.js, on globalThis,
+// so that every copy of the dual package in a test file sees it: a setup script may require()
+// the package while the steps import it. Jest gives each test file its own global and runs
+// setupFiles inside it, so the global a setup script sets is visible to that file's Fusion
+// calls and cannot reach another file. It is per-file configuration, which is the whole reason
+// this option can be set in one place.
 
 import { describeValue } from "./value-description.js";
+import { shared, replaceShared } from "./shared-state.js";
 
 // Fusion's three validation keys. stepsMustMatchFeatureFile decides between the
 // unmatched-step refusal and a visible skipped test; scenariosMustMatchFeatureFile gates the
@@ -64,16 +67,10 @@ const errorsNamedBy = (errors) => {
 // replace is what the previous setter did, and it is the only semantics under which a consumer
 // can CLEAR a global they set earlier.
 //
-// Kept on globalThis, not in a module-level variable. The package is dual: a setup script that
-// require()s it loads dist/index.cjs, steps that import it load src/, and each copy has its own
-// module variables, so a global set through one copy was lost to the other (measured: the
-// mixed consumer in test/specs/baseline/assert-packaged-consumer.js). Every copy in one test
-// file shares the test environment's global, and Jest gives each test file its own, so the
-// layer stays per-file exactly as before.
-const GLOBAL_OPTIONS = Symbol.for(
-  "@g_package/jest-cucumber-fusion/global-options",
-);
-const globalOptions = () => globalThis[GLOBAL_OPTIONS] || {};
+// Kept in the shared store (src/shared-state.js), not in a module variable: a global set
+// through one copy of the dual package was otherwise lost to the other (measured: the mixed
+// consumer in test/specs/baseline/assert-packaged-consumer.js).
+const globalOptions = () => shared("globalOptions", () => ({}));
 
 const isAnOptionObject = (candidate) =>
   typeof candidate === "object" &&
@@ -101,7 +98,7 @@ const setFusionConfiguration = (optionsForEveryFusionCall) => {
 
   // Copied, so the stored global is ours: a consumer who later mutates the object they passed
   // does not silently reconfigure the rest of their file.
-  globalThis[GLOBAL_OPTIONS] = Object.assign({}, optionsForEveryFusionCall);
+  replaceShared("globalOptions", Object.assign({}, optionsForEveryFusionCall));
 };
 
 // `errors` is merged key-wise ACROSS the layers, not layer-over-layer as a whole value, which

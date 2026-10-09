@@ -24,7 +24,7 @@ All four publish ES modules only, and Jest cannot `require` an ES module. Most c
 - `import` resolves to `src/index.js`, the ES module source, for steps written as ES modules under Jest's ES module mode;
 - `require` resolves to `dist/index.cjs`, a CommonJS bundle that `scripts/build-cjs.js` builds with esbuild before every pack (the `prepack` script), with the four dependencies inlined. It ships with `dist/THIRD_PARTY_LICENSES.txt`, their MIT notices, and `dist/index.d.cts`, the typings for TypeScript consumers that `require`.
 
-A consumer who mixes the two, for example a `setupFiles` script that `require`s Fusion and steps that `import` it, loads two copies. The global configuration lives on `globalThis` for that reason, so a global set through one copy reaches the other. The packaged-consumer baseline runs all three shapes against the real tarball. Everything else the package needs comes from Node itself (`fs`, `path`, `url` and `util`) and from Jest's own globals.
+A consumer who mixes the two, for example a `setupFiles` script that `require`s Fusion and steps that `import` it, or a shared step library written as CommonJS used by step files written as ES modules, loads two copies. So everything the copies must share, the step and hook registry and the global configuration, lives in `shared-state.js` on `globalThis`: steps or a global registered through one copy reach the other. The packaged-consumer baseline runs all four shapes against the real tarball. Everything else the package needs comes from Node itself (`fs`, `path`, `url` and `util`) and from Jest's own globals.
 
 Until 3.0.0 the package was CommonJS with no build step, pinned to the last cucumber releases a `require` could load (gherkin 39, messages 32, tag-expressions 9, callsites 3). A spike on 2026-10-09 measured the alternatives on packed builds: an ES module only package broke every CommonJS consumer, while the dual package ran them all unchanged.
 
@@ -72,6 +72,7 @@ flowchart TB
 
   subgraph core["Pure core, no I/O and no Jest"]
     vd["value-description.js: how a refusal names a value it was given"]
+    ss["shared-state.js: the registry and global options every copy shares"]
     cfg["configuration.js: option defaults, the global layer and the merge"]
     kw["keywords.js: a dialect keyword onto one registry bucket"]
     sa["step-argument.js: a pickle argument into the shape a step receives"]
@@ -104,6 +105,8 @@ flowchart TB
   idx --> nutil
 
   cfg --> vd
+  cfg --> ss
+  idx --> ss
   sn --> vd
   vd --> nutil
 
@@ -126,8 +129,9 @@ flowchart TB
 
 | Module | Responsibility | Requires |
 |---|---|---|
-| `index.js` | The public surface. Holds the module-level registry the verbs and hooks write into, refuses a duplicate matcher in the same keyword bucket, supports the chained form where a step chain returned by one verb is handed to another, and orchestrates one `Fusion` call. It exports no port. | `util`, `configuration`, `feature-source`, `test-registration` |
-| `configuration.js` | The option defaults, the global layer `setFusionConfiguration` writes, and the merge of defaults, then global, then per-call. `errors` merges key by key at every layer, so naming one validation never switches another off, and an option set to `undefined` counts as not set. Refuses a setter argument that is not an options object. | `value-description` |
+| `index.js` | The public surface. Writes the registry the verbs and hooks register into (kept in `shared-state`), refuses a duplicate matcher in the same keyword bucket, supports the chained form where a step chain returned by one verb is handed to another, and orchestrates one `Fusion` call. It exports no port. | `util`, `configuration`, `feature-source`, `test-registration`, `shared-state` |
+| `configuration.js` | The option defaults, the global layer `setFusionConfiguration` writes, and the merge of defaults, then global, then per-call. `errors` merges key by key at every layer, so naming one validation never switches another off, and an option set to `undefined` counts as not set. Refuses a setter argument that is not an options object. The global layer is kept in `shared-state`. | `value-description`, `shared-state` |
+| `shared-state.js` | The state every copy of the dual package in one test file must share: the step and hook registry and the global configuration, on `globalThis` under a key naming the major version. A value is created only when absent, so a copy that loads second never resets what the first registered. Jest gives each test file its own global, so the state stays per file. | nothing |
 | `value-description.js` | Names a value a refusal was given, as its type and its JSON form, falling back to `util.inspect` for a value JSON cannot hold (a BigInt, a circular object, a function), and never throwing. | `util` |
 | `feature-source.js` | Driven port for everything outside the process. Resolves the feature path against the calling file, reads the bytes, parses the Gherkin, checks for duplicate declared scenario titles, builds the tag filter, compiles pickles, recovers each step's keyword, and returns one plain loaded-feature value. The only module that may touch the filesystem, the parser or the caller stack. | `fs`, `path`, `url`, `callsites`, `@cucumber/gherkin`, `@cucumber/messages`, `@cucumber/tag-expressions`, `keywords`, `step-argument`, `tag-filter` |
 | `keywords.js` | Maps an AST step keyword, in whatever dialect the feature declared, onto exactly one of the five registry buckets, or refuses. Compiled pickles throw the keyword away, so it has to be recovered and mapped before a lookup can be honest. | nothing |

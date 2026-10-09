@@ -235,6 +235,51 @@ const writeTheConsumerProject = (projectDirectory) => {
     testMatch: ["<rootDir>/mixed.steps.mjs"],
     setupFiles: ["<rootDir>/setup-global.cjs"],
   });
+
+  // A shared step library written as CommonJS, with a hook, used by a step file written as an
+  // ES module: the shape of a project moving its steps to ES modules one file at a time. Its
+  // definitions and its hook are registered through the CommonJS copy of Fusion and must be
+  // bound by the ES module copy's Fusion() call.
+  fs.writeFileSync(
+    path.join(projectDirectory, "shared-steps.cjs"),
+    [
+      'const { Given, Before } = require("@g_package/jest-cucumber-fusion");',
+      "",
+      "Before(() => {",
+      "  globalThis.sharedBeforeRan = true;",
+      "});",
+      'Given("the shared step runs", () => {});',
+      "",
+    ].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(projectDirectory, "library.feature"),
+    [
+      "Feature: A shared CommonJS step library serves an ES module step file",
+      "",
+      "  Scenario: Shared steps and hooks are bound",
+      "    Given the shared step runs",
+      "    Then the shared Before hook ran",
+      "",
+    ].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(projectDirectory, "library.steps.mjs"),
+    [
+      'import "./shared-steps.cjs";',
+      'import { Then, Fusion } from "@g_package/jest-cucumber-fusion";',
+      "",
+      'Then("the shared Before hook ran", () => {',
+      "  expect(globalThis.sharedBeforeRan).toBe(true);",
+      "});",
+      "",
+      'Fusion("library.feature");',
+      "",
+    ].join("\n"),
+  );
+  jestConfig("jest.library.json", {
+    testMatch: ["<rootDir>/library.steps.mjs"],
+  });
 };
 
 const treeOf = (projectDirectory) => {
@@ -372,6 +417,7 @@ const esModuleRun = (configFile) =>
   );
 const consumerImportRun = esModuleRun("jest.esm.json");
 const consumerMixedRun = esModuleRun("jest.mixed.json");
+const consumerLibraryRun = esModuleRun("jest.library.json");
 
 const { routes, broken } = forbiddenRoutesIn(treeOf(projectDirectory));
 
@@ -411,6 +457,21 @@ if (consumerImportRun.status !== 0) {
       "          ship every module src/index.js imports.\n" +
       "    The consumer run said:\n" +
       `${(consumerImportRun.stderr || consumerImportRun.stdout || "").trim()}`,
+  );
+}
+
+if (consumerLibraryRun.status !== 0) {
+  failures.push(
+    "WHAT: the consumer's jest exited " +
+      `${consumerLibraryRun.status}, not 0, when a shared step library written as CommonJS\n` +
+      "          registers steps and a hook that an ES module step file's Fusion() call needs.\n" +
+      "    WHY:  the library registers through dist/index.cjs and the step file calls Fusion()\n" +
+      "          through src/. A registry each copy owns leaves the step unbound (refused as\n" +
+      "          unregistered, though it was registered) and the hook never run.\n" +
+      "    HOW:  keep the step and hook registry in the store both copies share\n" +
+      "          (src/shared-state.js, on globalThis), as the global configuration is.\n" +
+      "    The consumer run said:\n" +
+      `${(consumerLibraryRun.stderr || consumerLibraryRun.stdout || "").trim()}`,
   );
 }
 
@@ -456,6 +517,7 @@ console.log(
     )}), steps that require() the package\n` +
     "  ES module steps:  exit 0, steps that import it, under Jest's ES module mode\n" +
     "  mixed:            exit 0, a require()ing setup script's global reaches importing steps\n" +
+    "  shared library:   exit 0, a CommonJS step library's steps and hook serve an ES module file\n" +
     `  names refused:    ${FORBIDDEN.join(
       ", ",
     )}, absent from the whole installed tree\n` +
