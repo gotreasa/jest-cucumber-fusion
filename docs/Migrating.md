@@ -69,6 +69,8 @@ Each row was observed by running the same steps file under `jest-cucumber-fusion
 
 Versions 1 and 2 of this package matched a Scenario Outline step against its template text, so a row whose value did not fit the definition's regular expression still ran, with no captured values. Version 3 matches each row's substituted text, so that row now reports an unmatched step, and a step definition that relied on running with no captures needs a regular expression that accepts the row's value.
 
+The same change reaches a step's docstring and data table. Version 2 substituted a row's values into them, except when the step was bound by a regular expression and its own text held no placeholder: that step received the `<name>` text as written. Version 3 substitutes in every case, as Cucumber does, so a docstring or table cell that needs a literal `<name>` must use a placeholder name that is not an Examples column.
+
 The global configuration import and the version 3 rows of the table above complete the list; [Migrating from version 2](./AdditionalConfiguration.md#migrating-from-version-2) shows the configuration change.
 
 ## What does the migration cost?
