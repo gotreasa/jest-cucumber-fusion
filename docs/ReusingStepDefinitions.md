@@ -17,7 +17,7 @@ Scenario: Reusing a SpaceX rocket
 Write you step definitions as usual but require (or import) your shared step definition file
 ```javascript
 // reuse-rocket.steps.js
-const { Given, Fusion } = require( 'jest-cucumber-fusion' )
+const { Given, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 
 
@@ -38,7 +38,7 @@ Fusion( '../reuse-rocket.feature' )
 Place you shared step definitions in a shared step definition file, jest-cucumber-fusion takes care of the rest
 ```javascript
 // reuse-code.js
-const { Then } = require( 'jest-cucumber-fusion' )
+const { Then } = require( '@g_package/jest-cucumber-fusion' )
 
 Then( 'I\'m happy', () => {
     const localHappy = true
@@ -65,7 +65,7 @@ Scenario: Reusing a SpaceX rocket
 You will now need to encapsulate the variables in an accessor function and pass the accessor to the constructor/init of your file
 ```javascript
 // reuse-rocket.steps.js
-const { Given, Fusion } = require( 'jest-cucumber-fusion' )
+const { Given, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../../src/rocket' )
 
@@ -89,7 +89,7 @@ Fusion( '../reuse-definition.feature' )
 Inside you shared step file, be careful to call the accessor inside your test step function not outside
 ```javascript
 // reuse-code.js
-const { When, Then, And } = require( 'jest-cucumber-fusion' )
+const { When, Then, And } = require( '@g_package/jest-cucumber-fusion' )
 
 And( 'I drop my mic', () => {  
     const micDropped = true

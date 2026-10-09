@@ -18,7 +18,7 @@ Scenario: Adding an item to my todo list
 ```
 
 ```javascript
-const { Before, After, Given, When, Then, Fusion } = require( 'jest-cucumber-fusion' )
+const { Before, After, Given, When, Then, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { TodoList } = require( '../../src/todo-list' )
 let todoList
