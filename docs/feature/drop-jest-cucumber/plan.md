@@ -388,6 +388,26 @@ its history, b-yond's included). The 6 baseline scripts pass, about 31s together
       `src/test-registration.js` uses on purpose; 10 `no-unused-vars` on positional step
       arguments in examples; 1 `expect-expect` on an `expect*` helper; 2 stale disable
       directives. All are configuration. Adoption is Gearoid's call.
+- [x] Scanner comparison (Gearoid: "research how good Yelp's detect-secrets is versus
+      secretlint"). Synthetic corpus of 19 secret formats and 8 look-alikes: detect-secrets
+      1.5.0 caught 17 with 3 false positives (entropy noise), secretlint 13.0.7 caught 14
+      with 0. detect-secrets' last release is 1.5.0 of 2024-05-06 (PyPI); secretlint 13.0.7
+      is of 2026-10-03 (npm) and needs Node >= 22. `--no-glob` is not needed with v13: a
+      token in a staged `[id].planted.js` was blocked. Kept secretlint.
+- [x] Custom secretlint patterns (Gearoid, 2026-10-09): a Google API key (`AIza` plus 35)
+      and a quoted literal of 8 or more characters assigned to password, passwd or pwd,
+      skipping placeholders, `${...}` and the dummies changeme, password, example,
+      placeholder, `xxxxxxxx` and `********`. 13 pattern cases behave as intended; the
+      corpus score rises to 16 of 19 with 0 false positives; the repository scans clean.
+- [x] ESLint adopted (Gearoid, 2026-10-09): `eslint.config.js`, ESLint 9 recommended plus
+      the Jest plugin's recommended set for tests. `jest/no-standalone-expect` treats
+      Given, When, Then, And and But as test blocks, with two decided allowances: `jest.fn`
+      fakes and `afterAll` checks. `expect*` helpers count as assertions; unused positional
+      step arguments are allowed in tests; Jest globals are declared for
+      `src/test-registration.js` only. Two stale disable comments removed. `npm run lint`
+      is clean at `--max-warnings 0`, and a probe proved it still errors on a top-level
+      expect, an unused variable in `src/` and an undeclared `describe`. Wired into
+      lint-staged (`*.js`) and the CI `integration` job.
 
 ## Blockers
 
