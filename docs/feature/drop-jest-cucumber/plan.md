@@ -160,6 +160,18 @@ Parked outside the repo while the tree was frozen, applied here after the amend.
   `npm test`, an "ES modules and TypeScript" section in `RunningTheExamples.md`, and a fix to
   `docs/Language.md:77`, which says ES module syntax needs a transform such as Babel (the
   probe ran native ESM with `--transform '{}'`).
+- **Node and Jest version matrix** (Gearoid, 2026-10-09: follow-up, not PR #16). Today CI runs
+  only Node 24 (`node-version: 24`) with the lockfile's Jest 30. The one multi-version run was
+  a by-hand smoke test on 2026-10-08 (Node 20.20.2, 22.23.3, 24.21.0; Jest 30 only; 41/41), and
+  its script lives in the job tmp directory, not the repository. Gaps: no Node matrix; no Jest
+  below 30 ever tested (Fusion calls the runner's `describe`/`test` globals,
+  `src/test-registration.js:126,138`, so the consumer's Jest is what counts); `jest` is a runtime
+  `dependency` (`^30.4.2`), so a Jest 29 consumer gets an unused second Jest (R10); no `engines`
+  field. Node 20 reached end of life on 2026-04-30 (from memory, confirm). Scope: a CI matrix
+  job, Node 22, 24 and 26 × Jest 29 and 30, running `npm test` with Jest overridden per cell;
+  then `jest` moved to `peerDependencies` (`^29 || ^30` only if Jest 29 passes, else `^30`) and
+  an `engines` field. Decision for Gearoid: support Jest 29, or declare Jest 30 only (Node-only
+  matrix, three cells).
 
 ## Post-delivery probes (2026-10-08, on `b4b15b6`, disposable copies only)
 
