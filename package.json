@@ -107,6 +107,9 @@
       "/node_modules/",
       "<rootDir>/.claude/"
     ],
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/test/"
