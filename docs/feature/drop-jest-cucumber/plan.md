@@ -94,8 +94,9 @@ Raised by the architecture pass, then reproduced. Probe scripts in the job tmp d
 - [x] `des integrate`, then signed amend (Gearoid's go) to `e2b1445 feat!: replace jest-cucumber
       with jest + @cucumber/gherkin` with a BREAKING CHANGE body; tree identical to `9b2bca97`.
 - [x] Docs: README and `docs/AdditionalConfiguration.md` updated (V5).
-- [ ] Push branch and open PR. **Held: Gearoid chose "nothing outward yet" on 2026-10-07.**
-- [ ] Release 3.0.0 via semantic-release on merge.
+- [x] Push branch and open PR. Held on 2026-10-07 ("nothing outward yet"); draft PR #16
+      opened 2026-10-09 on Gearoid's go, and every later push on his go.
+- [ ] Release 3.0.0 via semantic-release on merge (squash with the PR body's message).
 
 ## Delivery log (2026-10-07)
 
@@ -254,7 +255,9 @@ tests pin behaviour that already holds, so their proof is killing the named surv
       regex mutants including the multi-digit split, `:25`, `:26`, `:30` all 4); file score
       89 / 107 = 83.2% (was 77.8%). Left: dedup at `:129-133` (J4) and pluralisation at `:156`.
 - [x] Final: 17 of 17 vectors exit 0; whole suite 32 suites, 771 tests; prettier clean.
-- [ ] Signed commits.
+- [x] Signed commits. Checked 2026-10-10: `f9f8d42` carries an SSH signature and GitHub
+      reports it verified (`reason=valid`), as it does the head `aeb829b`. Locally `%G?`
+      shows `N` only because no `gpg.ssh.allowedSignersFile` is configured to verify with.
 - **Open, for Gearoid:** about 150 em dashes in code comments and test prose (new `src/`
       modules and oracles from this delivery, plus older PR #7 regression tests). The ban lists
       config, rule, reference, plan and docs files; code comments are not named, and the rules
@@ -543,8 +546,10 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
       uses a dynamic `import()` (the test requires the config and passes it), and Jest
       injects a `jest` binding that collided with the config's `const jest` (renamed
       `jestPlugin`).
-- [ ] PR #16 body still describes rule 4 as "the core requires only itself and util"; update
-      it, and push `dd41e66`, `f9e8684` and this entry, when Gearoid says.
+- [x] PR #16 body updated for the merged dependency rule, and `dd41e66`, `f9e8684`, `e881ab7`
+      and the plan entries pushed (`b7340b2..8a1f069`, Gearoid's go, 2026-10-09). The prettier
+      job then failed twice on a Docker Hub 429 before Prettier ran; the tracked files passed
+      locally, which led to the Prettier 3 work below.
 
 ## Prettier 3, master merge and the ESM move (Gearoid, 2026-10-09 evening)
 
@@ -560,7 +565,7 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
       files). The lockfile kept this branch's tree with jest 30.5.2, semantic-release 25.0.9
       and handlebars 4.7.10 (security, #24) carried over. commitlint refused a custom merge
       subject; recommitted with git's standard one.
-- [ ] **ESM move (Gearoid: "callsites needs to be updated to 4.2.0").** callsites 4 is
+- [x] **ESM move (Gearoid: "callsites needs to be updated to 4.2.0").** callsites 4 is
       ESM-only and broke Fusion under Jest (`Must use import to load ES Module`, 0 tests,
       measured; #22's integration failed the same way). Decisions (Gearoid): make Fusion ESM,
       inside this PR as part of 3.0.0, spike first, and take the latest @cucumber majors too.
@@ -605,8 +610,33 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
         styles and the mixed hazard all pass. Berlin Clock (copy) identical to 2.0.0 in all
         four groups, combined jest 118 of 118. Fuzz: properties 885 of 885, differential 150
         cases 0 diffs, wild 36 diffs all the documented outline class. Package 68.5 kB packed.
-  - [ ] PR body; push (Gearoid's call). Spike worktree `spike/esm` to remove.
+  - [x] Worktrees `prettier-3` and `spike-esm` removed with their branches (Gearoid, 2026-10-09;
+        neither had a commit of its own, and `ci/prettier-3` was already gone from GitHub).
+  - [x] Pushed `8a1f069..aeb829b` (Gearoid's go); the pre-push hook passed, and CI is green:
+        integration, prettier (v4.6, no Docker), codecov patch and project.
+  - [x] PR body rebuilt for the dual package. A breaking change found while writing it: the
+        `exports` map blocks deep imports. `require(".../src/index.js")` worked on 2.0.0 and
+        now fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` (measured on both); it is in Breaking
+        changes and the squash message, which commitlint passes with no warning. Two counts
+        corrected on the way: the differential fuzz is 940 cases over 7 seeds.
+
+## 3.0.0-beta2 (Gearoid, 2026-10-09 and 10)
+
+- [x] Staged with `npm stage publish . --tag beta --access public` from a working-tree-only
+      version `3.0.0-beta2` (reverted afterwards; nothing committed). Stage
+      `9f602b2c-115b-4696-8291-ca2146a15b47`, 18 files, 68.7 kB, shasum
+      `baf83599bd7e15b1f6f9c48c8c89a1126e3674c8`, identical to an independent `npm pack` of
+      `aeb829b` (the build is deterministic). Gearoid approved it with 2FA; dist-tag `beta`
+      points at it, `latest` stays 2.0.0.
+- [x] Berlin Clock: installed `@beta` from npm into a throwaway worktree of `main` `19c1327`
+      (the commit of the beta1 run, so its 2.0.0 baseline holds). It resolves to
+      `dist/index.cjs` with no config change. BDD 50, unit 85, pact consumer 16 and provider
+      1, every group identical test by test to 2.0.0; the Jest step of `npm test` 14 suites,
+      152 tests; OpenAPI and InSpec (29) pass; clean `npm ci` passes. `publish:pact` not
+      run. Worktree and branch removed at Gearoid's request.
 
 ## Blockers
 
-None. Draft PR #16 is open; pushing new commits is Gearoid's call.
+None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of
+draft and squash-merge with the PR body's message, which releases 3.0.0 through
+semantic-release; Dependabot should then close #22 (callsites 4.2.0) on its own.
