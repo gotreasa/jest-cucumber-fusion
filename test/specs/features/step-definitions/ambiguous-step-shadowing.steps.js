@@ -86,7 +86,7 @@ describe("H1 — ambiguous step definitions", () => {
     // Match the full contract signature (not a loose /ambig/i) so an incidental "ambiguous"
     // in some unrelated error can't satisfy the assertion.
     expect(runScenarioMatching).toThrow(
-      /Ambiguous step definition.*matches \d+ step definitions/i
+      /Ambiguous step definition.*matches \d+ step definitions/i,
     );
   });
 });

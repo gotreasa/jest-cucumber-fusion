@@ -87,14 +87,14 @@ const recordTheArguments = (...argumentsGivenToTheStep) => {
 // (src/index.js:470-483) — where the docstring is dropped today.
 When(
   /^I file an incident for rocket "(.+)" with the following notes:$/,
-  recordTheArguments
+  recordTheArguments,
 );
 
 // Matched by its exact wording — a plain STRING matcher, so the pass-through branch
 // (src/index.js:448-457). The CONTROL: the same docstring, delivered correctly today.
 When(
   "I file an incident for the flagship rocket with the following notes:",
-  recordTheArguments
+  recordTheArguments,
 );
 
 // Matched by a pattern WITH captures, and carrying a data table: the capture-injection branch again,
@@ -111,7 +111,7 @@ Then(
     // THE DEFECT, pinned: the capture AND the docstring, in that order, and nothing else. Today the
     // recorded list is ["Falcon"] — the docstring never arrives.
     expect(argumentsTheStepReceived).toStrictEqual([rocket, notes]);
-  }
+  },
 );
 
 Then(
@@ -121,7 +121,7 @@ Then(
     // (feature-definition-creation.js:129-130), so it already arrives as the sole argument. Green
     // today; the fix must keep it green — and must not start double-delivering it.
     expect(argumentsTheStepReceived).toStrictEqual([notes]);
-  }
+  },
 );
 
 Then(
@@ -137,7 +137,7 @@ Then(
         { Name: "Grace", Role: "engineer" },
       ],
     ]);
-  }
+  },
 );
 
 Then(
@@ -147,7 +147,7 @@ Then(
     // else. `toStrictEqual` fails on a trailing null or undefined, so a fix that pushes the argument
     // unconditionally — the laziest way to make the RED scenarios pass — dies right here.
     expect(argumentsTheStepReceived).toStrictEqual([rocket]);
-  }
+  },
 );
 
 Then(
@@ -159,7 +159,7 @@ Then(
     // `Array.isArray(stepArgs) &&` and keeps `stepArgs.length > 0` still drops it. jest-cucumber's own
     // test is `!== undefined && !== null`; nothing weaker matches it.
     expect(argumentsTheStepReceived).toStrictEqual([rocket, ""]);
-  }
+  },
 );
 
 Then(
@@ -185,7 +185,7 @@ Then(
       rocket,
       `${rocket} shut down engine 3 at T+42 seconds`,
     ]);
-  }
+  },
 );
 
 Fusion("../l3-step-argument-delivery.feature");

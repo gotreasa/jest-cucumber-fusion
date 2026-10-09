@@ -21,14 +21,14 @@ When(
   /^I get paid \$(\d+) for writing some awesome code from my account#(\d+)$/,
   (paycheck, nAcc) => {
     myAccounts[nAcc - 1].deposit(parseInt(paycheck));
-  }
+  },
 );
 
 Then(
   /^my account#(\d+) balance should be \$(\d+)$/,
   (nAcc, expectedBalance) => {
     expect(myAccounts[nAcc - 1].balance).toBe(parseInt(expectedBalance));
-  }
+  },
 );
 
 Then(/^I have (\d+) accounts$/, (nAccounts) => {
@@ -44,7 +44,7 @@ When(
   (nAcc, nameNewAccount, typeAccount, nameOldAccount) => {
     myAccounts[nAcc - 1].name = nameNewAccount;
     myAccounts[nAcc - 1].type = typeAccount;
-  }
+  },
 );
 
 Then(
@@ -52,7 +52,7 @@ Then(
   (nAcc, nameAccount, typeAccount) => {
     expect(myAccounts[nAcc - 1].name).toBe(nameAccount);
     expect(myAccounts[nAcc - 1].type).toBe(typeAccount);
-  }
+  },
 );
 
 Then(/^my account#(\d+) should be:$/, (nAcc, table) => {

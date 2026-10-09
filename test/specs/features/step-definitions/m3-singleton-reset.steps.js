@@ -209,7 +209,7 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     try {
       // The external port fails to load the feature, so Fusion throws BEFORE reaching its reset.
       mockState.loadFeatureError = new Error(
-        "ENOENT: no such file or directory, open 'missing.feature'"
+        "ENOENT: no such file or directory, open 'missing.feature'",
       );
       expect(() => Fusion("missing.feature")).toThrow(/ENOENT/);
       mockState.loadFeatureError = null;
@@ -235,7 +235,7 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     try {
       mockState.feature = featureWithOneScenario("first", SIGNED_IN);
       expect(() => Fusion("first.feature")).toThrow(
-        /Ambiguous step definition/
+        /Ambiguous step definition/,
       );
 
       // The second feature's step matches ONLY the broad leaked matcher, so a dirty registry BINDS
@@ -260,10 +260,10 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
       // unmatched step (M5) — again from inside the synchronous defineFeature callback.
       mockState.feature = featureWithOneScenario(
         "first",
-        "a step with NO matching definition"
+        "a step with NO matching definition",
       );
       expect(() => Fusion("first.feature", { errors: false })).toThrow(
-        /No step definition matches/
+        /No step definition matches/,
       );
 
       expectCleanSlateOnNextFusion(Fusion, SIGNED_IN, spies);
