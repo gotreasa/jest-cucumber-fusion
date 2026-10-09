@@ -31,13 +31,21 @@ const { tagFilterFor } = require("./tag-filter");
 // Resolve the feature path from the FIRST stack frame outside this package, so an in-package
 // re-export/wrapper frame does not retarget it; guard a shallow stack (no external frame) so
 // we never call getFileName() on undefined.
+//
+// A frame with no file name is skipped too. A native function holds one when Fusion is handed
+// straight to it, `[...].forEach(Fusion)`, and taking it as the caller resolved the path against
+// the working directory (finding F7 of the PR #16 review).
 const resolveFeaturePath = (featureFileToLoad) => {
   const insideThisPackage = (fileName) =>
     typeof fileName === "string" && fileName.startsWith(__dirname + path.sep);
+  const isTheCaller = (fileName) =>
+    typeof fileName === "string" &&
+    fileName !== "" &&
+    !insideThisPackage(fileName);
 
   const externalFrame = callerSites
     .default()
-    .find((currentFrame) => !insideThisPackage(currentFrame.getFileName()));
+    .find((currentFrame) => isTheCaller(currentFrame.getFileName()));
   const callerSiteCaller = externalFrame ? externalFrame.getFileName() : "";
   const dirOfCaller = path.dirname(callerSiteCaller || "");
 
