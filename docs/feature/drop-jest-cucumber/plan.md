@@ -514,6 +514,28 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
       reworded, now enforced rule 4 (he first asked whether the core requires gherkin; it does
       not, only the `feature-source` port does); **keep** `"([^"]*)"` in starter code; **push**.
       Pushed `be4df4f..1728797`; the pre-push hook (tests, tsd, baselines) passed.
+- [x] 3.0.0-beta1 (Gearoid staged and approved it, 2026-10-09; dist-tag `3.0.0beta1`, latest
+      stays 2.0.0): installed from npm into a throwaway worktree of gotreasa-berlin-clock on
+      `main` `19c1327`. Jest step of its `npm test` 14 suites, 152 tests green, every group
+      identical test by test to 2.0.0; OpenAPI and InSpec checks green; `publish:pact` not run.
+      Worktree and branch removed at Gearoid's request.
+- [x] `dd41e66` test: three expect-in-a-loop checks became one assertion over the list of
+      offenders each (Gearoid asked whether `test.each` fitted; it does not, one setup per
+      test). Each was seen failing on a planted item, naming every offender.
+- [x] `f9e8684` test(arch): rules 1 and 4 merged into one allowlist (Gearoid: "it doesn't
+      really make sense, since Jest and @cucumber packages are needed"). An adversarial
+      review (general-purpose agent, Opus, read-only) found the rules do not keep those
+      packages out, only fix where they are required; the swappable-parser rationale false
+      (pinned parser, core coupled to Cucumber's shapes); rule 1 blind to path or url outside
+      the core; and table drift (`index.js` requires `util`, undocumented). Decision (Gearoid,
+      option A): every src module requires exactly its Requires row in Architecture.md. RED
+      first on `src/index.js requires util, unlisted`; planted `require ("path")`, computed
+      `require(name)` and `require("url")` in index all caught (the old rules caught one).
+      Rule 2 kept with its honest reason, registration order. Open, not done: the review's
+      suggestion to move rule 2 to ESLint `no-restricted-globals` (its regex flags a core
+      `const it = 1` and misses `globalThis.describe`).
+- [ ] PR #16 body still describes rule 4 as "the core requires only itself and util"; update
+      it, and push `dd41e66`, `f9e8684` and this entry, when Gearoid says.
 
 ## Blockers
 
