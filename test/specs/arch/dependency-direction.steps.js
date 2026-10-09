@@ -1,16 +1,23 @@
 /**
  * The dependency direction inside src/ is inward, and it is a law rather than a convention.
  *
- * Three obligations, checked over the src/ tree AS IT EXISTS rather than over a list of
- * module names, so a module added by a later value is governed the day it arrives and nobody
- * has to remember to edit this file:
+ * jest and the @cucumber packages are runtime dependencies by design; nothing here keeps them
+ * out. What it keeps is WHERE each dependency lives. The obligations, checked over the src/
+ * tree AS IT EXISTS, so a module added later is governed the day it arrives:
  *
- *   1. no file under src/ requires jest-cucumber -- the dependency the whole Request removes;
- *   2. only src/feature-source.js requires the outside world (@cucumber/*, node:fs,
- *      callsites) and only src/test-registration.js touches a Jest global, so the parser and
- *      the test runner each sit behind exactly one port and the core is pure;
- *   3. src/index.js exports exactly the eight public names, so a port does not leak out as an
+ *   1. no file under src/ requires jest-cucumber, the dependency the 3.0.0 Request removed;
+ *   2. each module requires exactly what the Requires column of docs/Architecture.md lists
+ *      for it, and every module has a row. A new module fails until it is given one, and a
+ *      require moved between modules is a visible edit to the table;
+ *   3. only src/test-registration.js touches a Jest global, so registration order lives in
+ *      one module;
+ *   4. src/index.js exports exactly the nine public names, so a port does not leak out as an
  *      export and the dropped `runner` option cannot come back under a new name.
+ *
+ * Until 2026-10-09, obligation 2 was two rules (only feature-source reaches the outside world;
+ * core modules require nothing but each other and util). They overlapped, and the first missed
+ * a require of path or url outside the core. Gearoid merged them into the table check after an
+ * adversarial review of PR #16.
  *
  * HOW IT READS THE SOURCE. Comments in this package name jest-cucumber, describe and test
  * constantly -- they explain what is being replaced. A grep would therefore flag prose. So
@@ -30,22 +37,9 @@ const path = require("path");
 
 const repositoryRoot = path.resolve(__dirname, "..", "..", "..");
 const sourceRoot = path.join(repositoryRoot, "src");
+const ARCHITECTURE_DOC = path.join(repositoryRoot, "docs", "Architecture.md");
 
 const THE_DEPENDENCY_BEING_REMOVED = "jest-cucumber";
-
-// The one module allowed to reach outside the process, and what counts as outside.
-const FEATURE_SOURCE = "src/feature-source.js";
-const OUTSIDE_WORLD = [
-  {
-    label: "@cucumber/*",
-    matches: (target) => target.startsWith("@cucumber/"),
-  },
-  {
-    label: "node:fs",
-    matches: (target) => /^(node:)?fs(\/.*)?$/.test(target),
-  },
-  { label: "callsites", matches: (target) => target === "callsites" },
-];
 
 // The one module allowed to touch the Jest runner, and what counts as touching it.
 const TEST_REGISTRATION = "src/test-registration.js";
@@ -157,9 +151,14 @@ const stripped = (source, { blankStrings }) => {
   return out;
 };
 
+// A require whose argument is not one string literal (`require(name)`, a template) cannot be
+// checked against the table, so it is counted and refused rather than silently skipped.
+const unreadableRequiresIn = (code) =>
+  (code.match(/\brequire\s*\(/g) || []).length - requireTargetsIn(code).length;
+
 const requireTargetsIn = (code) => {
   const targets = [];
-  const pattern = /require\(\s*(['"])([^'"]+)\1\s*\)/g;
+  const pattern = /\brequire\s*\(\s*(['"])([^'"]+)\1\s*\)/g;
   let match = pattern.exec(code);
   while (match) {
     targets.push(match[2]);
@@ -176,6 +175,9 @@ const theSourceTree = everyJavaScriptFileUnder(sourceRoot).map((absolute) => {
       .split(path.sep)
       .join("/"),
     requires: requireTargetsIn(stripped(source, { blankStrings: false })),
+    unreadableRequires: unreadableRequiresIn(
+      stripped(source, { blankStrings: false })
+    ),
     identifiers: stripped(source, { blankStrings: true }),
   };
 });
@@ -216,65 +218,71 @@ describe("the dependency direction inside src/ is inward", () => {
     });
   });
 
-  test(`only ${FEATURE_SOURCE} requires the outside world`, () => {
-    const offenders = [];
+  test("each module requires exactly what the Architecture table lists for it", () => {
+    const tableRows = fs
+      .readFileSync(ARCHITECTURE_DOC, "utf8")
+      .split("\n")
+      .filter((line) => /^\| `[a-z-]+\.js` \|/.test(line));
+    // The Requires column, as written: each backticked name, a module of src/ by its bare name
+    // or a package by its own. "nothing" and "Jest globals" name no require.
+    const listed = Object.fromEntries(
+      tableRows.map((line) => {
+        const cells = line.split("|").map((cell) => cell.trim());
+        const requiresCell = cells[cells.length - 2];
+        return [
+          `src/${cells[1].replace(/`/g, "")}`,
+          (requiresCell.match(/`[^`]+`/g) || [])
+            .map((name) => name.replace(/`/g, ""))
+            .sort(),
+        ];
+      })
+    );
+    // The same names from the code: "./keywords" is listed as keywords, "node:fs" as fs.
+    const asListed = (target) =>
+      target
+        .replace(/^\.\//, "")
+        .replace(/\.js$/, "")
+        .replace(/^node:/, "");
 
-    theSourceTree.forEach((each) => {
-      if (each.modulePath === FEATURE_SOURCE) return;
-      each.requires.forEach((target) => {
-        const outside = OUTSIDE_WORLD.find((kind) => kind.matches(target));
-        if (outside) {
-          offenders.push(
-            `${each.modulePath} requires ${target} (${outside.label})`
-          );
-        }
-      });
+    const mismatches = theSourceTree.flatMap((each) => {
+      const actual = [...new Set(each.requires.map(asListed))].sort();
+      const expected = listed[each.modulePath];
+      if (!expected) return [`${each.modulePath} has no row in the table`];
+      const unlisted = actual.filter((name) => !expected.includes(name));
+      const unused = expected.filter((name) => !actual.includes(name));
+      return [
+        ...unlisted.map(
+          (name) => `${each.modulePath} requires ${name}, unlisted`
+        ),
+        ...unused.map(
+          (name) =>
+            `${each.modulePath} is listed as requiring ${name}, but does not`
+        ),
+        ...(each.unreadableRequires > 0
+          ? [
+              `${each.modulePath} has a require whose target is not a string literal`,
+            ]
+          : []),
+      ];
     });
+    const rowsWithoutAFile = Object.keys(listed).filter(
+      (modulePath) =>
+        !theSourceTree.some((each) => each.modulePath === modulePath)
+    );
 
-    // WHAT: every module other than the feature-source port that reaches the parser, the
-    //       filesystem or the caller stack.
-    // WHY:  the core of this package has to stay a set of pure functions over values. Once a
-    //       core module reads a file or imports the parser, the parser stops being swappable,
-    //       the core stops being testable without a filesystem, and the two ports are no
-    //       longer the only way in or out.
-    // HOW:  resolve the path, read the bytes, parse and compile pickles in
-    //       src/feature-source.js, and hand the core a plain value.
-    expect(offenders).toStrictEqual([]);
-  });
-
-  test("a core module requires only other core modules and Node's util", () => {
-    const NOT_CORE = ["src/index.js", FEATURE_SOURCE, TEST_REGISTRATION];
-    const coreModules = theSourceTree
-      .map((each) => each.modulePath)
-      .filter((modulePath) => !NOT_CORE.includes(modulePath));
-    const isCoreModule = (target) =>
-      target.startsWith("./") &&
-      coreModules.includes(
-        `src/${target.slice(2)}${target.endsWith(".js") ? "" : ".js"}`
-      );
-    const isPureNodeModule = (target) => /^(node:)?util$/.test(target);
-
-    const offenders = theSourceTree
-      .filter((each) => coreModules.includes(each.modulePath))
-      .flatMap((each) =>
-        each.requires
-          .filter(
-            (target) => !isCoreModule(target) && !isPureNodeModule(target)
-          )
-          .map((target) => `${each.modulePath} requires ${target}`)
-      );
-
-    // WHAT: every require in a core module that is neither another core module nor util.
-    // WHY:  the dependency direction only ever points inward. A core module that required a
-    //       port, the public surface or any package would point outward, and the core would
-    //       stop being a set of plain functions over values. util is allowed because it is a
-    //       pure part of Node with no I/O: value-description.js uses util.inspect to name a
-    //       value a refusal was given (added by the PR #16 review fixes, 2026-10-09; until
-    //       then the core required nothing at all, a rule the docs stated but nothing checked).
-    // HOW:  move the work that needs the outside world into src/feature-source.js or
-    //       src/test-registration.js, and hand the core a plain value.
-    expect(coreModules.length).toBeGreaterThan(0);
-    expect(offenders).toStrictEqual([]);
+    // WHAT: every difference between what a module requires and what the table says it does.
+    // WHY:  jest and the @cucumber packages are runtime dependencies by design; this rule does
+    //       not keep them out. It keeps each one in a known place: the filesystem, the parser
+    //       and the caller stack in src/feature-source.js, nothing outside the package in the
+    //       core. The table is that map, and a change to where something is required becomes
+    //       a visible edit to it instead of a drift nobody sees.
+    // HOW:  require the module where the table says it belongs, or, if the design really
+    //       changed, change the table row in docs/Architecture.md in the same commit.
+    expect(tableRows.length).toBeGreaterThan(0);
+    expect({ mismatches, rowsWithoutAFile }).toStrictEqual({
+      mismatches: [],
+      rowsWithoutAFile: [],
+    });
   });
 
   test(`only ${TEST_REGISTRATION} touches a Jest global`, () => {
@@ -296,9 +304,10 @@ describe("the dependency direction inside src/ is inward", () => {
     });
 
     // WHAT: every module other than the test-registration port that names a Jest global.
-    // WHY:  the Jest runner is a driven port. If describe, test or a hook can be reached from
-    //       anywhere in src/, the package can only ever run under Jest and the registration
-    //       behaviour cannot be observed in one place.
+    // WHY:  running under Jest is the product, so this is not about leaving Jest. It is about
+    //       registration ORDER: binding every step before registering anything, hooks once per
+    //       test, skipped scenarios as test.skip. The package's real bugs have lived there, and
+    //       they stay findable while one module is the only one that registers.
     // HOW:  pass nothing but values across the boundary and let src/test-registration.js be
     //       the only module that registers anything.
     expect(offenders).toStrictEqual([]);

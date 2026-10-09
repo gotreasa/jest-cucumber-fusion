@@ -94,6 +94,7 @@ flowchart TB
   idx --> cfg
   idx --> fsrc
   idx --> treg
+  idx --> nutil
 
   cfg --> vd
   sn --> vd
@@ -118,7 +119,7 @@ flowchart TB
 
 | Module | Responsibility | Requires |
 |---|---|---|
-| `index.js` | The public surface. Holds the module-level registry the verbs and hooks write into, refuses a duplicate matcher in the same keyword bucket, supports the chained form where a step chain returned by one verb is handed to another, and orchestrates one `Fusion` call. It exports no port. | `configuration`, `feature-source`, `test-registration` |
+| `index.js` | The public surface. Holds the module-level registry the verbs and hooks write into, refuses a duplicate matcher in the same keyword bucket, supports the chained form where a step chain returned by one verb is handed to another, and orchestrates one `Fusion` call. It exports no port. | `util`, `configuration`, `feature-source`, `test-registration` |
 | `configuration.js` | The option defaults, the global layer `setFusionConfiguration` writes, and the merge of defaults, then global, then per-call. `errors` merges key by key at every layer, so naming one validation never switches another off, and an option set to `undefined` counts as not set. Refuses a setter argument that is not an options object. | `value-description` |
 | `value-description.js` | Names a value a refusal was given, as its type and its JSON form, falling back to `util.inspect` for a value JSON cannot hold (a BigInt, a circular object, a function), and never throwing. | `util` |
 | `feature-source.js` | Driven port for everything outside the process. Resolves the feature path against the calling file, reads the bytes, parses the Gherkin, checks for duplicate declared scenario titles, builds the tag filter, compiles pickles, recovers each step's keyword, and returns one plain loaded-feature value. The only module that may touch the filesystem, the parser or the caller stack. | `fs`, `path`, `url`, `callsites`, `@cucumber/gherkin`, `@cucumber/messages`, `@cucumber/tag-expressions`, `keywords`, `step-argument`, `tag-filter` |
@@ -212,11 +213,10 @@ A step function receives its regex captures first, in order, and then the step's
 
 ## 5. Rules the architecture keeps
 
-These four rules are what make the shape above hold over time. They are not conventions in a comment: they are checked by `test/specs/arch/dependency-direction.steps.js`, which reads the `src/` tree as it actually is, so a module added later is governed from the day it arrives.
+Jest and the `@cucumber` packages are runtime dependencies by design: gluing Gherkin to Jest is what this package is for. These rules do not keep them out. They keep each dependency in a known place, so the shape above holds over time. They are not conventions in a comment: they are checked by `test/specs/arch/dependency-direction.steps.js`, which reads the `src/` tree as it actually is, so a module added later is governed from the day it arrives.
 
-1. **Only `feature-source` reaches the outside world.** It is the one module that may require the filesystem, the Gherkin and messages packages, the tag-expressions package or the caller-stack reader. Everything else works on plain values, which is what keeps the parser swappable and the core readable without a file or a parser in the way.
-2. **Only `test-registration` touches a Jest global.** `describe`, `test`, `beforeEach` and `afterEach` are reachable from exactly one module, so registration behaviour can be understood and observed in one place.
+1. **Each module requires exactly what the table in section 3 lists for it.** The Requires column is the rule: the test compares it with every file's real `require` calls and fails on any difference in either direction, on a module with no row, and on a `require` whose target is not a plain string. So the filesystem, the parser packages and the caller stack stay in `feature-source`, and the core modules require nothing outside the package except Node's `util`. A deliberate change of design is an edit to the table in the same commit, which makes it visible in review. (Until 2026-10-09 this was two overlapping rules, "only `feature-source` reaches the outside world" and "the core requires only itself"; the first missed a `path` or `url` require outside the core, and neither noticed the table drifting from the code.)
+2. **Only `test-registration` touches a Jest global.** Running under Jest is the product, so this is not about leaving Jest. It keeps registration order (every step bound before anything is registered, each hook once per test, a skipped scenario as `test.skip`) in one module, which is where this package's real bugs have lived.
 3. **`index.js` exports exactly nine names:** `Given`, `When`, `Then`, `And`, `But`, `Before`, `After`, `Fusion` and `setFusionConfiguration`. The two driven ports are internal module paths and are never exported, so an internal seam cannot quietly become part of the public contract.
-4. **The pure core modules require only each other and Node's `util`.** `configuration`, `keywords`, `step-argument`, `tag-filter`, `step-matching`, `scenario-name`, `code-suggestion` and `value-description` reach no port, no package and nothing with I/O, which is why the dependency direction only ever points inward. `util` is allowed because `util.inspect` is pure: `value-description` uses it to name a value a refusal was given.
 
-A fifth rule is worth stating even though it is about messages rather than modules: the text a consumer sees on a failure is part of the contract. The failing-step decoration, the missing-feature-file message, the Gherkin parse error, the duplicate step definition and duplicate title refusals, the ambiguous and unmatched step refusals, and the tag filter and name template refusals are all fixed text, so anything that greps your test output keeps working across a release.
+A fourth rule is worth stating even though it is about messages rather than modules: the text a consumer sees on a failure is part of the contract. The failing-step decoration, the missing-feature-file message, the Gherkin parse error, the duplicate step definition and duplicate title refusals, the ambiguous and unmatched step refusals, and the tag filter and name template refusals are all fixed text, so anything that greps your test output keeps working across a release.

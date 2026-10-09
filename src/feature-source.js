@@ -1,9 +1,10 @@
 // Driven port: everything outside the process boundary that getting a feature file needs.
 //
-// This is the ONLY module under src/ allowed to require the filesystem, the Gherkin parser or
-// the caller-stack reader, and that is an architectural law rather than a convention (see
-// test/specs/arch/dependency-direction.steps.js). It hands the rest of the package one plain
-// value (a LoadedFeature), so the core stays pure and the parser stays swappable.
+// This is the ONLY module under src/ that requires the filesystem, the Gherkin parser or the
+// caller-stack reader: docs/Architecture.md's table says so, and
+// test/specs/arch/dependency-direction.steps.js holds every module to its row. It hands the
+// rest of the package one plain value (a LoadedFeature), so the core works on values and
+// needs no file or parser to be read or tested.
 //
 // LoadedFeature, the whole of what crosses back:
 //   { title, featureTags, scenarios: [ { title, excludedByTagFilter, tags,
