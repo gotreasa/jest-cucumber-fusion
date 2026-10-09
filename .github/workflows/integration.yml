@@ -57,6 +57,12 @@ jobs:
     - name: Type checking
       run: npm run test-d
 
+    - name: Baseline checks
+      run: npm run test:baseline
+
+    - name: Secret scan
+      run: npm run lint:secrets
+
     - name: Code coverage
       uses: codecov/codecov-action@v7
       with:

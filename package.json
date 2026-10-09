@@ -10,10 +10,13 @@
   "scripts": {
     "test": "jest --color",
     "test-d": "tsd",
+    "test:baseline": "node test/specs/baseline/run-all.js",
     "coverage": "jest --coverage",
+    "lint:secrets": "secretlint \"**/*\"",
     "commit": "git-cz",
     "semantic-release": "semantic-release",
-    "fmt": "npx prettier --write ."
+    "fmt": "npx prettier --write .",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -33,9 +36,15 @@
     "jest": "^30.4.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
     "cz-conventional-changelog": "^3.3.0",
     "fast-check": "^4.10.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "2.3.2",
+    "secretlint": "^13.0.7",
     "semantic-release": "^25.0.5",
     "tsd": "^0.33.0"
   },

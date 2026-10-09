@@ -1,0 +1,4 @@
+{
+  "*": "secretlint",
+  "*.{js,md,ts}": "prettier --write"
+}
