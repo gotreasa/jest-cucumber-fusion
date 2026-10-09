@@ -30,9 +30,18 @@ fs.writeFileSync(
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 
 const received = [];
-Given(/sticky (\d+)/y, (n) => received.push(["sticky", n]));
-Given(/global (\d+)/g, (n) => received.push(["global", n]));
+const sticky = /sticky (\d+)/y;
+const global = /global (\d+)/g;
+Given(sticky, (n) => received.push(["sticky", n]));
+Given(global, (n) => received.push(["global", n]));
 Fusion(feature);
+
+// The consumer owns these RegExp objects, so Fusion leaves no trace on them: a lastIndex left
+// advanced would shift the next match wherever else the consumer uses one (found by the review
+// of the PR #16 fixes).
+afterAll(() => {
+  expect([sticky.lastIndex, global.lastIndex]).toEqual([0, 0]);
+});
 
 afterAll(() => {
   // Every step ran with its own capture, in feature order: plain scenarios, then outline rows.

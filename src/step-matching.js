@@ -53,10 +53,13 @@ const findMatchingStep = (featureRegistry, currentStep) => {
 // A matcher with the global (g) or sticky (y) flag carries a `lastIndex` from one use to the
 // next, and a sticky one starts matching there. Testing a step and then reading its captures
 // each moved it, so a sticky matcher bound its step with no captures (finding F5 of the PR #16
-// review). Every use starts from the beginning of the step text instead.
+// review). Every use starts from the beginning of the step text instead, and leaves lastIndex
+// at 0 again: the consumer owns the RegExp and may use it elsewhere.
 const execFromStart = (stepRegExp, stepText) => {
   stepRegExp.lastIndex = 0;
-  return stepRegExp.exec(stepText);
+  const match = stepRegExp.exec(stepText);
+  stepRegExp.lastIndex = 0;
+  return match;
 };
 
 const isFunctionForScenario = (stepText, stepDefinition) => {

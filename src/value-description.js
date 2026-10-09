@@ -13,7 +13,12 @@ const asText = (value) => {
   } catch {
     // Not serialisable as JSON; described below.
   }
-  return inspect(value);
+  try {
+    return inspect(value);
+  } catch {
+    // A custom inspect hook that throws: say so rather than let the refusal crash.
+    return "(a value that cannot be printed)";
+  }
 };
 
 const describeValue = (value) => `${typeof value} ${asText(value)}`;

@@ -41,6 +41,15 @@ const outcomes = {
   templateBigInt: templateRefusalFor(10n),
   templateCircular: templateRefusalFor(circular),
   templateFunction: templateRefusalFor(function aFunction() {}),
+  // Neither JSON nor util.inspect can print this one (found by the review of the PR #16 fixes).
+  templateUnprintable: templateRefusalFor({
+    toJSON() {
+      throw new Error("no JSON");
+    },
+    [require("util").inspect.custom]() {
+      throw new Error("no inspect");
+    },
+  }),
   configurationBigInt: messageFrom(() => setFusionConfiguration(10n)),
 };
 
@@ -61,6 +70,13 @@ describe("refusals naming a value JSON cannot serialise", () => {
     expect(outcomes.templateFunction).toContain(
       "function [Function: aFunction]"
     );
+  });
+
+  test("a template answering a value nothing can print still gets the template refusal", () => {
+    expect(outcomes.templateUnprintable).toContain(
+      "object (a value that cannot be printed)"
+    );
+    expect(outcomes.templateUnprintable).toContain("WHAT:");
   });
 
   test("setFusionConfiguration given a BigInt gets its own refusal", () => {
