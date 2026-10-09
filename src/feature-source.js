@@ -16,19 +16,19 @@
 // is given; all three are read by presence or truthiness, so a value staged without them
 // behaves exactly as one did before those options did anything.
 
-const fs = require("fs");
-const path = require("path");
-const url = require("url");
-const callerSites = require("callsites");
-const gherkin = require("@cucumber/gherkin");
-const messages = require("@cucumber/messages");
+import fs from "fs";
+import path from "path";
+import url from "url";
+import callerSites from "callsites";
+import * as gherkin from "@cucumber/gherkin";
+import * as messages from "@cucumber/messages";
 // The named export, not the default: 9.1.0 publishes both, and `default` is interop
 // scaffolding a later major could drop without that being a documented breaking change.
-const { parse: parseTagExpression } = require("@cucumber/tag-expressions");
+import { parse as parseTagExpression } from "@cucumber/tag-expressions";
 
-const { bucketForKeyword } = require("./keywords");
-const { stepArgumentFrom } = require("./step-argument");
-const { tagFilterFor } = require("./tag-filter");
+import { bucketForKeyword } from "./keywords.js";
+import { stepArgumentFrom } from "./step-argument.js";
+import { tagFilterFor } from "./tag-filter.js";
 
 // Resolve the feature path from the FIRST stack frame outside this package, so an in-package
 // re-export/wrapper frame does not retarget it; guard a shallow stack (no external frame) so
@@ -46,12 +46,15 @@ const fileOnDisk = (fileName) => {
   return path.isAbsolute(fileName) ? fileName : null;
 };
 
+// The directory this module runs from: src/ for the ES module entry, dist/ for the CommonJS
+// bundle, where scripts/build-cjs.js defines import.meta.url as the bundle's own file.
+const THIS_PACKAGE_DIRECTORY = path.dirname(url.fileURLToPath(import.meta.url));
+
 const resolveFeaturePath = (featureFileToLoad) => {
   const insideThisPackage = (fileName) =>
-    fileName.startsWith(__dirname + path.sep);
+    fileName.startsWith(THIS_PACKAGE_DIRECTORY + path.sep);
 
-  const callerFile = callerSites
-    .default()
+  const callerFile = callerSites()
     .map((currentFrame) => fileOnDisk(currentFrame.getFileName()))
     .find((fileName) => fileName !== null && !insideThisPackage(fileName));
   const dirOfCaller = path.dirname(callerFile || "");
@@ -308,5 +311,5 @@ const loadFeature = (absoluteFeatureFilePath, options) => {
   };
 };
 
-module.exports.resolveFeaturePath = resolveFeaturePath;
-module.exports.loadFeature = loadFeature;
+export { resolveFeaturePath };
+export { loadFeature };

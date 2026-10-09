@@ -9,7 +9,7 @@
  * the global, are both visible as one of the two reports being the wrong way round.
  */
 
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 Given("the shop is open", () => {});
 

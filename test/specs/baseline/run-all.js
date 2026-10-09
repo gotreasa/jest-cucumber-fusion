@@ -3,20 +3,24 @@
 // (test names, template names, reports, the packaged consumer, the advisory dependency). They
 // are plain node scripts rather than Jest files, so `npm test` does not pick them up; this is
 // how CI and the pre-push hook run them.
-const { spawnSync } = require("child_process");
-const fs = require("fs");
-const path = require("path");
+import { spawnSync } from "child_process";
+import fs from "fs";
+import path from "path";
 
 const scripts = fs
-  .readdirSync(__dirname)
+  .readdirSync(import.meta.dirname)
   .filter((name) => /^assert-.*\.js$/.test(name))
   .sort();
 
 const failed = scripts.filter((name) => {
   console.log(`baseline: ${name}`);
-  const run = spawnSync(process.execPath, [path.join(__dirname, name)], {
-    stdio: "inherit",
-  });
+  const run = spawnSync(
+    process.execPath,
+    [path.join(import.meta.dirname, name)],
+    {
+      stdio: "inherit",
+    },
+  );
   return run.status !== 0;
 });
 

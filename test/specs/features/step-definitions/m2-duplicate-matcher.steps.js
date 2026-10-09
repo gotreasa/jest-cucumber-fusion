@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 /**
  * Regression test — M2: duplicate matcher-source overwrite.
  * RCA: docs/feature/review-hardening/discuss/rca.md (M2, MED).
@@ -21,8 +22,8 @@
 describe("M2 — duplicate matcher-source registration", () => {
   beforeEach(() => jest.resetModules());
 
-  test("re-registering an identical regex source (same step type) throws and names the matcher", () => {
-    const { Given } = require("../../../../src");
+  test("re-registering an identical regex source (same step type) throws and names the matcher", async () => {
+    const { Given } = await import("../../../../src/index.js");
     Given(/^I have (\d+) apples$/, () => {});
 
     let error = null;
@@ -37,8 +38,8 @@ describe("M2 — duplicate matcher-source registration", () => {
     expect(error.message).toContain("I have (\\d+) apples");
   });
 
-  test("re-registering an identical string pattern (same step type) throws and names the matcher", () => {
-    const { Given } = require("../../../../src");
+  test("re-registering an identical string pattern (same step type) throws and names the matcher", async () => {
+    const { Given } = await import("../../../../src/index.js");
     Given("I am on the checkout page", () => {});
 
     let error = null;
@@ -52,8 +53,8 @@ describe("M2 — duplicate matcher-source registration", () => {
     expect(error.message).toContain("I am on the checkout page");
   });
 
-  test("registering two DIFFERENT sources (same step type) does NOT throw — that is H1 ambiguity, not a duplicate", () => {
-    const { Given } = require("../../../../src");
+  test("registering two DIFFERENT sources (same step type) does NOT throw — that is H1 ambiguity, not a duplicate", async () => {
+    const { Given } = await import("../../../../src/index.js");
     Given(/^I have (.*)$/, () => {});
     expect(() => Given(/^I have (\d+) apples$/, () => {})).not.toThrow();
   });

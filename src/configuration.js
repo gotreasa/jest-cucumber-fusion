@@ -11,7 +11,7 @@
 // file's Fusion calls and cannot reach another file. It is per-file configuration, not shared
 // mutable state, and that is the whole reason this option can be set in one place.
 
-const { describeValue } = require("./value-description");
+import { describeValue } from "./value-description.js";
 
 // Fusion's three validation keys. stepsMustMatchFeatureFile decides between the
 // unmatched-step refusal and a visible skipped test; scenariosMustMatchFeatureFile gates the
@@ -63,7 +63,17 @@ const errorsNamedBy = (errors) => {
 // The middle layer. Replaced wholesale by each setFusionConfiguration call, never merged into:
 // replace is what the previous setter did, and it is the only semantics under which a consumer
 // can CLEAR a global they set earlier.
-let globalOptions = {};
+//
+// Kept on globalThis, not in a module-level variable. The package is dual: a setup script that
+// require()s it loads dist/index.cjs, steps that import it load src/, and each copy has its own
+// module variables, so a global set through one copy was lost to the other (measured: the
+// mixed consumer in test/specs/baseline/assert-packaged-consumer.js). Every copy in one test
+// file shares the test environment's global, and Jest gives each test file its own, so the
+// layer stays per-file exactly as before.
+const GLOBAL_OPTIONS = Symbol.for(
+  "@g_package/jest-cucumber-fusion/global-options",
+);
+const globalOptions = () => globalThis[GLOBAL_OPTIONS] || {};
 
 const isAnOptionObject = (candidate) =>
   typeof candidate === "object" &&
@@ -91,7 +101,7 @@ const setFusionConfiguration = (optionsForEveryFusionCall) => {
 
   // Copied, so the stored global is ours: a consumer who later mutates the object they passed
   // does not silently reconfigure the rest of their file.
-  globalOptions = Object.assign({}, optionsForEveryFusionCall);
+  globalThis[GLOBAL_OPTIONS] = Object.assign({}, optionsForEveryFusionCall);
 };
 
 // `errors` is merged key-wise ACROSS the layers, not layer-over-layer as a whole value, which
@@ -117,14 +127,14 @@ const mergeFusionOptions = (perCallOptions) => {
   // into the global, so one file's option cannot configure another file of the same run.
   const merged = Object.assign(
     defaultOptions(),
-    keysThatAreSet(globalOptions),
+    keysThatAreSet(globalOptions()),
     keysThatAreSet(perCall),
   );
 
   return Object.assign(merged, {
-    errors: errorsAcross([globalOptions, perCall]),
+    errors: errorsAcross([globalOptions(), perCall]),
   });
 };
 
-module.exports.setFusionConfiguration = setFusionConfiguration;
-module.exports.mergeFusionOptions = mergeFusionOptions;
+export { setFusionConfiguration };
+export { mergeFusionOptions };

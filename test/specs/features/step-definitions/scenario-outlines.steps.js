@@ -1,6 +1,6 @@
-const { Before, Given, When, Then, Fusion } = require("../../../../src");
+import { Before, Given, When, Then, Fusion } from "../../../../src/index.js";
 
-const { OnlineSales } = require("../../../src/online-sales");
+import { OnlineSales } from "../../../src/online-sales.js";
 
 let onlineSales;
 let salesPrice;

@@ -9,7 +9,7 @@
  * The refusal is not caught here -- the run must fail and carry it.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

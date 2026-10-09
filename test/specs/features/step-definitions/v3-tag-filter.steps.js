@@ -64,7 +64,7 @@ global.afterEach = countingOrForwarding("afterEach", "hooks");
 global.test = countingOrForwarding("test", "tests");
 global.test.skip = countingOrForwarding("test", "tests");
 
-const { Given, When, Fusion } = require("../../../../src");
+import { Given, When, Fusion } from "../../../../src/index.js";
 
 // Every step of the feature records that it ran, so the log IS the answer to "whose bodies
 // executed". The step that both scenarios share records the same label, which makes the count

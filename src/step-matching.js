@@ -86,4 +86,4 @@ const boundStepFor = (stepDefinition, stepText, stepArgs) => {
   return { isBound: true, stepArguments, stepFn: stepDefinition.stepFn };
 };
 
-module.exports.findMatchingStep = findMatchingStep;
+export { findMatchingStep };

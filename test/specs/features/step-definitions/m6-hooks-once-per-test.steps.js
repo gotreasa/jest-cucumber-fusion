@@ -12,7 +12,7 @@
  * Each Fusion() starts from an empty registry (M3), so the second feature registers its
  * own hooks, and neither feature may run the other's.
  */
-const { Given, Before, After, Fusion } = require("../../../../src");
+import { Given, Before, After, Fusion } from "../../../../src/index.js";
 
 // The hooks that close one test, in registration order.
 const closingHooks = ["after:first", "after:second"];

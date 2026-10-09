@@ -11,7 +11,7 @@
  * have to take their name from the same call.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

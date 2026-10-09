@@ -1,6 +1,7 @@
-const { Given, Then, And, Fusion } = require("../../../../src");
+import { Given, Then, And, Fusion } from "../../../../src/index.js";
 
-const { Rocket } = require("../../../src/rocket");
+import { Rocket } from "../../../src/rocket.js";
+import reuseCode from "./reuse-code.js";
 
 let rocket;
 function getCurrentRocket() {
@@ -11,7 +12,7 @@ Given(/^I am Elon Musk and I launched a rocket in space already$/, () => {
   rocket = new Rocket();
 });
 
-require("./reuse-code")(getCurrentRocket);
+reuseCode(getCurrentRocket);
 
 // The critics speak in the order the feature quotes them: the Then hears 'a success'
 // and the And -- the very same definition, reused under a second keyword -- hears

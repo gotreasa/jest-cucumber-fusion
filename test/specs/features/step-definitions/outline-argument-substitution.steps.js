@@ -6,11 +6,11 @@
 // substitute every argument, so that case changed. Characterisation, green on arrival: it pins
 // the documented row in docs/Migrating.md. Found by differential fuzzing of PR #16 against
 // 2.0.0 (finding F3), 2026-10-09.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { When, Fusion } = require("../../../../src");
+import { When, Fusion } from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(
   path.join(os.tmpdir(), "fusion-substitution-"),

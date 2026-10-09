@@ -236,5 +236,5 @@ const unmatchedStepRefusal = (featureTitle, unboundSteps) => {
 // starterCodeFor export").
 const starterCodeFor = (step) => starterCodeForShape([step]);
 
-module.exports.starterCodeFor = starterCodeFor;
-module.exports.unmatchedStepRefusal = unmatchedStepRefusal;
+export { starterCodeFor };
+export { unmatchedStepRefusal };

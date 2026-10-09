@@ -10,7 +10,7 @@
  * registered the row under its own name instead, so both rows would come back untemplated.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

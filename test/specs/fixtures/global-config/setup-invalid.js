@@ -8,7 +8,7 @@
  * unconfigured, and the consumer looking for a bug in their feature files.
  */
 
-const { setFusionConfiguration } = require("../../../../src");
+import { setFusionConfiguration } from "../../../../src/index.js";
 
 // Built at run time rather than written as a literal, deliberately. Jest prints a code frame
 // of this file when a setup script fails, so a literal would appear in the failure text

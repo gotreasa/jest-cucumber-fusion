@@ -4,7 +4,7 @@
 // beside this file was not found, and the refusal named the wrong directory. Frames with no
 // file name are skipped, so the path resolves from this file. Found by the PR #16 adversarial
 // review (finding F7), 2026-10-09.
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 Given("the feature was found next to its caller", () => {});
 
@@ -13,7 +13,7 @@ Given("the feature was found next to its caller", () => {});
 // A Node internal frame has a file name, `node:events` here, but it is not a file on disk, so
 // it is skipped too and the path still resolves from this file (found by the review of the PR
 // #16 fixes).
-const { EventEmitter } = require("events");
+import { EventEmitter } from "events";
 const emitter = new EventEmitter();
 emitter.on("load", Fusion);
 // Each Fusion() starts from an empty registry, so the step is registered again.

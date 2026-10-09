@@ -3,11 +3,15 @@
 // coverage never saw this module's refusal, replace semantics or the errors merge. These tests
 // observe the same behaviour in-process. Jest gives each test file its own module registry, so
 // the global set here cannot leak into another file.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { Given, Fusion, setFusionConfiguration } = require("../../../../src");
+import {
+  Given,
+  Fusion,
+  setFusionConfiguration,
+} from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-global-"));
 const writeFeature = (name, body) => {

@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 /**
  * Regression test — M3: module singleton never reset.
  * RCA: docs/feature/review-hardening/discuss/rca.md (M3, MED).
@@ -49,6 +50,10 @@
  * a Fusion() that threw left the registry dirty for the next one (D/E/F).
  */
 
+// Not doubled, so the static imports are the real collaborators.
+import { findMatchingStep } from "../../../../src/step-matching.js";
+import { unmatchedStepRefusal } from "../../../../src/code-suggestion.js";
+
 const mockState = {
   feature: null,
   loadFeatureError: null,
@@ -56,7 +61,9 @@ const mockState = {
   registryHandedOver: [],
 };
 
-jest.mock("../../../../src/feature-source", () => ({
+// Registered before any test imports Fusion. The doubles stay registered across
+// jest.resetModules(), so each fresh copy of Fusion below is wired to them.
+jest.unstable_mockModule("../../../../src/feature-source.js", () => ({
   resolveFeaturePath: jest.fn((featureFileToLoad) => {
     // The real port always answers with an absolute path; so does this one.
     expect(typeof featureFileToLoad).toBe("string");
@@ -69,7 +76,7 @@ jest.mock("../../../../src/feature-source", () => ({
   }),
 }));
 
-jest.mock("../../../../src/test-registration", () => ({
+jest.unstable_mockModule("../../../../src/test-registration.js", () => ({
   registerFeature: jest.fn((loadedFeature, featureRegistry, options) => {
     expect(loadedFeature).toBeDefined();
     expect(featureRegistry).toBeDefined();
@@ -83,13 +90,6 @@ jest.mock("../../../../src/test-registration", () => ({
     // rather than throwing on it, and the port raises one refusal for the whole feature when
     // the step check is on. Both are production modules, so the refusal observed below is the
     // real one.
-    const { findMatchingStep } = jest.requireActual(
-      "../../../../src/step-matching",
-    );
-    const { unmatchedStepRefusal } = jest.requireActual(
-      "../../../../src/code-suggestion",
-    );
-
     const unboundSteps = [];
 
     loadedFeature.scenarios.forEach((scenario) =>
@@ -171,8 +171,8 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     forgetWhatCrossedTheSeam();
   });
 
-  test("step definitions do not leak — a second feature does not inherit the first feature's steps", () => {
-    const { Given, Fusion } = require("../../../../src");
+  test("step definitions do not leak — a second feature does not inherit the first feature's steps", async () => {
+    const { Given, Fusion } = await import("../../../../src/index.js");
     Given(SIGNED_IN, () => {});
 
     // Feature 1 sees the definition registered ahead of it (the reset must not run early).
@@ -191,8 +191,9 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     expect(mockState.boundSteps).toEqual([]);
   });
 
-  test("hooks do not leak — the first feature's before/after hooks are not re-wired onto a second feature", () => {
-    const { Before, After, Given, Fusion } = require("../../../../src");
+  test("hooks do not leak — the first feature's before/after hooks are not re-wired onto a second feature", async () => {
+    const { Before, After, Given, Fusion } =
+      await import("../../../../src/index.js");
     Before(() => {});
     After(() => {});
     Given(SIGNED_IN, () => {});
@@ -217,8 +218,8 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     expect(mockState.registryHandedOver[0].after).toEqual([]);
   });
 
-  test("a second feature re-registering the same step is a fresh registration, not a duplicate, and it binds", () => {
-    const { Given, Fusion } = require("../../../../src");
+  test("a second feature re-registering the same step is a fresh registration, not a duplicate, and it binds", async () => {
+    const { Given, Fusion } = await import("../../../../src/index.js");
     Given(SIGNED_IN, () => {});
     fuse(Fusion, featureWithOneScenario("first", SIGNED_IN));
 
@@ -234,8 +235,9 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     expect(mockState.boundSteps).toHaveLength(1);
   });
 
-  test("D — a Fusion() that throws because the feature file is missing still leaves a clean slate", () => {
-    const { Before, After, Given, Fusion } = require("../../../../src");
+  test("D — a Fusion() that throws because the feature file is missing still leaves a clean slate", async () => {
+    const { Before, After, Given, Fusion } =
+      await import("../../../../src/index.js");
     Before(() => {});
     After(() => {});
     Given(SIGNED_IN, () => {});
@@ -251,8 +253,9 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     expectCleanSlateOnNextFusion(Fusion, SIGNED_IN);
   });
 
-  test("E — a Fusion() that throws on an ambiguous step (errors:true default) still leaves a clean slate", () => {
-    const { Before, After, Given, Fusion } = require("../../../../src");
+  test("E — a Fusion() that throws on an ambiguous step (errors:true default) still leaves a clean slate", async () => {
+    const { Before, After, Given, Fusion } =
+      await import("../../../../src/index.js");
     Before(() => {});
     After(() => {});
     // Two DIFFERENT matchers that both match SIGNED_IN: the matcher raises the H1 ambiguity
@@ -270,8 +273,9 @@ describe("M3 — the step registry is reset once a feature is loaded", () => {
     expectCleanSlateOnNextFusion(Fusion, "the shopper is browsing");
   });
 
-  test("F — a Fusion() that throws on an unmatched step still leaves a clean slate", () => {
-    const { Before, After, Given, Fusion } = require("../../../../src");
+  test("F — a Fusion() that throws on an unmatched step still leaves a clean slate", async () => {
+    const { Before, After, Given, Fusion } =
+      await import("../../../../src/index.js");
     Before(() => {});
     After(() => {});
     Given(SIGNED_IN, () => {});

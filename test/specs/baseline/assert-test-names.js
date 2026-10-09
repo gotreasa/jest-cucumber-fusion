@@ -17,13 +17,13 @@
  * the business of the other verification vectors.
  */
 
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const { spawnSync } = require("child_process");
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { spawnSync } from "child_process";
 
-const repositoryRoot = path.resolve(__dirname, "..", "..", "..");
-const baselineFile = path.join(__dirname, "test-names-2.0.0.txt");
+const repositoryRoot = path.resolve(import.meta.dirname, "..", "..", "..");
+const baselineFile = path.join(import.meta.dirname, "test-names-2.0.0.txt");
 
 const cannotObserve = (what, why, how) => {
   console.error(`CANNOT OBSERVE the generated test names.`);
@@ -91,6 +91,8 @@ const runTheSuite = () => {
       ],
       {
         cwd: repositoryRoot,
+        // Fusion is ES modules, so the child Jest runs in its ESM mode.
+        env: { ...process.env, NODE_OPTIONS: "--experimental-vm-modules" },
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
       },

@@ -9,12 +9,13 @@
 // were inherited from jest-cucumber's generator.
 //
 // The seed is fixed so a failure reproduces; widen with SNIPPET_SEED=<n> SNIPPET_RUNS=<n>.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const fc = require("fast-check");
+import fs from "fs";
+import os from "os";
+import path from "path";
+import fc from "fast-check";
 
-const { Given, When, Then, And, But, Fusion } = require("../../../../src");
+import { Given, When, Then, And, But, Fusion } from "../../../../src/index.js";
+import { starterCodeFor } from "../../../../src/code-suggestion.js";
 
 const SEED = Number(process.env.SNIPPET_SEED || 20261008);
 const RUNS = Number(process.env.SNIPPET_RUNS || 150);
@@ -403,7 +404,6 @@ describe("one definition per step shape", () => {
 // starterCodeFor, kept for probes that drive the generator directly, answers for one step
 // exactly what the refusal suggests for it.
 test("starterCodeFor gives one step's starter code, as the refusal does", () => {
-  const { starterCodeFor } = require("../../../../src/code-suggestion");
   expect(
     starterCodeFor({
       keyword: "given",

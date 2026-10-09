@@ -7,7 +7,7 @@
  * Default options, so the check is on; all three rows must register and pass.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

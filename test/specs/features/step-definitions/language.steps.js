@@ -1,4 +1,4 @@
-const {
+import {
   Before,
   Given,
   When,
@@ -6,9 +6,9 @@ const {
   Fusion,
   And,
   But,
-} = require("../../../../src");
+} from "../../../../src/index.js";
 
-const { OnlineSales } = require("../../../src/online-sales");
+import { OnlineSales } from "../../../src/online-sales.js";
 
 let onlineSales;
 let salesPrice;

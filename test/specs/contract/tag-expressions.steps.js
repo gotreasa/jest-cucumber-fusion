@@ -3,7 +3,7 @@
  *
  * The whole of tagFilter's grammar now comes from this library, so its terms are a contract
  * with another owner on another release schedule, not an internal detail. This spec states
- * them against the REAL installed package -- requiring it by name, the way src/feature-source.js
+ * them against the REAL installed package -- importing it by name, the way src/feature-source.js
  * does -- so a version bump that changes any of them is caught here and not in a consumer's
  * suite.
  *
@@ -11,7 +11,7 @@
  * tag expression language it speaks. node_modules is untracked, so the declaration, not a
  * vendored dist, is the honest locator.
  * Consumer side: src/feature-source.js, the one module the architectural law lets reach the
- * cucumber scope. It requires the library and hands the parse function inward to
+ * cucumber scope. It imports the library and hands the parse function inward to
  * src/tag-filter.js, which is why that module can stay pure.
  *
  * The term worth reading twice is the last one. A parser that answered an unparseable
@@ -23,8 +23,12 @@
  * dependency of this package yet. Every test below names that in its failure instead of
  * crashing on an undefined, so the red is readable and tells the crafter exactly what to add.
  * It turns green when the pin is declared and installed, and red again if a later pin changes
- * the API or moves to a cucumber major that publishes ESM only and so cannot be required under
- * Jest on the supported Node line.
+ * the API.
+ *
+ * Since 3.0.0 moved Fusion to ES modules (2026-10-09), the library is imported, at 11.0.1, the
+ * ESM-only major that Fusion could not use while it was CommonJS. A consumer that require()s
+ * Fusion reaches the library through dist/index.cjs, which bundles it; the packaged-consumer
+ * baseline holds that path.
  */
 
 const THE_LIBRARY = "@cucumber/tag-expressions";
@@ -33,18 +37,15 @@ let required = null;
 let loadFailure = null;
 
 try {
-  required = require(THE_LIBRARY);
+  required = await import(THE_LIBRARY);
 } catch (thrown) {
   loadFailure = thrown;
 }
 
-// Any of the three CommonJS interop shapes counts as "requiring it yields a parse function":
-// a named `parse` export, the module itself, or a default export. The design fixes that a
-// parse function is reachable from CommonJS; it does not fix which shape, so this reports the
-// one it found rather than failing on a guess. 9.1.0 publishes an object carrying BOTH `parse`
-// and `default`, and the named export is the one to prefer -- the default is interop
-// scaffolding that a later major could drop without it being a breaking change to anyone
-// reading the documentation.
+// Any of three shapes counts as "importing it yields a parse function": a named `parse`
+// export, the module itself, or a default export. The design fixes that a parse function is
+// reachable; it does not fix which shape, so this reports the one it found rather than failing
+// on a guess. The named export is the one to prefer.
 const parse =
   required && typeof required.parse === "function"
     ? required.parse
@@ -55,9 +56,9 @@ const parse =
         : null;
 
 const describeWhatWasFound = () => {
-  if (loadFailure) return `require() threw: ${loadFailure.message}`;
-  if (!required) return "require() yielded nothing";
-  return `require() yielded ${typeof required}${
+  if (loadFailure) return `import() threw: ${loadFailure.message}`;
+  if (!required) return "import() yielded nothing";
+  return `import() yielded ${typeof required}${
     typeof required === "object"
       ? ` with keys [${Object.keys(required).join(", ")}]`
       : ""
@@ -71,27 +72,23 @@ const theAgreementIsObservable = () => {
     throw new Error(
       `WHAT: no parse function could be reached from ${THE_LIBRARY}.\n` +
         `      ${describeWhatWasFound()}\n` +
-        "WHY:  tagFilter's whole expression language comes from this library, reached by " +
-        "require() from CommonJS inside the consumer's Jest. Without it there is no grammar " +
-        "to speak, and none of the terms below has been observed.\n" +
-        `HOW:  declare ${THE_LIBRARY} in package.json dependencies, pinned exactly to 9.1.0 ` +
-        "(the majors past it publish ESM only and Jest on the supported Node line cannot " +
-        "require them), regenerate package-lock.json, and require it from " +
-        "src/feature-source.js -- the one module the architectural law lets reach the " +
-        "cucumber scope.",
+        "WHY:  tagFilter's whole expression language comes from this library. Without it " +
+        "there is no grammar to speak, and none of the terms below has been observed.\n" +
+        `HOW:  declare ${THE_LIBRARY} in package.json dependencies, pinned exactly to 11.0.1, ` +
+        "regenerate package-lock.json, and import it from src/feature-source.js -- the one " +
+        "module the architecture table lets reach the cucumber scope.",
     );
 };
 
 const satisfies = (expression, tags) => parse(expression).evaluate(tags);
 
 describe("the tag expression language tagFilter speaks", () => {
-  test("the pinned library can be required from CommonJS and yields a parse function", () => {
-    // WHAT: a parse function, reachable by require() from an ordinary CommonJS file.
-    // WHY:  this package has no build step and a consumer requires it from their own
-    //       .steps.js under their own Jest, so a dependency that cannot be require()d cannot
-    //       be used at all. This is the term the exact pin exists to protect.
-    // HOW:  pin a version whose published package carries a CommonJS build and a require
-    //       condition in its exports map.
+  test("the pinned library can be imported and yields a parse function", () => {
+    // WHAT: a parse function, reachable by importing the library by name.
+    // WHY:  src/feature-source.js imports it that way, and dist/index.cjs bundles the same
+    //       import for consumers that require() Fusion. This is the term the exact pin
+    //       exists to protect.
+    // HOW:  pin a version that exports `parse`.
     theAgreementIsObservable();
     expect(typeof parse).toBe("function");
   });

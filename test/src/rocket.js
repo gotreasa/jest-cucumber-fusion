@@ -10,4 +10,4 @@ class Rocket {
   }
 }
 
-module.exports.Rocket = Rocket;
+export { Rocket };

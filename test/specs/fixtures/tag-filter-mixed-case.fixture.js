@@ -7,7 +7,7 @@
  * selecting nothing, which the report script reads as two statuses that moved.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

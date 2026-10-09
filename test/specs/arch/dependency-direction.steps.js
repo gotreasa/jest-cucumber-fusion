@@ -32,11 +32,12 @@
  *   GREEN — the export list is already exactly the eight public names.
  */
 
-const fs = require("fs");
-const path = require("path");
-const { ESLint } = require("eslint");
+import fs from "fs";
+import path from "path";
+import { ESLint } from "eslint";
+import eslintConfig from "../../../eslint.config.cjs";
 
-const repositoryRoot = path.resolve(__dirname, "..", "..", "..");
+const repositoryRoot = path.resolve(import.meta.dirname, "..", "..", "..");
 const sourceRoot = path.join(repositoryRoot, "src");
 const ARCHITECTURE_DOC = path.join(repositoryRoot, "docs", "Architecture.md");
 
@@ -138,20 +139,31 @@ const stripped = (source, { blankStrings }) => {
   return out;
 };
 
-// A require whose argument is not one string literal (`require(name)`, a template) cannot be
-// checked against the table, so it is counted and refused rather than silently skipped.
-const unreadableRequiresIn = (code) =>
-  (code.match(/\brequire\s*\(/g) || []).length - requireTargetsIn(code).length;
+// What a module depends on, read from its comment-free source. src/ is ES modules, so that is
+// every `import ... from "x"`, bare `import "x"`, `export ... from "x"` and `import("x")`; a
+// `require("x")` is read too, so a CommonJS require slipped back in is still seen.
+const DEPENDENCY_PATTERNS = [
+  /\bimport\s[^"';]*?\bfrom\s*(['"])([^'"]+)\1/g,
+  /\bimport\s*(['"])([^'"]+)\1/g,
+  /\bexport\s[^"';]*?\bfrom\s*(['"])([^'"]+)\1/g,
+  /\bimport\s*\(\s*(['"])([^'"]+)\1\s*\)/g,
+  /\brequire\s*\(\s*(['"])([^'"]+)\1\s*\)/g,
+];
 
-const requireTargetsIn = (code) => {
-  const targets = [];
-  const pattern = /\brequire\s*\(\s*(['"])([^'"]+)\1\s*\)/g;
-  let match = pattern.exec(code);
-  while (match) {
-    targets.push(match[2]);
-    match = pattern.exec(code);
-  }
-  return targets;
+const requireTargetsIn = (code) =>
+  DEPENDENCY_PATTERNS.flatMap((pattern) =>
+    [...code.matchAll(pattern)].map((match) => match[2]),
+  );
+
+// A dynamic import() or require() whose argument is not one string literal (`import(name)`, a
+// template) cannot be checked against the table, so it is counted and refused rather than
+// silently skipped.
+const unreadableRequiresIn = (code) => {
+  const calls = (code.match(/\b(?:import|require)\s*\(/g) || []).length;
+  const literal = [
+    ...code.matchAll(/\b(?:import|require)\s*\(\s*(['"])[^'"]+\1\s*\)/g),
+  ].length;
+  return calls - literal;
 };
 
 const theSourceTree = everyJavaScriptFileUnder(sourceRoot).map((absolute) => {
@@ -277,12 +289,11 @@ describe("the dependency direction inside src/ is inward", () => {
     // text search over the source could not tell apart (it flagged all three). Each probe is
     // linted as if it were the file named, so the per-file config applies exactly as it does
     // to the real tree.
-    // The config is required here and handed over, because ESLint's own loader uses a dynamic
-    // import(), which Jest's module sandbox refuses.
+    // The repository's config, imported and handed over, so this test pins exactly that file.
     const eslint = new ESLint({
       cwd: repositoryRoot,
       overrideConfigFile: true,
-      overrideConfig: require(path.join(repositoryRoot, "eslint.config.js")),
+      overrideConfig: eslintConfig,
     });
     const jestGlobalErrors = async (code, filePath) =>
       (await eslint.lintText(code, { filePath }))[0].messages
@@ -320,8 +331,8 @@ describe("the dependency direction inside src/ is inward", () => {
         PORT,
       ),
     };
-    // The real tree, file by file through lintText: lintFiles' own file search also reaches a
-    // dynamic import().
+    // The real tree, file by file through lintText with the same config, from the source tree
+    // this test already holds.
     const realTree = (
       await Promise.all(
         theSourceTree.map(async (each) =>
@@ -345,7 +356,7 @@ describe("the dependency direction inside src/ is inward", () => {
     //       test, skipped scenarios as test.skip. The package's real bugs have lived there, and
     //       they stay findable while one module is the only one that registers.
     // HOW:  pass nothing but values across the boundary and let src/test-registration.js be
-    //       the only module that registers anything. The rules live in eslint.config.js.
+    //       the only module that registers anything. The rules live in eslint.config.cjs.
     expect({
       notRefused: Object.keys(refused).filter(
         (probe) => refused[probe].length === 0,
@@ -357,9 +368,9 @@ describe("the dependency direction inside src/ is inward", () => {
     }).toStrictEqual({ notRefused: [], wronglyRefused: [], realTree: [] });
   });
 
-  test("src/index.js exports exactly the public surface and nothing more", () => {
-    // Required through the package entry point, the way a consumer requires it.
-    const publicSurface = require("../../../src");
+  test("src/index.js exports exactly the public surface and nothing more", async () => {
+    // Imported through the package entry point, the way a consumer imports it.
+    const publicSurface = await import("../../../src/index.js");
 
     // WHAT: the exported names, as a sorted set.
     // WHY:  an export is a promise that cannot be withdrawn inside a major. A seam exported

@@ -4,11 +4,16 @@
 // JSON.stringify, which throws on a BigInt and on a circular object, so the consumer got a
 // TypeError from inside Fusion instead of the refusal written for them. Found by the PR #16
 // adversarial review (finding F8), 2026-10-09.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { inspect } from "util";
 
-const { Given, Fusion, setFusionConfiguration } = require("../../../../src");
+import {
+  Given,
+  Fusion,
+  setFusionConfiguration,
+} from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(
   path.join(os.tmpdir(), "fusion-unserialisable-"),
@@ -46,7 +51,7 @@ const outcomes = {
     toJSON() {
       throw new Error("no JSON");
     },
-    [require("util").inspect.custom]() {
+    [inspect.custom]() {
       throw new Error("no inspect");
     },
   }),

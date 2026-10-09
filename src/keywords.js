@@ -53,4 +53,4 @@ const bucketForKeyword = (keyword, dialect, language) => {
   return bucket;
 };
 
-module.exports.bucketForKeyword = bucketForKeyword;
+export { bucketForKeyword };

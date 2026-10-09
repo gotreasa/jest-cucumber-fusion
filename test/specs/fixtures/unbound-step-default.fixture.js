@@ -10,7 +10,7 @@
  * file that must fail collection would break the whole-repository vector if it were collected.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

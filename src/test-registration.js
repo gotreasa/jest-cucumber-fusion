@@ -7,9 +7,9 @@
 // removed intermediary used to own: one describe per feature, the hook wiring, one test per
 // scenario, and running the steps of a test in order.
 
-const { findMatchingStep } = require("./step-matching");
-const { unmatchedStepRefusal } = require("./code-suggestion");
-const { nameForScenario } = require("./scenario-name");
+import { findMatchingStep } from "./step-matching.js";
+import { unmatchedStepRefusal } from "./code-suggestion.js";
+import { nameForScenario } from "./scenario-name.js";
 
 // BIND BEFORE REGISTERING. Every step of every scenario is matched up front, so a refusal
 // (an unmatched step, an ambiguous one, an unsupported keyword) leaves Fusion() on the way
@@ -140,4 +140,4 @@ const registerFeature = (loadedFeature, featureRegistry, options) => {
   });
 };
 
-module.exports.registerFeature = registerFeature;
+export { registerFeature };

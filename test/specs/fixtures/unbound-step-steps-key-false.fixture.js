@@ -16,7 +16,7 @@
  * second Fusion call, which only a test body can catch without failing the file.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

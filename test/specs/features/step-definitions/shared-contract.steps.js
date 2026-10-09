@@ -108,9 +108,9 @@ const recordWhatFusionRegisters = (driveTheFeature) => {
 };
 
 // --- the public surface, required exactly as a consumer requires it ------------------------
-const path = require("path");
+import path from "path";
 
-const {
+import {
   Given,
   And,
   But,
@@ -118,7 +118,7 @@ const {
   Before,
   After,
   Fusion,
-} = require("../../../../src");
+} from "../../../../src/index.js";
 
 const FEATURE_TITLE =
   "A feature file reaches the step definitions that bind it";
@@ -335,7 +335,7 @@ test("a failing step reports its text, its arguments and the original error, and
 
 test("a missing feature file names the absolute path Fusion looked for", () => {
   const pathItMustName = path.resolve(
-    __dirname,
+    import.meta.dirname,
     "../does-not-exist-shared-contract.feature",
   );
 

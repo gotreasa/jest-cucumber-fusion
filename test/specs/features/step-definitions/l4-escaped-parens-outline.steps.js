@@ -43,7 +43,7 @@
  * that needed fixing.
  */
 
-const { Given, Then, Before, Fusion } = require("../../../../src");
+import { Given, Then, Before, Fusion } from "../../../../src/index.js";
 
 // The arguments the step under observation was ACTUALLY called with. A rest param records them
 // exactly as they arrived — count and order included — so the Then can assert the whole list.

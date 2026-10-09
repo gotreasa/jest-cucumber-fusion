@@ -7,7 +7,7 @@
  * key, which is why every step still has to bind -- and it does.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

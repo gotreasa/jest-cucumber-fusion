@@ -87,4 +87,4 @@ const tagFilterFor = (expression, parseExpression) => {
   return (tagNames) => parsed.evaluate((tagNames || []).map(lowercased));
 };
 
-module.exports.tagFilterFor = tagFilterFor;
+export { tagFilterFor };

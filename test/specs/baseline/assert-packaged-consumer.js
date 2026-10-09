@@ -27,15 +27,17 @@
  * non-zero. It never exits 0 on an observation it did not make.
  */
 
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const { spawnSync } = require("child_process");
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { spawnSync } from "child_process";
 
 const FORBIDDEN = ["jest-cucumber", "uuid"];
 
-const repositoryRoot = path.resolve(__dirname, "..", "..", "..");
-const manifest = require(path.join(repositoryRoot, "package.json"));
+const repositoryRoot = path.resolve(import.meta.dirname, "..", "..", "..");
+const manifest = JSON.parse(
+  fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"),
+);
 
 let workspace = null;
 
@@ -173,6 +175,66 @@ const writeTheConsumerProject = (projectDirectory) => {
       "",
     ].join("\n"),
   );
+
+  // The same steps, written as an ES module: a consumer who imports the package.
+  fs.writeFileSync(
+    path.join(projectDirectory, "sales.steps.mjs"),
+    fs
+      .readFileSync(path.join(projectDirectory, "sales.steps.js"), "utf8")
+      .replace(
+        'const { Given, When, Then, Fusion } = require("@g_package/jest-cucumber-fusion");',
+        'import { Given, When, Then, Fusion } from "@g_package/jest-cucumber-fusion";',
+      ),
+  );
+
+  // A setup script that require()s the package and steps that import it. Under a dual package
+  // they reach two copies of Fusion, so the global this setup sets must still reach the steps:
+  // the @wip scenario's step is bound by nothing, and only the filter keeps it from being
+  // refused.
+  fs.writeFileSync(
+    path.join(projectDirectory, "setup-global.cjs"),
+    [
+      'const { setFusionConfiguration } = require("@g_package/jest-cucumber-fusion");',
+      'setFusionConfiguration({ tagFilter: "not @wip" });',
+      "",
+    ].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(projectDirectory, "mixed.feature"),
+    [
+      "Feature: A global set by require reaches steps that import",
+      "",
+      "  Scenario: Selected",
+      "    Given the shop is open",
+      "",
+      "  @wip",
+      "  Scenario: Not written yet",
+      "    Given a step nobody has written",
+      "",
+    ].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(projectDirectory, "mixed.steps.mjs"),
+    [
+      'import { Given, Fusion } from "@g_package/jest-cucumber-fusion";',
+      "",
+      'Given("the shop is open", () => {});',
+      "",
+      'Fusion("mixed.feature");',
+      "",
+    ].join("\n"),
+  );
+
+  const jestConfig = (name, config) =>
+    fs.writeFileSync(
+      path.join(projectDirectory, name),
+      `${JSON.stringify({ rootDir: ".", collectCoverage: false, ...config }, null, 2)}\n`,
+    );
+  jestConfig("jest.esm.json", { testMatch: ["<rootDir>/sales.steps.mjs"] });
+  jestConfig("jest.mixed.json", {
+    testMatch: ["<rootDir>/mixed.steps.mjs"],
+    setupFiles: ["<rootDir>/setup-global.cjs"],
+  });
 };
 
 const treeOf = (projectDirectory) => {
@@ -296,6 +358,21 @@ const consumerRun = run(
   },
 );
 
+// The same consumer project under Jest's ES module mode, once importing the package and once
+// mixing a require()ing setup script with importing steps.
+const esModuleRun = (configFile) =>
+  run(
+    `the consumer suite, ${configFile}`,
+    consumerJest,
+    ["--config", configFile],
+    {
+      cwd: projectDirectory,
+      env: { ...process.env, NODE_OPTIONS: "--experimental-vm-modules" },
+    },
+  );
+const consumerImportRun = esModuleRun("jest.esm.json");
+const consumerMixedRun = esModuleRun("jest.mixed.json");
+
 const { routes, broken } = forbiddenRoutesIn(treeOf(projectDirectory));
 
 if (broken.length > 0) {
@@ -324,6 +401,34 @@ if (consumerRun.status !== 0) {
   );
 }
 
+if (consumerImportRun.status !== 0) {
+  failures.push(
+    "WHAT: the consumer's jest exited " +
+      `${consumerImportRun.status}, not 0, for steps that import the package.\n` +
+      "    WHY:  the package is dual: `import` resolves to the ES module source in src/. A\n" +
+      "          consumer writing ES module steps must get the same Fusion a require()r does.\n" +
+      "    HOW:  keep package.json's exports `import` condition pointing at src/index.js and\n" +
+      "          ship every module src/index.js imports.\n" +
+      "    The consumer run said:\n" +
+      `${(consumerImportRun.stderr || consumerImportRun.stdout || "").trim()}`,
+  );
+}
+
+if (consumerMixedRun.status !== 0) {
+  failures.push(
+    "WHAT: the consumer's jest exited " +
+      `${consumerMixedRun.status}, not 0, when a setup script require()s the package and the\n` +
+      "          steps import it.\n" +
+      "    WHY:  those are two copies of Fusion (dist/index.cjs and src/), and the global the\n" +
+      "          setup script sets has to reach the steps' copy. When it does not, the @wip\n" +
+      "          scenario is not filtered out and its unbound step is refused.\n" +
+      "    HOW:  keep the global configuration somewhere both copies share (globalThis), not in\n" +
+      "          a module-level variable each copy owns.\n" +
+      "    The consumer run said:\n" +
+      `${(consumerMixedRun.stderr || consumerMixedRun.stdout || "").trim()}`,
+  );
+}
+
 if (routes.length > 0) {
   failures.push(
     `WHAT: ${routes.length} path(s) to an advisory carrier in the installed consumer tree:\n` +
@@ -348,7 +453,9 @@ console.log(
     `  consumer suite:   exit 0 (${path.relative(
       projectDirectory,
       consumerJest,
-    )})\n` +
+    )}), steps that require() the package\n` +
+    "  ES module steps:  exit 0, steps that import it, under Jest's ES module mode\n" +
+    "  mixed:            exit 0, a require()ing setup script's global reaches importing steps\n" +
     `  names refused:    ${FORBIDDEN.join(
       ", ",
     )}, absent from the whole installed tree\n` +

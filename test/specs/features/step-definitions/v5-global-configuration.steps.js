@@ -32,12 +32,18 @@
  *           why the assertion below reads the refusal's content and not merely its exit code.
  */
 
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const { spawnSync } = require("child_process");
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { spawnSync } from "child_process";
 
-const repositoryRoot = path.resolve(__dirname, "..", "..", "..", "..");
+const repositoryRoot = path.resolve(
+  import.meta.dirname,
+  "..",
+  "..",
+  "..",
+  "..",
+);
 const fixtureProject = path.join(
   repositoryRoot,
   "test",
@@ -87,6 +93,8 @@ const childRunWith = (configurationFileName) => {
       ],
       {
         cwd: repositoryRoot,
+        // Fusion is ES modules, so the child Jest runs in its ESM mode.
+        env: { ...process.env, NODE_OPTIONS: "--experimental-vm-modules" },
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
       },

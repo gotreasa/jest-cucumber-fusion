@@ -23,12 +23,14 @@
  *
  * CURRENT STATUS: GREEN, and deliberately so. This is a guard, not a falsifier: the Gherkin
  * reachable today already produces every fact below, which is exactly why the design chose
- * pickles. It turns red if a later pin changes the pickle shape, or moves to a cucumber major
- * that publishes ESM only and so cannot be required under Jest on the supported Node line --
- * the named residue of the CommonJS pin.
+ * pickles. It turns red if a later pin changes the pickle shape.
+ *
+ * Since 3.0.0 moved Fusion to ES modules (2026-10-09), the compiler is imported, at the
+ * ESM-only gherkin 42 and messages 34 that Fusion could not use while it was CommonJS. A
+ * consumer that require()s Fusion reaches them through dist/index.cjs, which bundles them.
  */
 
-// The compiler is required here, directly and by name, because the version that is actually
+// The compiler is imported here, directly and by name, because the version that is actually
 // installed IS the subject. A failure to load it is reported as a failure of this agreement
 // rather than left to crash the file, so the reason is readable.
 let gherkin = null;
@@ -36,8 +38,8 @@ let messages = null;
 let loadFailure = null;
 
 try {
-  gherkin = require("@cucumber/gherkin");
-  messages = require("@cucumber/messages");
+  gherkin = await import("@cucumber/gherkin");
+  messages = await import("@cucumber/messages");
 } catch (thrown) {
   loadFailure = thrown;
 }
@@ -111,11 +113,11 @@ if (!loadFailure) {
 const theAgreementIsObservable = () => {
   if (loadFailure)
     throw new Error(
-      "WHAT: the installed @cucumber/gherkin could not be required.\n" +
+      "WHAT: the installed @cucumber/gherkin could not be imported.\n" +
         `  ${loadFailure.message}\n` +
-        "WHY:  this package requires the compiler synchronously inside the consumer's Jest, so " +
-        "a compiler that cannot be required leaves every pickle fact below unobserved.\n" +
-        "HOW:  pin the cucumber dependencies to the last CommonJS-loadable line, exactly.",
+        "WHY:  a compiler that cannot be loaded leaves every pickle fact below unobserved.\n" +
+        "HOW:  declare @cucumber/gherkin and @cucumber/messages in package.json, pinned " +
+        "exactly, and reinstall.",
     );
   if (compileFailure)
     throw new Error(
@@ -148,14 +150,12 @@ const pickleNamed = (name) =>
 const stepTextsOf = (pickle) => pickle.steps.map((step) => step.text);
 
 describe("the pickle facts this package depends on hold for the installed Gherkin", () => {
-  test("the installed compiler can be required and the feature compiled", () => {
+  test("the installed compiler can be imported and the feature compiled", () => {
     // WHAT: the compiler loads under this runtime and compiles a document into pickles.
-    // WHY:  every term below is read off those pickles. If the compiler cannot be required at
-    //       all -- the shape a cucumber major that publishes ESM only takes under Jest on the
-    //       supported Node line -- then nothing below observes anything, and that has to read
-    //       as a broken agreement rather than as silence.
-    // HOW:  keep the cucumber dependencies pinned to the last CommonJS-loadable line, exactly,
-    //       so require() works inside the consumer's Jest.
+    // WHY:  every term below is read off those pickles. If the compiler cannot be loaded at
+    //       all, nothing below observes anything, and that has to read as a broken agreement
+    //       rather than as silence.
+    // HOW:  keep the cucumber dependencies declared and pinned exactly.
     expect(loadFailure && loadFailure.message).toBeNull();
     expect(compileFailure && compileFailure.message).toBeNull();
     expect(compiled.pickles.length).toBeGreaterThan(0);

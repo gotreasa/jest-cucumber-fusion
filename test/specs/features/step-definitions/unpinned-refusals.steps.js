@@ -3,11 +3,11 @@
 //   - an asterisk step (`* ...`) is refused by name, because no registry bucket can bind it;
 //   - a scenarioNameTemplate that returns "" is refused, naming the empty string;
 //   - a scenarioNameTemplate that throws something other than an Error is refused, naming it.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-unpinned-"));
 const writeFeature = (name, body) => {

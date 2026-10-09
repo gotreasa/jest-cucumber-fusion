@@ -6,12 +6,12 @@
 // Widen locally with FUZZ_SEED=<n> FUZZ_RUNS=<n> npx jest fuzz-properties.
 // Sensitivity was proven against the published 1.0.0: P5 reproduces the L4 crash and
 // P4 fails every case on the L3 dropped docstring.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const fc = require("fast-check");
+import fs from "fs";
+import os from "os";
+import path from "path";
+import fc from "fast-check";
 
-const { Given, When, Then, Fusion } = require("../../../../src");
+import { Given, When, Then, Fusion } from "../../../../src/index.js";
 
 const SEED = Number(process.env.FUZZ_SEED || 20261002);
 const RUNS = Number(process.env.FUZZ_RUNS || 40);

@@ -1,6 +1,13 @@
-const { Before, After, Given, When, Then, Fusion } = require("../../../../src");
+import {
+  Before,
+  After,
+  Given,
+  When,
+  Then,
+  Fusion,
+} from "../../../../src/index.js";
 
-const { TodoList } = require("../../../src/todo-list");
+import { TodoList } from "../../../src/todo-list.js";
 
 let todoList;
 

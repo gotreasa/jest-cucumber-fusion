@@ -8,11 +8,11 @@
 //   - a step that throws a non-Error is reported with what it threw (test-registration.js);
 //   - a matcher that is neither a string nor a RegExp is refused at the call (index.js). Until
 //     this change it was silently ignored, so the scenario failed later as an unbound step.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { Given, When, Fusion } = require("../../../../src");
+import { Given, When, Fusion } from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-branches-"));
 const writeFeature = (name, body) => {

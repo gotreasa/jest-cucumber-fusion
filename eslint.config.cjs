@@ -24,14 +24,24 @@ const restrictedJestGlobals = JEST_GLOBALS.map((name) => ({
 
 module.exports = [
   {
-    ignores: ["coverage/", ".nwave/", ".claude/", "node_modules/"],
+    // dist/ is the generated CommonJS bundle (scripts/build-cjs.js), not source.
+    ignores: ["coverage/", ".nwave/", ".claude/", "node_modules/", "dist/"],
   },
   js.configs.recommended,
   {
+    // The package is "type": "module", so .js files are ES modules.
     files: ["**/*.js"],
     languageOptions: {
+      sourceType: "module",
+      ecmaVersion: 2024,
+      globals: globals.node,
+    },
+  },
+  {
+    files: ["**/*.cjs"],
+    languageOptions: {
       sourceType: "commonjs",
-      ecmaVersion: 2022,
+      ecmaVersion: 2024,
       globals: globals.node,
     },
   },

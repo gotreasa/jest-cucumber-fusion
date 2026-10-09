@@ -14,7 +14,7 @@
  * the FIRST call win would invert both reports.
  */
 
-const { setFusionConfiguration } = require("../../../../src");
+import { setFusionConfiguration } from "../../../../src/index.js";
 
 setFusionConfiguration({
   scenarioNameTemplate: ({ scenarioTitle }) => `stale: ${scenarioTitle}`,

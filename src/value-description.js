@@ -4,7 +4,7 @@
 // `object ["@smoke"]`). JSON.stringify throws on a BigInt and on a circular object, and answers
 // undefined for a function or a symbol, so those fall back to util.inspect: a refusal must never
 // crash while naming what it refuses (finding F8 of the PR #16 review).
-const { inspect } = require("util");
+import { inspect } from "util";
 
 const asText = (value) => {
   try {
@@ -23,4 +23,4 @@ const asText = (value) => {
 
 const describeValue = (value) => `${typeof value} ${asText(value)}`;
 
-module.exports.describeValue = describeValue;
+export { describeValue };

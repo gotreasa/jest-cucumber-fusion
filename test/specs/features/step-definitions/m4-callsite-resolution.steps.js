@@ -22,40 +22,44 @@
  *   (b) frame [1] is undefined, so `.getFileName()` throws a TypeError.
  *
  * MODELING NOTE (see report): (a) models "inside the package" as a frame whose filename is the
- * package entry (src/index.js) — the natural `!== __filename` / `startsWith(packageDir)` fix.
+ * package entry (src/index.js) — the natural `!== import.meta.filename` / `startsWith(packageDir)` fix.
  * The resolution now lives in src/feature-source.js and excludes every frame inside src/, so
  * both the entry frame and the port's own frame are transparent.
  */
 
-const path = require("path");
+import { jest } from "@jest/globals";
+import path from "path";
+import url from "url";
 
 const mockState = { feature: null, loadedPath: null, frames: [] };
 
-jest.mock("callsites", () => ({
+// The order matters under ES modules. callsites is doubled first; then the REAL
+// feature-source is imported, so its caller resolution reads the doubled stack; then
+// feature-source itself is doubled around that real function; and only then is Fusion
+// imported, so it is wired to the double.
+jest.unstable_mockModule("callsites", () => ({
   default: jest.fn(() => mockState.frames),
 }));
-jest.mock("../../../../src/feature-source", () => {
-  const realFeatureSource = jest.requireActual(
-    "../../../../src/feature-source",
-  );
+const realFeatureSource = await import("../../../../src/feature-source.js");
+jest.unstable_mockModule("../../../../src/feature-source.js", () => ({
+  // The subject: the real caller resolution, running against the faked stack above.
+  resolveFeaturePath: realFeatureSource.resolveFeaturePath,
+  loadFeature: jest.fn((absolutePath) => {
+    // The real port is handed an ABSOLUTE path and refuses anything it cannot read; a double
+    // that accepted a relative path would hide a resolution defect rather than reveal one.
+    expect(path.isAbsolute(absolutePath)).toBe(true);
 
-  return {
-    // The subject: the real caller resolution, running against the faked stack above.
-    resolveFeaturePath: realFeatureSource.resolveFeaturePath,
-    loadFeature: jest.fn((absolutePath) => {
-      // The real port is handed an ABSOLUTE path and refuses anything it cannot read; a double
-      // that accepted a relative path would hide a resolution defect rather than reveal one.
-      expect(require("path").isAbsolute(absolutePath)).toBe(true);
+    mockState.loadedPath = absolutePath;
+    return mockState.feature;
+  }),
+}));
 
-      mockState.loadedPath = absolutePath;
-      return mockState.feature;
-    }),
-  };
-});
-
-const { Fusion } = require("../../../../src");
+const { Fusion } = await import("../../../../src/index.js");
 // The real, absolute path of the package entry — used as the "inside the package" frame filename.
-const packageEntryFile = require.resolve("../../../../src");
+const packageEntryFile = path.join(
+  import.meta.dirname,
+  "../../../../src/index.js",
+);
 
 const frame = (fileName) => ({ getFileName: () => fileName });
 
@@ -90,7 +94,7 @@ describe("M4 — robust caller resolution", () => {
       frame(null),
       frame("node:events"),
       frame("evalmachine.<anonymous>"),
-      frame(require("url").pathToFileURL(moduleCaller).href),
+      frame(url.pathToFileURL(moduleCaller).href),
     ];
 
     Fusion("sample.feature");

@@ -45,4 +45,4 @@ const stepArgumentFrom = (pickleStepArgument) => {
   return NO_STEP_ARGUMENT;
 };
 
-module.exports.stepArgumentFrom = stepArgumentFrom;
+export { stepArgumentFrom };

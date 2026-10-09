@@ -8,7 +8,7 @@
  * act, so this run has to fail with no test reported.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

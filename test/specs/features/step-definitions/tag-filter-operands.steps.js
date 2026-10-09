@@ -7,11 +7,11 @@
 // every bare operand: `@smoke and not Slow` failed with a ReferenceError and `@nope and smoke`
 // was accepted (measured by the review of the PR #16 fixes). Found by fuzzing PR #16 (finding
 // F1), 2026-10-09.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-operands-"));
 const feature = path.join(featureDir, "operands.feature");

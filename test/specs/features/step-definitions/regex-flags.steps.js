@@ -3,11 +3,11 @@
 // matcher bound its step and handed the step function `undefined` instead of its captures, on
 // every use. 2.0.0 failed the second use loudly; 3.0.0 passed silently with the wrong value.
 // Found by fuzzing PR #16 (finding F5), 2026-10-09.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-flags-"));
 const feature = path.join(featureDir, "regex-flags.feature");

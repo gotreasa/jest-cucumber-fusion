@@ -11,11 +11,11 @@
 //   - a header-only data table reaches its step as [] (bound in the V1 design; the guard at
 //     src/step-argument.js:20 is unreachable from Gherkin, so this pins the promise rather than
 //     kills that mutant).
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-edges-"));
 const writeFeature = (name, body) => {

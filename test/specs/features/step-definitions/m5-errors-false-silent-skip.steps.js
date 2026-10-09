@@ -35,9 +35,15 @@
  * and the scenario body completed without throwing.
  */
 
+import { jest } from "@jest/globals";
+// Not doubled, so the static imports are the real collaborators.
+import { findMatchingStep } from "../../../../src/step-matching.js";
+import { unmatchedStepRefusal } from "../../../../src/code-suggestion.js";
+
 const mockState = { feature: null, boundSteps: null, skippedScenarios: null };
 
-jest.mock("../../../../src/feature-source", () => ({
+// Registered before Fusion is imported: a static import would load the real ports first.
+jest.unstable_mockModule("../../../../src/feature-source.js", () => ({
   resolveFeaturePath: jest.fn((featureFileToLoad) => {
     // The real port always answers with an absolute path; so does this one.
     expect(typeof featureFileToLoad).toBe("string");
@@ -46,7 +52,7 @@ jest.mock("../../../../src/feature-source", () => ({
   loadFeature: jest.fn(() => mockState.feature),
 }));
 
-jest.mock("../../../../src/test-registration", () => ({
+jest.unstable_mockModule("../../../../src/test-registration.js", () => ({
   registerFeature: jest.fn((loadedFeature, featureRegistry, options) => {
     // Model the real port faithfully, in the three moves that matter here: it binds every step
     // of every scenario up front through src/step-matching, which now REPORTS an unbound step
@@ -60,13 +66,6 @@ jest.mock("../../../../src/test-registration", () => ({
     expect(featureRegistry).toBeDefined();
     expect(options).toBeDefined();
     expect(typeof options.errors.stepsMustMatchFeatureFile).toBe("boolean");
-
-    const { findMatchingStep } = jest.requireActual(
-      "../../../../src/step-matching",
-    );
-    const { unmatchedStepRefusal } = jest.requireActual(
-      "../../../../src/code-suggestion",
-    );
 
     const scenarios = loadedFeature.scenarios.map((scenario) => ({
       title: scenario.title,
@@ -90,7 +89,7 @@ jest.mock("../../../../src/test-registration", () => ({
   }),
 }));
 
-const { Given, Fusion } = require("../../../../src");
+const { Given, Fusion } = await import("../../../../src/index.js");
 
 // A single, DIFFERENT definition is registered, so the feature step below is genuinely unmatched.
 Given(/^a defined step$/, () => {});

@@ -17,4 +17,4 @@ class TodoList {
   }
 }
 
-module.exports.TodoList = TodoList;
+export { TodoList };

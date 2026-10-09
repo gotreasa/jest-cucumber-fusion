@@ -18,9 +18,12 @@
  * through untouched. This test exists so that regression to silent-swallow is caught.
  */
 
+import { jest } from "@jest/globals";
+
 const mockState = { registryHandedToThePort: null };
 
-jest.mock("../../../../src/test-registration", () => ({
+// Registered before Fusion is imported: a static import would load the real port first.
+jest.unstable_mockModule("../../../../src/test-registration.js", () => ({
   registerFeature: jest.fn((loadedFeature, featureRegistry) => {
     // The real port reads both arguments; a double that accepted less would hide a wiring
     // defect rather than reveal one.
@@ -33,7 +36,7 @@ jest.mock("../../../../src/test-registration", () => ({
   }),
 }));
 
-const { Before, Given, Fusion } = require("../../../../src");
+const { Before, Given, Fusion } = await import("../../../../src/index.js");
 
 Before(() => {
   throw new Error("hook failure — Before threw");

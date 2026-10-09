@@ -11,7 +11,7 @@
 //
 // Pure: no filesystem, no parser, no Jest global. The port calls it; it calls the template.
 
-const { describeValue } = require("./value-description");
+import { describeValue } from "./value-description.js";
 
 // Kept as the first line of the refusal because the previous engine used it, so anything a
 // consumer greps for still matches.
@@ -107,4 +107,4 @@ const nameForScenario = (loadedFeature, scenario, scenarioNameTemplate) => {
   return answer;
 };
 
-module.exports.nameForScenario = nameForScenario;
+export { nameForScenario };

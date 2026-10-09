@@ -57,7 +57,7 @@ global.describe = counting("describe", "describes");
 global.test = counting("test", "tests");
 global.test.skip = counting("test", "tests");
 
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 // The one definition that does bind, so the refusal has something it must NOT name.
 const THE_BOUND_STEP = "the shop is open";

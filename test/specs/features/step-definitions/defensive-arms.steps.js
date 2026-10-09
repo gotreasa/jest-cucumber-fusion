@@ -7,15 +7,17 @@
 //   - keywords: a keyword no dialect bucket holds, and a refusal with no dialect name;
 //   - feature-source: gherkin.compile throwing, and a pickle step whose astNodeIds name no
 //     step, both reached by overriding ONLY gherkin.compile for one isolated module load.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const gherkin = require("@cucumber/gherkin");
+import { jest } from "@jest/globals";
+import fs from "fs";
+import os from "os";
+import path from "path";
+// The real parser, imported before any test doubles it.
+import * as gherkin from "@cucumber/gherkin";
 
-const { tagFilterFor } = require("../../../../src/tag-filter");
-const { stepArgumentFrom } = require("../../../../src/step-argument");
-const { bucketForKeyword } = require("../../../../src/keywords");
-const { mergeFusionOptions } = require("../../../../src/configuration");
+import { tagFilterFor } from "../../../../src/tag-filter.js";
+import { stepArgumentFrom } from "../../../../src/step-argument.js";
+import { bucketForKeyword } from "../../../../src/keywords.js";
+import { mergeFusionOptions } from "../../../../src/configuration.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-defensive-"));
 const feature = path.join(featureDir, "valid.feature");
@@ -25,18 +27,16 @@ fs.writeFileSync(
 );
 afterAll(() => fs.rmSync(featureDir, { recursive: true, force: true }));
 
-// Load src/feature-source with gherkin.compile replaced, leaving the parser itself real.
-const featureSourceWithCompile = (compile) => {
-  let loaded;
-  jest.isolateModules(() => {
-    jest.doMock("@cucumber/gherkin", () => ({
-      ...jest.requireActual("@cucumber/gherkin"),
-      compile,
-    }));
-    loaded = require("../../../../src/feature-source");
-  });
-  jest.dontMock("@cucumber/gherkin");
-  return loaded;
+// Load a fresh src/feature-source with gherkin.compile replaced, leaving the parser itself
+// real. Each call resets the module registry first, so the copy it returns is wired to this
+// call's compile and no earlier one.
+const featureSourceWithCompile = async (compile) => {
+  jest.resetModules();
+  jest.unstable_mockModule("@cucumber/gherkin", () => ({
+    ...gherkin,
+    compile,
+  }));
+  return import("../../../../src/feature-source.js");
 };
 
 describe("defensive arms", () => {
@@ -71,8 +71,8 @@ describe("defensive arms", () => {
     );
   });
 
-  test("feature-source: a compile failure after a good parse is refused by name", () => {
-    const { loadFeature } = featureSourceWithCompile(() => {
+  test("feature-source: a compile failure after a good parse is refused by name", async () => {
+    const { loadFeature } = await featureSourceWithCompile(() => {
       throw new Error("compiler fault");
     });
     expect(() => loadFeature(feature, mergeFusionOptions({}))).toThrow(
@@ -80,9 +80,9 @@ describe("defensive arms", () => {
     );
   });
 
-  test("feature-source: a pickle step naming no AST step is refused as unresolvable", () => {
-    const realCompile = jest.requireActual("@cucumber/gherkin").compile;
-    const { loadFeature } = featureSourceWithCompile((...args) =>
+  test("feature-source: a pickle step naming no AST step is refused as unresolvable", async () => {
+    const realCompile = gherkin.compile;
+    const { loadFeature } = await featureSourceWithCompile((...args) =>
       realCompile(...args).map((pickle) => ({
         ...pickle,
         steps: pickle.steps.map((step) => ({ ...step, astNodeIds: ["nope"] })),

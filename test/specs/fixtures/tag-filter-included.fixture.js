@@ -11,7 +11,7 @@
  * these fixtures are driven one at a time with an explicit testMatch instead.
  */
 
-const { Given, Fusion } = require("../../../src");
+import { Given, Fusion } from "../../../src/index.js";
 
 Given("the shop is open", () => {});
 

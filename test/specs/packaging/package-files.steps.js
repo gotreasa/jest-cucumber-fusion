@@ -2,10 +2,11 @@
 // npm's own always-included files. Without an allow-list npm packs the whole checkout, and the
 // published 2.0.0 shipped a 10.4 MB `codecov` binary that CI had downloaded into it, plus the
 // test tree (docs/feature/drop-jest-cucumber/plan.md, "Post-delivery probes").
-const path = require("path");
-const { spawnSync } = require("child_process");
+import fs from "fs";
+import path from "path";
+import { spawnSync } from "child_process";
 
-const repositoryRoot = path.resolve(__dirname, "../../..");
+const repositoryRoot = path.resolve(import.meta.dirname, "../../..");
 
 // Packed once per suite: both tests read the same list.
 let packed = null;
@@ -29,8 +30,16 @@ const packOnce = () => {
     .sort();
 };
 
+// The CommonJS entry point and its typings and bundled licences, built by scripts/build-cjs.js
+// (npm test builds it first, through the pretest script).
+const BUILT_FILES = [
+  "dist/THIRD_PARTY_LICENSES.txt",
+  "dist/index.cjs",
+  "dist/index.d.cts",
+];
+
 const isRuntimeFile = (file) =>
-  ["package.json", "README.md", "LICENSE"].includes(file) ||
+  ["package.json", "README.md", "LICENSE", ...BUILT_FILES].includes(file) ||
   /^src\/[^/]+\.(js|d\.ts)$/.test(file);
 
 test("the package carries only runtime files", () => {
@@ -41,9 +50,14 @@ test("the package carries only runtime files", () => {
 test("the package carries the entry point, its types and every source module", () => {
   const files = packedFiles();
   expect(files).toEqual(
-    expect.arrayContaining(["package.json", "src/index.js", "src/index.d.ts"]),
+    expect.arrayContaining([
+      "package.json",
+      "src/index.js",
+      "src/index.d.ts",
+      ...BUILT_FILES,
+    ]),
   );
-  const sourceModules = require("fs")
+  const sourceModules = fs
     .readdirSync(path.join(repositoryRoot, "src"))
     .map((name) => `src/${name}`);
   expect(files).toEqual(expect.arrayContaining(sourceModules));

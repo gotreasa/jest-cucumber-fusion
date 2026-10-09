@@ -14,13 +14,16 @@
  * clean" must never produce the same exit status.
  */
 
-const path = require("path");
-const { spawnSync } = require("child_process");
+import fs from "fs";
+import path from "path";
+import { spawnSync } from "child_process";
 
 const FORBIDDEN = ["jest-cucumber", "uuid"];
 
-const repositoryRoot = path.resolve(__dirname, "..", "..", "..");
-const manifest = require(path.join(repositoryRoot, "package.json"));
+const repositoryRoot = path.resolve(import.meta.dirname, "..", "..", "..");
+const manifest = JSON.parse(
+  fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"),
+);
 
 const cannotObserve = (what, why, how) => {
   console.error("CANNOT OBSERVE the production dependency tree.");

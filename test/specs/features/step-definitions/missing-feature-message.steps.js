@@ -2,9 +2,9 @@
 // follows must be true. Found by running the docs on 2026-10-09: for a feature path with a
 // directory part, the message named the FEATURE's directory as "the directory of the file that
 // called it", so a caller in .../p/q/r was told Fusion had resolved against .../p/q.
-const path = require("path");
+import path from "path";
 
-const { Fusion } = require("../../../../src");
+import { Fusion } from "../../../../src/index.js";
 
 let refusal = null;
 try {
@@ -18,7 +18,7 @@ describe("missing feature file message", () => {
     expect(refusal).not.toBeNull();
     expect(refusal.message).toContain(
       `Feature file not found (${path.join(
-        __dirname,
+        import.meta.dirname,
         "no-such-folder",
         "missing.feature",
       )})`,
@@ -27,7 +27,7 @@ describe("missing feature file message", () => {
 
   test("never presents the feature's own folder as the calling file's directory", () => {
     expect(refusal.message).not.toContain(
-      `which here is ${path.join(__dirname, "no-such-folder")}`,
+      `which here is ${path.join(import.meta.dirname, "no-such-folder")}`,
     );
   });
 

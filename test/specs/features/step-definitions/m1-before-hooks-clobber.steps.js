@@ -26,9 +26,12 @@
  * against the single-slot assignment, where the log was ["before-2"].
  */
 
+import { jest } from "@jest/globals";
+
 const mockState = { registryHandedToThePort: null };
 
-jest.mock("../../../../src/test-registration", () => ({
+// Registered before Fusion is imported: a static import would load the real port first.
+jest.unstable_mockModule("../../../../src/test-registration.js", () => ({
   registerFeature: jest.fn((loadedFeature, featureRegistry) => {
     // The real port is given both of these and reads both; a double that accepted less than
     // it would hide a wiring defect rather than reveal one.
@@ -42,7 +45,7 @@ jest.mock("../../../../src/test-registration", () => ({
   }),
 }));
 
-const { Before, Given, Fusion } = require("../../../../src");
+const { Before, Given, Fusion } = await import("../../../../src/index.js");
 
 const hookRunLog = [];
 // Two Before hooks registered for the same feature — both must run, in this order.

@@ -5,12 +5,16 @@
 // Object.assign copied that `undefined` over the global setFusionConfiguration value, so the
 // global filter silently vanished, and `errors: { stepsMustMatchFeatureFile: undefined }`
 // silently switched the check off. Found by the PR #16 adversarial review (F4), 2026-10-09.
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-const { Given, Fusion, setFusionConfiguration } = require("../../../../src");
-const { mergeFusionOptions } = require("../../../../src/configuration");
+import {
+  Given,
+  Fusion,
+  setFusionConfiguration,
+} from "../../../../src/index.js";
+import { mergeFusionOptions } from "../../../../src/configuration.js";
 
 const featureDir = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-undefined-"));
 const feature = path.join(featureDir, "undefined-options.feature");

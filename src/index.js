@@ -4,13 +4,10 @@
 // src/configuration.js, the outside world (the feature file, the parser, the caller stack) to
 // src/feature-source.js, and the Jest runner to src/test-registration.js. Both ports are
 // required by module path and are never exported, so they stay internal.
-const { inspect } = require("util");
-const {
-  mergeFusionOptions,
-  setFusionConfiguration,
-} = require("./configuration");
-const featureSource = require("./feature-source");
-const testRegistration = require("./test-registration");
+import { inspect } from "util";
+import { mergeFusionOptions, setFusionConfiguration } from "./configuration.js";
+import * as featureSource from "./feature-source.js";
+import * as testRegistration from "./test-registration.js";
 
 const emptyStepsDefinition = () => ({
   given: {},
@@ -175,14 +172,14 @@ const Fusion = (featureFileToLoad, optionsForThisFeature) => {
   }
 };
 
-module.exports.Before = Before;
-module.exports.After = After;
-module.exports.Given = Given;
-module.exports.When = When;
-module.exports.Then = Then;
-module.exports.And = And;
-module.exports.But = But;
-module.exports.Fusion = Fusion;
+export { Before };
+export { After };
+export { Given };
+export { When };
+export { Then };
+export { And };
+export { But };
+export { Fusion };
 // Re-exported, not re-implemented: the module that owns the merge owns the layer the setter
 // writes, so the entry point keeps no state of its own.
-module.exports.setFusionConfiguration = setFusionConfiguration;
+export { setFusionConfiguration };

@@ -38,7 +38,7 @@
  *           ever asked for a name, let alone refused. Each failure is an assertion.
  */
 
-const { Given, Fusion } = require("../../../../src");
+import { Given, Fusion } from "../../../../src/index.js";
 
 const THE_FEATURE = "../v4-scenario-name-template.feature";
 const FEATURE_TITLE = "A template names every test";
