@@ -4,6 +4,7 @@
 // src/configuration.js, the outside world (the feature file, the parser, the caller stack) to
 // src/feature-source.js, and the Jest runner to src/test-registration.js. Both ports are
 // required by module path and are never exported, so they stay internal.
+const { inspect } = require("util");
 const {
   mergeFusionOptions,
   setFusionConfiguration,
@@ -26,20 +27,55 @@ const emptyStepsDefinition = () => ({
 // than inheriting the previous feature's step definitions and hooks.
 let stepsDefinition = emptyStepsDefinition();
 
+const isRegExp = (candidate) =>
+  Object.prototype.toString.call(candidate) === "[object RegExp]";
+
+const isStepMatcher = (candidate) =>
+  typeof candidate === "string" || isRegExp(candidate);
+
+const verbNamed = (definitionType) =>
+  definitionType.charAt(0).toUpperCase() + definitionType.slice(1);
+
+const whatTheMatcherWas = (candidate) =>
+  candidate === undefined || candidate === null
+    ? String(candidate)
+    : `${typeof candidate} ${inspect(candidate)}`;
+
+// Refused at the call, like every other misuse. Until 3.0.0 a matcher of any other type was
+// silently ignored, so the scenario failed later as an unbound step, far from the mistake.
+const refuseUnsupportedMatcher = (definitionType, candidate) =>
+  new Error(
+    `Unsupported step matcher: ${verbNamed(
+      definitionType
+    )} was given ${whatTheMatcherWas(candidate)}.\n\n` +
+      `WHY:  Fusion binds a step definition to the feature's steps by its matcher, and only\n` +
+      `      a string or a regular expression can match a step's text. Any other matcher\n` +
+      `      binds nothing, and the step would then fail as unbound, far from this call.\n` +
+      `HOW:  pass the step's text, ${verbNamed(
+        definitionType
+      )}("the shop is open", fn), or a regular\n` +
+      `      expression, ${verbNamed(
+        definitionType
+      )}(/^(\\d+) items? in the basket$/, fn).`
+  );
+
 const addDefinitionFunction = (
   definitionType,
   regexpSentence,
   fnForDefinition
 ) => {
+  if (!isStepMatcher(regexpSentence))
+    throw refuseUnsupportedMatcher(definitionType, regexpSentence);
+
   if (stepsDefinition[definitionType]) {
-    if (regexpSentence.constructor === RegExp) {
+    if (isRegExp(regexpSentence)) {
       throwIfDuplicateMatcher(definitionType, regexpSentence.source);
       stepsDefinition[definitionType][regexpSentence.source] = {
         stepRegExp: regexpSentence,
         stepExpression: null,
         stepFn: fnForDefinition,
       };
-    } else if (typeof regexpSentence === "string") {
+    } else {
       throwIfDuplicateMatcher(definitionType, regexpSentence);
       stepsDefinition[definitionType][regexpSentence] = {
         stepRegExp: null,

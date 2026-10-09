@@ -60,6 +60,7 @@ Each row was observed by running the same steps file under `jest-cucumber-fusion
 | A step with no definition, default options | the suite failed with `jest-cucumber`'s message, suggesting code in its own `test(..., ({ given }) => ...)` form | the suite fails with one message naming every unmatched step, each with starter code you can paste, such as `Then(/^the balance is \$(\d+)$/, (arg0) => {});` | 3.0.0 |
 | A step with no definition, `errors: false` | the test passed and the step was skipped silently | the scenario is reported as a skipped test | 3.0.0 |
 | `scenarioNameTemplate` on a Scenario Outline | applied to plain scenarios only; outline rows kept their own titles | applied to every test, outline rows included | 3.0.0 |
+| A step matcher that is neither a string nor a regular expression, such as `Given(42, fn)` | accepted and ignored, so the step later failed as having no definition (`undefined` threw a `TypeError` instead) | refused at the call: `Unsupported step matcher: Given was given number 42.` | 3.0.0 |
 | Two scenarios declared with the same title, ignoring case | the suite failed: `More than one scenario found in feature file that match scenario title ...` | the suite still fails by default, now with `Duplicate scenario title`, naming each title and how often it is declared; `errors: { scenariosMustMatchFeatureFile: false }` allows them | 3.0.0 |
 
 `tagFilter`, data tables, docstrings (an empty one included), Background, `# language:` headers and chaining a step definition with `And(chain)` behave as they did in 0.8.1.
