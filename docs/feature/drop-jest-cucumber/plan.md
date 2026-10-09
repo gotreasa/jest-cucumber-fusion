@@ -161,10 +161,13 @@ Parked outside the repo while the tree was frozen, applied here after the amend.
   `docs/Language.md:77`, which says ES module syntax needs a transform such as Babel (the
   probe ran native ESM with `--transform '{}'`).
 - **Node and Jest version matrix** (Gearoid, 2026-10-09: follow-up, not PR #16). Today CI runs
-  only Node 24 (`node-version: 24`) with the lockfile's Jest 30. The one multi-version run was
-  a by-hand smoke test on 2026-10-08 (Node 20.20.2, 22.23.3, 24.21.0; Jest 30 only; 41/41), and
-  its script lives in the job tmp directory, not the repository. Gaps: no Node matrix; no Jest
-  below 30 ever tested (Fusion calls the runner's `describe`/`test` globals,
+  only Node 24 (`node-version: 24`) with the lockfile's Jest 30. Two by-hand runs exist, both
+  with scripts in the job tmp directory, not the repository: the smoke test on 2026-10-08 (Node
+  20.20.2, 22.23.3, 24.21.0; Jest 30; 41/41), and the migration matrix (`migrate/jest-matrix.sh`:
+  the candidate in consumer projects on their own Jest 27, 29 and 30, Node 22; identical
+  results, 8 of 10 suites passing with only the 2 intended refusals failing, 11 passed and 2
+  skipped). Corrected 2026-10-09: this entry first said no Jest below 30 was ever tested, which
+  was wrong. Gaps: none of this runs in CI (Fusion calls the runner's `describe`/`test` globals,
   `src/test-registration.js:126,138`, so the consumer's Jest is what counts); `jest` is a runtime
   `dependency` (`^30.4.2`), so a Jest 29 consumer gets an unused second Jest (R10); no `engines`
   field. Node 20 reached end of life on 2026-04-30 (from memory, confirm). Scope: a CI matrix
