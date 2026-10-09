@@ -354,6 +354,41 @@ global; exactly nine public exports); public API and 2.0.0-compatible names and 
         (`configuration.js`, `test-registration.js` now 100%); 17 of 17 vectors exit 0;
         prettier clean. Remaining branch gaps are exactly the 9 defensive guards.
 
+## Hooks, baselines in CI, secrets (Gearoid, 2026-10-09)
+
+Asked: "wire the baseline scripts into CI, along with the git hooks"; Husky; pre-commit with
+lint-staged, commit-msg commitlint, pre-push tests and baselines; secret detection; investigate
+the missing ESLint. Before this the repo had no hooks of any kind and no ESLint, ever (none in
+its history, b-yond's included). The 6 baseline scripts pass, about 31s together.
+
+- [x] Dev dependencies: husky, lint-staged, @commitlint/cli and config-conventional,
+      secretlint with the recommended preset (npm-native, chosen over Yelp's detect-secrets,
+      which needs Python on every machine; Koru's assumption, open to Gearoid).
+- [x] `npm run test:baseline` runs every `test/specs/baseline/assert-*.js`; `npm run
+      lint:secrets` scans the repository.
+- [x] `.husky/pre-commit` (lint-staged: secretlint and prettier on staged files),
+      `.husky/commit-msg` (commitlint), `.husky/pre-push` (`npm test`, `tsd`, baselines).
+- [x] CI `integration` job runs the baselines and the secret scan.
+- [x] Each hook proven to block (2026-10-09): commitlint rejected "Added some stuff" (HEAD
+      unchanged); lint-staged's secretlint rejected a staged fake `ghp_` token (`pre-commit
+      script failed`); the pre-push commands under `set -e` stopped at a failing test, exit 1,
+      before the baselines. Clean pre-push takes 40s. The tooling commit `fffe852` itself went
+      through the hooks (prettier reformatted `run-all.js`). `npm run lint:secrets` finds
+      nothing in the repository and catches a planted token. Only runtime lockfile change:
+      `picomatch` 4.0.5 to 4.0.7 (hoisted patch).
+- [x] Known and left: 13 earlier commits on this branch have unwrapped bodies (137 to 664
+      characters) that commitlint's `body-max-line-length` (100) rejects. Not rewritten: the
+      PR squash-merges into a message within 72, and CI does not lint commits.
+- [x] Side effect: Husky set `core.hooksPath=.husky/_` in the config shared with the main
+      checkout; `master` has no `.husky/` until this merges, so no hooks run there yet.
+      lint-staged backs up through the shared stash and drops its entry when done.
+- [x] ESLint investigated with a throwaway ESLint 9 probe (recommended plus jest recommended):
+      76 files, 106 errors, 2 warnings, zero real defects. 90 `jest/no-standalone-expect` on
+      `expect` inside step callbacks; 5 `no-undef` on the Jest globals that
+      `src/test-registration.js` uses on purpose; 10 `no-unused-vars` on positional step
+      arguments in examples; 1 `expect-expect` on an `expect*` helper; 2 stale disable
+      directives. All are configuration. Adoption is Gearoid's call.
+
 ## Blockers
 
 None. Draft PR #16 is open; pushing new commits is Gearoid's call.
