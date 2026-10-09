@@ -10,7 +10,7 @@ runtime-scope alert, reachable only through jest-cucumber 4.5.0 and `@cucumber/g
 close L5 (empty docstring inside an outline, `docs/feature/review-hardening/plan.md:67`).
 
 - Branch: `worktree-drop-jest-cucumber`, from `master` at `40aa6a5` (2.0.0).
-- Issue / tracker: none yet. PR: none yet.
+- Issue / tracker: none (Dependabot alert #1; Jira item pending Gearoid's decision). PR: [#16](https://github.com/gotreasa/jest-cucumber-fusion/pull/16) (draft, opened 2026-10-09).
 - Size: **L**, estimated 15 to 25 paid turns.
 
 ## Decisions (Gearoid, 2026-10-07)
