@@ -40,6 +40,9 @@ const firstLineOfRefusal = (options) => {
 // Collected at module load, where Fusion registers.
 setFusionConfiguration({ tagFilter: "not @wip" });
 const withUnsetTagFilter = firstLineOfRefusal({ tagFilter: UNSET });
+// null is a value, not an absence: it CLEARS the global for this call, so the @wip scenario is
+// selected again and its unbound step is refused.
+const withClearedTagFilter = firstLineOfRefusal({ tagFilter: null });
 const template = () => "templated";
 setFusionConfiguration({ scenarioNameTemplate: template });
 const mergedWithUnsetTemplate = mergeFusionOptions({
@@ -61,5 +64,9 @@ describe("an option set to undefined", () => {
 
   test("a validation key of undefined leaves that validation on", () => {
     expect(withUnsetValidationKey).toMatch(/^Fusion found 1 step/);
+  });
+
+  test("a per-call tagFilter of null clears the global filter for that call", () => {
+    expect(withClearedTagFilter).toMatch(/^Fusion found 1 step/);
   });
 });
