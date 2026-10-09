@@ -203,6 +203,18 @@ setFusionConfiguration({
 });
 ```
 
+If your steps are ES modules (see [Using ES modules](../README.md#using-es-modules)), the setup file can be one too. It imports the same function:
+
+```javascript
+//jest-fusion-config.js (in a package with "type": "module")
+
+import { setFusionConfiguration } from '@g_package/jest-cucumber-fusion';
+
+setFusionConfiguration({ tagFilter: '@ui and not @slow' });
+```
+
+Either style of setup file works with either style of steps, because both share one global configuration.
+
 Options are merged lowest to highest: the defaults, then whatever `setFusionConfiguration` holds, then the options passed to one `Fusion` call. `errors` merges key-wise at every layer, so naming one validation in your setup file never switches off another. An option set to `undefined`, such as an unset environment variable forwarded as `{ tagFilter: process.env.TAGS }`, counts as not set and leaves the layer below in place. `null` is a value, so `{ tagFilter: null }` clears a global filter for that call.
 
 A second `setFusionConfiguration` call **replaces** what the first set rather than merging into it, which is how you clear or redefine a global. Jest gives each test file its own module registry and runs `setupFiles` inside it, so what you set there applies to that file and cannot reach another one.

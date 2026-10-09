@@ -108,3 +108,77 @@ module.exports = exports = function( fnRocket ) {
 	} )
 }
 ```
+
+
+## Written as ES modules
+
+The same two examples, for steps written as ES modules (see [Using ES modules](../README.md#using-es-modules) for the set-up). Two things change. A shared file is imported, with its extension. An `import` always runs before the rest of the file, wherever it is written, so the shared steps are registered first. That is safe, because Fusion binds every step only when `Fusion(...)` runs.
+
+```javascript
+// reuse-rocket.steps.js
+import { Given, Fusion } from '@g_package/jest-cucumber-fusion'
+import './reuse-code.js' // our shared test code
+
+Given( 'I am Elon Musk and I launched a rocket in space already', () => {
+    const hasLaunchedARocket = true
+    expect( hasLaunchedARocket ).toBe( true )
+} )
+
+Fusion( '../reuse-rocket.feature' )
+```
+
+```javascript
+// reuse-code.js
+import { Then } from '@g_package/jest-cucumber-fusion'
+
+Then( 'I\'m happy', () => {
+    const localHappy = true
+    expect( localHappy ).toBe( true )
+} )
+```
+
+To pass a value to the shared steps, the shared file exports the function, and the steps file imports it and calls it:
+
+```javascript
+// reuse-definition.steps.js
+import { Given, Fusion } from '@g_package/jest-cucumber-fusion'
+import { Rocket } from '../../../src/rocket.js'
+import registerRelaunchSteps from './reuse-code.js'
+
+let rocket
+function getCurrentRocket() {
+	return rocket
+}
+
+Given( 'I am Elon Musk and I launched a rocket in space already', () => {
+	rocket = new Rocket()
+} )
+
+registerRelaunchSteps( getCurrentRocket )
+
+Fusion( '../reuse-definition.feature' )
+```
+
+```javascript
+// reuse-code.js
+import { When, Then, And } from '@g_package/jest-cucumber-fusion'
+
+And( 'I drop my mic', () => {
+    const micDropped = true
+    expect( micDropped ).toBe( true )
+} )
+
+export default function registerRelaunchSteps( fnRocket ) {
+	When( 'I relaunch the rocket', () => {
+            const rocketUsed = fnRocket()
+            rocketUsed.launch()
+	} )
+
+	Then( 'the rocket end up in space again', () => {
+            const rocketUsed = fnRocket()
+            expect( rocketUsed.isInSpace ).toBe(true)
+	} )
+}
+```
+
+A shared file written as CommonJS can also serve steps written as ES modules: import it by its file name, for example `import './reuse-code.cjs'`.

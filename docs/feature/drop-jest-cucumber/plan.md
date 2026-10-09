@@ -706,6 +706,27 @@ Each fix failed first on its test, then passed:
       `chore/jest-cucumber-fusion-3.0.0-beta3` (0 commits past `19c1327`) at Gearoid's
       request.
 
+## ES module usage in the docs (Gearoid, 2026-10-10)
+
+Asked: "do they describe how to use the CJS versus ESM versions of the package?", then "fix
+them on PR #16". README and Migrating explained the split, but:
+
+- [x] Gap 1 (defect), reproduced on the packed tarball: the README's ES module example named
+      its file `rocket-launching.steps.mjs` beside its own `testMatch` `**/*.steps.js`, so
+      following it gave `No tests found, exiting with code 1`.
+- [x] Fixed: a README "Using ES modules" section (Node 20.11; the flag in a `test` script in
+      Jest's documented form, not shell `NODE_OPTIONS=`; `"type": "module"` or `.mjs` with its
+      `testMatch`; extensions on relative imports; `jest` from `@jest/globals`; an ES module
+      `setupFiles` script; TypeScript). ES module forms of both ReusingStepDefinitions
+      examples and of the AdditionalConfiguration setup file; Migrating links to the section.
+- [x] Guard: `assert-packaged-consumer.js` runs a second consumer set up exactly as the README
+      says, through its `npm test` script with `NODE_OPTIONS` removed, and requires 1 passed
+      and 1 skipped (`@wip`, filtered by the ES module setup file). Two planted faults (the old
+      `.mjs`/`testMatch` mismatch; a script without the flag) each fail it. The snippets it
+      does not run (`.mjs` option, side-effect shared import, importing a `.cjs` shared file)
+      were run by hand on the tarball: 3 of 3 suites pass.
+- [x] Suite 45 suites, 1,096 passed, 3 skipped, 100% lines; 6 of 6 baselines; lint, Prettier.
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of

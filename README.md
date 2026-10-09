@@ -68,14 +68,7 @@ const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumb
 
 ```
 
-Writing your steps as ES modules instead? Import the same names, and run Jest in its ES module mode (`NODE_OPTIONS=--experimental-vm-modules npx jest`) on Node 20.11 or newer (CommonJS steps run on Node 18.14 and up):
-
-```javascript
-//filename: rocket-launching.steps.mjs
-import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
-```
-
-The package ships both: `require` gets a CommonJS build, `import` gets the ES module source, and a `setupFiles` script may use either style whichever your steps use.
+The examples on this page are CommonJS, which needs no other set-up. To write your steps as ES modules instead, see [Using ES modules](#using-es-modules).
 
 ### Load any dependency you need to do your test
 
@@ -188,6 +181,61 @@ setFusionConfiguration( { tagFilter: '@smoke and not @slow' } )
 A per-call option still wins for its own file. See [Configuration options](./docs/AdditionalConfiguration.md) for every option and for the merge order.
 
 If you are coming from version 2, global configuration used to go through `jest-cucumber`'s own `setJestCucumberConfiguration`. That package is no longer a dependency, so the import moves to `setFusionConfiguration` from this package; the options object is the same shape.
+
+## Using ES modules
+
+The package ships both module styles: `require` gets a CommonJS build and `import` gets the ES module source. You do not have to choose one style for the whole project. A steps file, a shared step file and a `setupFiles` script may each use either style, and they share one set of step definitions and one global configuration.
+
+Steps written as ES modules need three things that CommonJS steps do not.
+
+**Node 20.11 or newer.** CommonJS steps run on Node 18.14 and newer.
+
+**Jest's ES module mode.** Jest runs ES modules only when Node starts with `--experimental-vm-modules`. Put the flag in your `test` script, in the form Jest's own documentation gives, which does not depend on your shell's syntax:
+
+```json
+"scripts": { "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js" }
+```
+
+Node prints an `ExperimentalWarning` about the flag on each run. That is expected.
+
+**Files that Node reads as ES modules.** Choose one of these:
+
+- Add `"type": "module"` to your `package.json`. Your files keep the `.js` extension, and the `testMatch` above stays as it is.
+- Name your files with the `.mjs` extension instead, and change `testMatch` to find them:
+
+  ```json
+  "jest": { "testMatch": [ "**/*.steps.mjs" ] }
+  ```
+
+Then import the same names that the CommonJS examples require:
+
+```javascript
+//filename: rocket-launching.steps.js (in a package with "type": "module")
+import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
+import { Rocket } from '../../src/rocket.js'
+```
+
+Some differences from CommonJS to know about:
+
+- A relative import names the file in full, extension included: `'../../src/rocket.js'`, not `'../../src/rocket'`.
+- `expect`, `describe` and the other test globals work as before, but Jest does not give the `jest` object as a global. Import it, after you add `@jest/globals` to your `devDependencies`:
+
+  ```javascript
+  import { jest } from '@jest/globals'
+  ```
+
+- A global configuration script imports `setFusionConfiguration`, and is listed in `setupFiles` as before:
+
+  ```javascript
+  //filename: jest-fusion-config.js (in a package with "type": "module")
+  import { setFusionConfiguration } from '@g_package/jest-cucumber-fusion'
+
+  setFusionConfiguration( { tagFilter: '@smoke and not @slow' } )
+  ```
+
+- Shared step definitions are imported instead of required. [Re-using step definitions](./docs/ReusingStepDefinitions.md#written-as-es-modules) shows both of its examples as ES modules.
+
+TypeScript finds the matching type definitions for either style, with no configuration.
 
  
 ## Additional Documentation 

@@ -282,6 +282,111 @@ const writeTheConsumerProject = (projectDirectory) => {
   });
 };
 
+// A second consumer, set up exactly as the README's "Using ES modules" section says: "type":
+// "module", the README's testMatch, the documented `npm test` script, an ES module setupFiles
+// script, a shared step file that exports a function (docs/ReusingStepDefinitions.md), a
+// relative import with its extension, and `jest` imported from @jest/globals. The README's
+// earlier ES module example named its file .steps.mjs beside a testMatch of **/*.steps.js, so
+// following it ran no tests at all (found 2026-10-10). It shares the first consumer's
+// node_modules through a link, so it needs no second install.
+const writeTheDocumentedEsModuleProject = (
+  esModuleDirectory,
+  installedFrom,
+) => {
+  fs.symlinkSync(
+    path.join(installedFrom, "node_modules"),
+    path.join(esModuleDirectory, "node_modules"),
+    "dir",
+  );
+  fs.writeFileSync(
+    path.join(esModuleDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "fusion-documented-es-module-consumer",
+        version: "1.0.0",
+        private: true,
+        type: "module",
+        scripts: {
+          test: "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+        },
+        jest: {
+          testMatch: ["**/*.steps.js"],
+          setupFiles: ["./jest-fusion-config"],
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  const write = (name, lines) =>
+    fs.writeFileSync(path.join(esModuleDirectory, name), lines.join("\n"));
+
+  write("jest-fusion-config.js", [
+    'import { setFusionConfiguration } from "@g_package/jest-cucumber-fusion";',
+    "",
+    'setFusionConfiguration({ tagFilter: "not @wip" });',
+    "",
+  ]);
+  write("rocket.js", [
+    "export class Rocket {",
+    "  launch() {",
+    "    this.isInSpace = true;",
+    "  }",
+    "}",
+    "",
+  ]);
+  write("reuse-code.js", [
+    'import { When, Then } from "@g_package/jest-cucumber-fusion";',
+    "",
+    "export default function registerRelaunchSteps(fnRocket) {",
+    '  When("I relaunch the rocket", () => {',
+    "    fnRocket().launch();",
+    "  });",
+    '  Then("the rocket end up in space again", () => {',
+    "    expect(fnRocket().isInSpace).toBe(true);",
+    "  });",
+    "}",
+    "",
+  ]);
+  write("reuse-definition.feature", [
+    "Feature: Rocket reuse",
+    "",
+    "  Scenario: Reusing a SpaceX rocket",
+    "    Given I am Elon Musk and I launched a rocket in space already",
+    "    When I relaunch the rocket",
+    "    Then the rocket end up in space again",
+    "    And the countdown was announced once",
+    "",
+    "  @wip",
+    "  Scenario: Not written yet",
+    "    Given a step nobody has written",
+    "",
+  ]);
+  write("reuse-definition.steps.js", [
+    'import { jest } from "@jest/globals";',
+    'import { Given, And, Fusion } from "@g_package/jest-cucumber-fusion";',
+    'import { Rocket } from "./rocket.js";',
+    'import registerRelaunchSteps from "./reuse-code.js";',
+    "",
+    "let rocket;",
+    "const announce = jest.fn();",
+    "",
+    'Given("I am Elon Musk and I launched a rocket in space already", () => {',
+    "  rocket = new Rocket();",
+    "  announce();",
+    "});",
+    "",
+    'And("the countdown was announced once", () => {',
+    "  expect(announce).toHaveBeenCalledTimes(1);",
+    "});",
+    "",
+    "registerRelaunchSteps(() => rocket);",
+    "",
+    'Fusion("reuse-definition.feature");',
+    "",
+  ]);
+};
+
 const treeOf = (projectDirectory) => {
   const listing = run("npm ls", "npm", ["ls", "--all", "--json"], {
     cwd: projectDirectory,
@@ -419,6 +524,26 @@ const consumerImportRun = esModuleRun("jest.esm.json");
 const consumerMixedRun = esModuleRun("jest.mixed.json");
 const consumerLibraryRun = esModuleRun("jest.library.json");
 
+// The documented ES module consumer runs through its own `npm test` script, with NODE_OPTIONS
+// removed, so the flag reaches Jest only the way the README says to give it.
+const esModuleDirectory = path.join(workspace, "documented-es-module-project");
+fs.mkdirSync(esModuleDirectory);
+writeTheDocumentedEsModuleProject(esModuleDirectory, projectDirectory);
+const documentedEnvironment = { ...process.env };
+delete documentedEnvironment.NODE_OPTIONS;
+const documentedEsModuleRun = run(
+  "the documented ES module consumer",
+  "npm",
+  ["test", "--silent", "--", "--coverage=false", "--json"],
+  { cwd: esModuleDirectory, env: documentedEnvironment },
+);
+let documentedResults = null;
+try {
+  documentedResults = JSON.parse(documentedEsModuleRun.stdout);
+} catch {
+  documentedResults = null;
+}
+
 const { routes, broken } = forbiddenRoutesIn(treeOf(projectDirectory));
 
 if (broken.length > 0) {
@@ -490,6 +615,34 @@ if (consumerMixedRun.status !== 0) {
   );
 }
 
+// Exit 0 alone would accept a run that found no tests under --passWithNoTests-like settings,
+// so the documented consumer must also report its one selected scenario as passed and the
+// @wip one as skipped.
+const documentedCounts = documentedResults && {
+  passed: documentedResults.numPassedTests,
+  skipped: documentedResults.numPendingTests,
+  failed: documentedResults.numFailedTests,
+};
+if (
+  documentedEsModuleRun.status !== 0 ||
+  !documentedCounts ||
+  documentedCounts.passed !== 1 ||
+  documentedCounts.skipped !== 1 ||
+  documentedCounts.failed !== 0
+) {
+  failures.push(
+    'WHAT: the consumer set up as the README\'s "Using ES modules" says exited ' +
+      `${documentedEsModuleRun.status} with ${JSON.stringify(documentedCounts)}, not exit 0\n` +
+      "          with 1 passed, 1 skipped and 0 failed.\n" +
+      "    WHY:  a reader copies that set-up as written. If it finds no tests, loses the setup\n" +
+      "          script's global, or cannot import a shared step file, the documentation is wrong.\n" +
+      "    HOW:  keep the README section, docs/ReusingStepDefinitions.md and this consumer in\n" +
+      "          step; change all three together.\n" +
+      "    The consumer run said:\n" +
+      `${(documentedEsModuleRun.stderr || documentedEsModuleRun.stdout || "").trim()}`,
+  );
+}
+
 if (routes.length > 0) {
   failures.push(
     `WHAT: ${routes.length} path(s) to an advisory carrier in the installed consumer tree:\n` +
@@ -518,6 +671,7 @@ console.log(
     "  ES module steps:  exit 0, steps that import it, under Jest's ES module mode\n" +
     "  mixed:            exit 0, a require()ing setup script's global reaches importing steps\n" +
     "  shared library:   exit 0, a CommonJS step library's steps and hook serve an ES module file\n" +
+    "  README ES module: exit 0, 1 passed and 1 skipped, set up as the README documents\n" +
     `  names refused:    ${FORBIDDEN.join(
       ", ",
     )}, absent from the whole installed tree\n` +
