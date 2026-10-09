@@ -546,6 +546,67 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
 - [ ] PR #16 body still describes rule 4 as "the core requires only itself and util"; update
       it, and push `dd41e66`, `f9e8684` and this entry, when Gearoid says.
 
+## Prettier 3, master merge and the ESM move (Gearoid, 2026-10-09 evening)
+
+- [x] Dependabot version updates were off (the repo is a fork; GitHub leaves them off on forks
+      until enabled). Gearoid enabled them; PRs #17 to #22 followed.
+- [x] #19 (`prettier_action` 3.3 to 4.6) failed: v4 installs Prettier `latest` (3.9.9), which
+      refused the 0-byte `.prettierrc.json` (empty since 2021, `82d6b9c`). Fixed by #23
+      (`ci/prettier-3`, Gearoid's option C: Prettier 3, config `{}`, 16-file reformat), which
+      also replaced #21. Merged 2026-10-09; Dependabot closed #19 and #21.
+- [x] `0212dce` merged `origin/master` into this branch: master's side of the 6 conflicting
+      source and test files was #23's reformat alone (all 51 changed lines differ only by a
+      trailing comma, checked), so this branch's side was kept and Prettier 3 reapplied (45
+      files). The lockfile kept this branch's tree with jest 30.5.2, semantic-release 25.0.9
+      and handlebars 4.7.10 (security, #24) carried over. commitlint refused a custom merge
+      subject; recommitted with git's standard one.
+- [ ] **ESM move (Gearoid: "callsites needs to be updated to 4.2.0").** callsites 4 is
+      ESM-only and broke Fusion under Jest (`Must use import to load ES Module`, 0 tests,
+      measured; #22's integration failed the same way). Decisions (Gearoid): make Fusion ESM,
+      inside this PR as part of 3.0.0, spike first, and take the latest @cucumber majors too.
+- [x] Spike (throwaway worktree `spike/esm`, not pushed): the source converts mechanically;
+      gherkin 42.0.1, messages 34.2.1, tag-expressions 11.0.1 and callsites 4.2.0 work with
+      Fusion's code unchanged; messages 34 has no dependencies, so no `uuid` returns. Consumers
+      with packed builds: ESM-only breaks every CommonJS consumer (plain jest, Babel on
+      node_modules, and Berlin Clock: 0 of 5 BDD suites); ES module steps under Jest's ESM
+      mode work (smoke 10/10, with an ExperimentalWarning). A dual build (ESM source plus an
+      esbuild-bundled `dist/index.cjs`) passes all of them, Berlin Clock identical to 2.0.0.
+      Dual costs measured: package 30.7 kB to 65 kB; the dual-package hazard is real (setup
+      `require`, steps `import`: the global config was lost and the file failed); an `exports`
+      map blocks `require("…/package.json")` unless listed.
+- [x] **Decision (Gearoid): dual ESM + CJS.** Delivered in `2b53ea8` (code and tests) and the
+      docs commit after it:
+  - [x] Package: `"type": "module"`; gherkin 42.0.1, messages 34.2.1, tag-expressions 11.0.1,
+        callsites 4.2.0 pinned exactly; `exports` (import to `src/`, require to
+        `dist/index.cjs` with `dist/index.d.cts` typings, `./package.json`); `main` to the
+        bundle; `files` with `dist/`. `scripts/build-cjs.js` (esbuild 0.28.2, devDependency)
+        runs on `prepack` and `pretest`, maps `import.meta.url` to the bundle's file, and
+        writes `dist/THIRD_PARTY_LICENSES.txt` from the files esbuild bundled. Its log goes to
+        stderr: on stdout it corrupted `npm pack --json` (caught by the packaged baseline).
+  - [x] `src/` to ES modules; global configuration on `globalThis` under
+        `Symbol.for("@g_package/jest-cucumber-fusion/global-options")`. RED first: the
+        packaged baseline's new mixed consumer (setup `require`, steps `import`) failed with
+        the unbound-step refusal, then passed.
+  - [x] `eslint.config.cjs`, `commitlint.config.cjs`; ESLint `sourceType: "module"` for `.js`.
+  - [x] Fusion's suite under Jest's ESM mode (`npm test` runs
+        `node --experimental-vm-modules`). A probe first: `resetModules` plus `import()` gives
+        a fresh module and `unstable_mockModule` doubles packages and relative modules;
+        `isolateModulesAsync` was avoided (an earlier mock leaked into it). Seven doubling
+        files converted by hand; m4 needs its order (double callsites, import the real
+        feature-source, double it, import Fusion). The architecture check now reads imports
+        (it failed first, reading none, rather than passing vacuously). Child Jest runs in
+        the baselines and v5 get `NODE_OPTIONS`. Contract tests restated: the libraries are
+        imported; CommonJS reach is the bundle's job.
+  - [x] Packaged-consumer baseline: CommonJS, ES module and mixed consumers on the tarball.
+  - [x] Docs: Architecture (dual package, pins, imports), Migrating, README, RunningTheExamples.
+  - [x] Re-verified on the packed build: suite 43 suites, 1,092 passed, 3 skipped, lines and
+        functions 100%; 6 of 6 baselines; tsd; ESLint; secrets. Smoke 10 of 10 (CommonJS) on
+        Node 18, 20, 22, 24 with Jest 30 and Node 22 with Jest 29 and 27; the three consumer
+        styles and the mixed hazard all pass. Berlin Clock (copy) identical to 2.0.0 in all
+        four groups, combined jest 118 of 118. Fuzz: properties 885 of 885, differential 150
+        cases 0 diffs, wild 36 diffs all the documented outline class. Package 68.5 kB packed.
+  - [ ] PR body; push (Gearoid's call). Spike worktree `spike/esm` to remove.
+
 ## Blockers
 
 None. Draft PR #16 is open; pushing new commits is Gearoid's call.

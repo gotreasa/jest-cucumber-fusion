@@ -68,6 +68,15 @@ const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumb
 
 ```
 
+Writing your steps as ES modules instead? Import the same names, and run Jest in its ES module mode (`NODE_OPTIONS=--experimental-vm-modules npx jest`):
+
+```javascript
+//filename: rocket-launching.steps.mjs
+import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
+```
+
+The package ships both: `require` gets a CommonJS build, `import` gets the ES module source, and a `setupFiles` script may use either style whichever your steps use.
+
 ### Load any dependency you need to do your test
 
 ```javascript

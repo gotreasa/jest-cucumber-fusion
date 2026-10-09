@@ -8,18 +8,25 @@ You write step definitions in a `.steps.js` file using the verbs `Given`, `When`
 
 Per call, or once for a whole run, you can pass `errors` (which validations are on), `tagFilter` (a tag expression selecting which scenarios run), `scenarioNameTemplate` (what each test is called) and `loadRelativePath` (accepted and ignored). `setFusionConfiguration` sets the same options once, from a script listed in Jest's `setupFiles`.
 
-### The dependency line, and why CommonJS
+### The dependency line, and the dual package
 
-The package is published as CommonJS with no build step, because a consumer requires it directly from their own `.steps.js` file running under their own Jest. The Gherkin toolchain is pinned to the last releases that a CommonJS `require` can load:
+Fusion's source is ES modules, and so are its dependencies, pinned exactly:
 
 | Dependency | Pin | Used for |
 |---|---|---|
-| `@cucumber/gherkin` | 39.1.0 | parsing a feature file and compiling pickles |
-| `@cucumber/messages` | 32.3.1 | the incrementing id source the parser and compiler share |
-| `@cucumber/tag-expressions` | 9.1.0 | reading a `tagFilter` expression |
-| `callsites` | ~3.1.0 | finding the file that called `Fusion`, so a relative feature path resolves against it |
+| `@cucumber/gherkin` | 42.0.1 | parsing a feature file and compiling pickles |
+| `@cucumber/messages` | 34.2.1 | the incrementing id source the parser and compiler share |
+| `@cucumber/tag-expressions` | 11.0.1 | reading a `tagFilter` expression |
+| `callsites` | 4.2.0 | finding the file that called `Fusion`, so a relative feature path resolves against it |
 
-The majors after those pins publish ESM only, and Jest 30 on Node 22 cannot `require` an ESM-only package. Moving past them would therefore mean either a build step or an ESM-only release, so the pins are exact rather than a range. Everything else the package needs comes from Node itself (`fs` and `path`) and from Jest's own globals.
+All four publish ES modules only, and Jest cannot `require` an ES module. Most consumers `require` Fusion from a CommonJS `.steps.js` file under their own Jest, so the package is dual, through the `exports` map in `package.json`:
+
+- `import` resolves to `src/index.js`, the ES module source, for steps written as ES modules under Jest's ES module mode;
+- `require` resolves to `dist/index.cjs`, a CommonJS bundle that `scripts/build-cjs.js` builds with esbuild before every pack (the `prepack` script), with the four dependencies inlined. It ships with `dist/THIRD_PARTY_LICENSES.txt`, their MIT notices, and `dist/index.d.cts`, the typings for TypeScript consumers that `require`.
+
+A consumer who mixes the two, for example a `setupFiles` script that `require`s Fusion and steps that `import` it, loads two copies. The global configuration lives on `globalThis` for that reason, so a global set through one copy reaches the other. The packaged-consumer baseline runs all three shapes against the real tarball. Everything else the package needs comes from Node itself (`fs`, `path`, `url` and `util`) and from Jest's own globals.
+
+Until 3.0.0 the package was CommonJS with no build step, pinned to the last cucumber releases a `require` could load (gherkin 39, messages 32, tag-expressions 9, callsites 3). A spike on 2026-10-09 measured the alternatives on packed builds: an ES module only package broke every CommonJS consumer, while the dual package ran them all unchanged.
 
 ## 2. Context
 
@@ -28,14 +35,14 @@ This shows who and what Fusion sits between: the author writes the step definiti
 ```mermaid
 flowchart LR
   author["Test author"]
-  steps["Consumer steps file (*.steps.js)"]
+  steps["Consumer steps file (*.steps.js), required or imported"]
   setup["Optional setupFiles script, calls setFusionConfiguration"]
   features["Feature files (Gherkin)"]
   jest["Jest 30 on Node 22"]
   fusion["jest-cucumber-fusion"]
-  gherkin["@cucumber/gherkin 39.1.0"]
-  messages["@cucumber/messages 32.3.1"]
-  tagexpr["@cucumber/tag-expressions 9.1.0"]
+  gherkin["@cucumber/gherkin 42.0.1"]
+  messages["@cucumber/messages 34.2.1"]
+  tagexpr["@cucumber/tag-expressions 11.0.1"]
   globals["Jest globals: describe, test, beforeEach, afterEach"]
 
   author -->|writes| steps
@@ -55,7 +62,7 @@ flowchart LR
 
 ## 3. Components
 
-This shows every module in `src/` and what requires what. The shape is deliberate: one module reaches the outside world, one module reaches Jest, and everything in between is a set of plain functions over plain values that require nothing but each other and Node's `util`. The `@cucumber/tag-expressions` parse function is required by `feature-source` and passed into `tag-filter` as an argument, which is why `tag-filter` can own tag matching without depending on the expression library itself.
+This shows every module in `src/` and what imports what. The shape is deliberate: one module reaches the outside world, one module reaches Jest, and everything in between is a set of plain functions over plain values that import nothing but each other and Node's `util`. The `@cucumber/tag-expressions` parse function is imported by `feature-source` and passed into `tag-filter` as an argument, which is why `tag-filter` can own tag matching without depending on the expression library itself.
 
 ```mermaid
 flowchart TB
@@ -215,7 +222,7 @@ A step function receives its regex captures first, in order, and then the step's
 
 Jest and the `@cucumber` packages are runtime dependencies by design: gluing Gherkin to Jest is what this package is for. These rules do not keep them out. They keep each dependency in a known place, so the shape above holds over time. They are not conventions in a comment: they are checked by `test/specs/arch/dependency-direction.steps.js`, which reads the `src/` tree as it actually is, so a module added later is governed from the day it arrives.
 
-1. **Each module requires exactly what the table in section 3 lists for it.** The Requires column is the rule: the test compares it with every file's real `require` calls and fails on any difference in either direction, on a module with no row, and on a `require` whose target is not a plain string. So the filesystem, the parser packages and the caller stack stay in `feature-source`, and the core modules require nothing outside the package except Node's `util`. A deliberate change of design is an edit to the table in the same commit, which makes it visible in review. (Until 2026-10-09 this was two overlapping rules, "only `feature-source` reaches the outside world" and "the core requires only itself"; the first missed a `path` or `url` require outside the core, and neither noticed the table drifting from the code.)
+1. **Each module requires exactly what the table in section 3 lists for it.** The Requires column is the rule: the test compares it with every file's real dependencies (its `import` and `export ... from` statements, dynamic `import()` calls, and any `require`) and fails on any difference in either direction, on a module with no row, and on a dynamic `import()` or `require` whose target is not a plain string. So the filesystem, the parser packages and the caller stack stay in `feature-source`, and the core modules require nothing outside the package except Node's `util`. A deliberate change of design is an edit to the table in the same commit, which makes it visible in review. (Until 2026-10-09 this was two overlapping rules, "only `feature-source` reaches the outside world" and "the core requires only itself"; the first missed a `path` or `url` require outside the core, and neither noticed the table drifting from the code.)
 2. **Only `test-registration` touches a Jest global.** Running under Jest is the product, so this is not about leaving Jest. It keeps registration order (every step bound before anything is registered, each hook once per test, a skipped scenario as `test.skip`) in one module, which is where this package's real bugs have lived. ESLint enforces it (`eslint.config.js`), by name and through `globalThis` or `global`, and knows scope, so a local `const it` or an object key `test:` is not mistaken for the global; the architecture test pins that config and lints the real tree with it.
 3. **`index.js` exports exactly nine names:** `Given`, `When`, `Then`, `And`, `But`, `Before`, `After`, `Fusion` and `setFusionConfiguration`. The two driven ports are internal module paths and are never exported, so an internal seam cannot quietly become part of the public contract.
 
