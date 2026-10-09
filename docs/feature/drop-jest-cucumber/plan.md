@@ -702,8 +702,9 @@ Each fix failed first on its test, then passed:
       `npm test` 14 suites, 152 tests, exit 0; OpenAPI and InSpec (29) pass. The unit group
       alone misses the 100% line threshold (99.38%) exactly as 2.0.0 does; the provider
       needed the main checkout's gitignored `.env` copied in. `publish:pact` not run.
-- [ ] Remove the Berlin Clock worktree `.claude/worktrees/fusion-3-beta` and its branch
-      `chore/jest-cucumber-fusion-3.0.0-beta3`: Gearoid's call.
+- [x] Removed the Berlin Clock worktree `.claude/worktrees/fusion-3-beta` and its branch
+      `chore/jest-cucumber-fusion-3.0.0-beta3` (0 commits past `19c1327`) at Gearoid's
+      request.
 
 ## Blockers
 
