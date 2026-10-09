@@ -146,7 +146,14 @@ describe("branch behaviours no other suite pinned", () => {
     expect(matcherRefusals.undefined).toMatch(
       /^Unsupported step matcher: Given was given undefined\./
     );
-    for (const message of Object.values(matcherRefusals))
-      expect(message).toContain("a string or a regular expression");
+    // One assertion over every refusal, so a failure names each case that misses the advice.
+    expect(
+      Object.entries(matcherRefusals)
+        .filter(
+          ([, message]) =>
+            !String(message).includes("a string or a regular expression")
+        )
+        .map(([kind]) => kind)
+    ).toEqual([]);
   });
 });

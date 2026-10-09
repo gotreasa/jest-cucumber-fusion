@@ -362,31 +362,30 @@ const pasteAllAndBind = (keyword, stepTexts, caseLabel) => {
 };
 
 describe("one definition per step shape", () => {
+  const STEP_TEXTS = [
+    "I weigh 1 kilo",
+    "I weigh 1.5 kilo",
+    "I weigh 5 kilo",
+    'I say "a"',
+    'I say "b\u2028c"',
+  ];
   const outcome = pasteAllAndBind(
     "given",
-    [
-      "I weigh 1 kilo",
-      "I weigh 1.5 kilo",
-      "I weigh 5 kilo",
-      'I say "a"',
-      'I say "b\u2028c"',
-      // Unbound in a second scenario too, as a Background step is in every one: named once.
-      "I weigh 1 kilo",
-    ],
+    // The repeat is unbound in a second scenario too, as a Background step is in every one:
+    // named once.
+    [...STEP_TEXTS, "I weigh 1 kilo"],
     "shapes"
   );
 
   test("counts and names every unbound step, each once", () => {
     expect(outcome.message).toMatch(/^Fusion found 5 steps /);
     expect(outcome.message.split('"I weigh 1 kilo"').length - 1).toBe(1);
-    for (const stepText of [
-      "I weigh 1 kilo",
-      "I weigh 1.5 kilo",
-      "I weigh 5 kilo",
-      'I say "a"',
-      'I say "b\u2028c"',
-    ])
-      expect(outcome.message).toContain(`"${stepText}"`);
+    // One assertion over the list, so a failure names every step the message misses at once.
+    expect(
+      STEP_TEXTS.filter(
+        (stepText) => !outcome.message.includes(`"${stepText}"`)
+      )
+    ).toEqual([]);
   });
 
   test("suggests one definition per shape, wide enough for every step in it", () => {

@@ -81,10 +81,15 @@ describe("setFusionConfiguration in-process", () => {
     );
     expect(refusals.null).toContain("WHAT: it was given object null.");
     expect(refusals.array).toContain('WHAT: it was given object ["@smoke"].');
-    for (const message of Object.values(refusals))
-      expect(message).toMatch(
-        /^setFusionConfiguration needs an options object\./
-      );
+    // One assertion over every refusal, so a failure names each case with the wrong opening.
+    expect(
+      Object.entries(refusals)
+        .filter(
+          ([, message]) =>
+            !/^setFusionConfiguration needs an options object\./.test(message)
+        )
+        .map(([kind]) => kind)
+    ).toEqual([]);
   });
 
   test("an options object merged per key: the step check alone switched off", () => {
