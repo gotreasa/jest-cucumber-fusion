@@ -17,6 +17,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const url = require("url");
 const callerSites = require("callsites");
 const gherkin = require("@cucumber/gherkin");
 const messages = require("@cucumber/messages");
@@ -32,22 +33,27 @@ const { tagFilterFor } = require("./tag-filter");
 // re-export/wrapper frame does not retarget it; guard a shallow stack (no external frame) so
 // we never call getFileName() on undefined.
 //
-// A frame with no file name is skipped too. A native function holds one when Fusion is handed
-// straight to it, `[...].forEach(Fusion)`, and taking it as the caller resolved the path against
-// the working directory (finding F7 of the PR #16 review).
+// Only a frame whose file is ON DISK can be the caller: an absolute path, or the file: URL an
+// ES module frame reports. Any other frame is skipped: a native function holds one with no file
+// name when Fusion is handed straight to it, `[...].forEach(Fusion)`; Node's own modules report
+// `node:events` and the like; code run through vm reports `evalmachine.<anonymous>`. Taking any
+// of them as the caller resolved the path against the working directory (finding F7 of the
+// PR #16 review, and the review of its fix).
+const fileOnDisk = (fileName) => {
+  if (typeof fileName !== "string") return null;
+  if (fileName.startsWith("file:")) return url.fileURLToPath(fileName);
+  return path.isAbsolute(fileName) ? fileName : null;
+};
+
 const resolveFeaturePath = (featureFileToLoad) => {
   const insideThisPackage = (fileName) =>
-    typeof fileName === "string" && fileName.startsWith(__dirname + path.sep);
-  const isTheCaller = (fileName) =>
-    typeof fileName === "string" &&
-    fileName !== "" &&
-    !insideThisPackage(fileName);
+    fileName.startsWith(__dirname + path.sep);
 
-  const externalFrame = callerSites
+  const callerFile = callerSites
     .default()
-    .find((currentFrame) => isTheCaller(currentFrame.getFileName()));
-  const callerSiteCaller = externalFrame ? externalFrame.getFileName() : "";
-  const dirOfCaller = path.dirname(callerSiteCaller || "");
+    .map((currentFrame) => fileOnDisk(currentFrame.getFileName()))
+    .find((fileName) => fileName !== null && !insideThisPackage(fileName));
+  const dirOfCaller = path.dirname(callerFile || "");
 
   return path.resolve(dirOfCaller, featureFileToLoad);
 };

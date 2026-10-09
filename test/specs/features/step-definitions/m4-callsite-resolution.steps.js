@@ -81,6 +81,25 @@ describe("M4 — robust caller resolution", () => {
     );
   });
 
+  test("(c) frames that are not files on disk are skipped, and an ES module's file: URL is one", () => {
+    // Found by the review of the PR #16 fixes: a Node internal frame, a vm frame and a native
+    // frame are not the caller; an ES module reports its file as a file: URL.
+    const moduleCaller = "/virtual/esm-project/steps/checkout.steps.mjs";
+    mockState.frames = [
+      frame(packageEntryFile),
+      frame(null),
+      frame("node:events"),
+      frame("evalmachine.<anonymous>"),
+      frame(require("url").pathToFileURL(moduleCaller).href),
+    ];
+
+    Fusion("sample.feature");
+
+    expect(mockState.loadedPath).toBe(
+      path.resolve("/virtual/esm-project/steps", "sample.feature")
+    );
+  });
+
   test("(b) a shallow stack with no caller frame beyond Fusion does not throw a TypeError", () => {
     // Only Fusion's own frame is present; frame [1] is undefined.
     mockState.frames = [frame(packageEntryFile)];

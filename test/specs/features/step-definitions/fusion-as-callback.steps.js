@@ -9,3 +9,13 @@ const { Given, Fusion } = require("../../../../src");
 Given("the feature was found next to its caller", () => {});
 
 ["../../fixtures/callback-caller.feature"].forEach(Fusion);
+
+// A Node internal frame has a file name, `node:events` here, but it is not a file on disk, so
+// it is skipped too and the path still resolves from this file (found by the review of the PR
+// #16 fixes).
+const { EventEmitter } = require("events");
+const emitter = new EventEmitter();
+emitter.on("load", Fusion);
+// Each Fusion() starts from an empty registry, so the step is registered again.
+Given("the feature was found next to its caller", () => {});
+emitter.emit("load", "../../fixtures/callback-caller.feature");
