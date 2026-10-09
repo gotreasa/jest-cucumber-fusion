@@ -24,7 +24,7 @@ Then(
     expect(sayingForTheMission).toBe(verdictsStillToHear.shift());
     // The critics can only speak of the mission at all because the rocket flew
     expect(rocket.isInSpace).toBe(true);
-  })
+  }),
 );
 
 Fusion("../reuse-definition.feature");

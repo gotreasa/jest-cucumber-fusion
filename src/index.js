@@ -16,7 +16,7 @@ let stepsDefinition = emptyStepsDefinition();
 const addDefinitionFunction = (
   definitionType,
   regexpSentence,
-  fnForDefinition
+  fnForDefinition,
 ) => {
   if (stepsDefinition[definitionType]) {
     if (regexpSentence.constructor === RegExp) {
@@ -40,7 +40,7 @@ const addDefinitionFunction = (
 const throwIfDuplicateMatcher = (definitionType, matcherKey) => {
   if (stepsDefinition[definitionType][matcherKey])
     throw new Error(
-      `Duplicate step definition: "${matcherKey}" is already registered for "${definitionType}"`
+      `Duplicate step definition: "${matcherKey}" is already registered for "${definitionType}"`,
     );
 };
 
@@ -48,7 +48,7 @@ const Given = (regexpSentenceOrChainedObject, fnForDefinition) => {
   return defineAndChain(
     "given",
     regexpSentenceOrChainedObject,
-    fnForDefinition
+    fnForDefinition,
   );
 };
 const When = (regexpSentenceOrChainedObject, fnForDefinition) => {
@@ -76,7 +76,7 @@ const defineAndChain = (stepType, stepObjectOrSentence, fnForStep) => {
     addDefinitionFunction(
       stepType,
       stepObjectOrSentence.stepSentence,
-      stepObjectOrSentence.stepFnDefinition
+      stepObjectOrSentence.stepFnDefinition,
     );
 
     return stepObjectOrSentence;
@@ -108,13 +108,13 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
     const dirOfCaller = path.dirname(callerSiteCaller || "");
     const absoluteFeatureFilePath = path.resolve(
       dirOfCaller,
-      featureFileToLoad
+      featureFileToLoad,
     );
 
     const jestCucumber = require("jest-cucumber");
     const feature = jestCucumber.loadFeature(
       absoluteFeatureFilePath,
-      optionsToPassToJestCucumber
+      optionsToPassToJestCucumber,
     );
 
     // When jest-cucumber's own step-count validation is disabled ({ errors: false }),
@@ -142,7 +142,7 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
           feature.scenarios,
           testFn,
           false,
-          failOnUnmatchedStep
+          failOnUnmatchedStep,
         );
 
       if (feature.scenarioOutlines.length > 0)
@@ -151,7 +151,7 @@ const Fusion = (featureFileToLoad, optionsToPassToJestCucumber) => {
           feature.scenarioOutlines,
           testFn,
           true,
-          failOnUnmatchedStep
+          failOnUnmatchedStep,
         );
     });
   } finally {
@@ -172,7 +172,7 @@ const matchJestTestSuiteWithCucumberFeature = (
   featureScenariosOrOutline,
   testFn,
   isOutline,
-  failOnUnmatchedStep
+  failOnUnmatchedStep,
 ) => {
   featureScenariosOrOutline.forEach((currentScenarioOrOutline) => {
     matchJestTestWithCucumberScenario(
@@ -181,7 +181,7 @@ const matchJestTestSuiteWithCucumberFeature = (
       currentScenarioOrOutline.steps,
       testFn,
       isOutline,
-      failOnUnmatchedStep
+      failOnUnmatchedStep,
     );
   });
 };
@@ -192,7 +192,7 @@ const matchJestTestWithCucumberScenario = (
   currentScenarioSteps,
   testFn,
   isOutline,
-  failOnUnmatchedStep
+  failOnUnmatchedStep,
 ) => {
   testFn(currentScenarioTitle, ({ given, when, then, and, but }) => {
     currentScenarioSteps.forEach((currentStep) => {
@@ -201,7 +201,7 @@ const matchJestTestWithCucumberScenario = (
         { given, when, then, and, but },
         currentStep,
         isOutline,
-        failOnUnmatchedStep
+        failOnUnmatchedStep,
       );
     });
   });
@@ -212,12 +212,12 @@ const matchJestDefinitionWithCucumberStep = (
   verbFunction,
   currentStep,
   isOutline,
-  failOnUnmatchedStep
+  failOnUnmatchedStep,
 ) => {
   const foundMatchingStep = findMatchingStep(
     featureRegistry,
     currentStep,
-    isOutline
+    isOutline,
   );
   if (!foundMatchingStep) {
     if (failOnUnmatchedStep)
@@ -228,7 +228,7 @@ const matchJestDefinitionWithCucumberStep = (
   // this will be the "given", "when", "then"...functions
   verbFunction[currentStep.keyword](
     foundMatchingStep.stepExpression,
-    foundMatchingStep.stepFn
+    foundMatchingStep.stepFn,
   );
 };
 
@@ -240,9 +240,9 @@ const findMatchingStep = (featureRegistry, currentStep, isOutline) => {
       return isFunctionForScenario(
         scenarioSentence,
         featureRegistry[scenarioType][currentStepDefinitionFunction],
-        isOutline
+        isOutline,
       );
-    }
+    },
   );
   if (matchingSteps.length === 0) return null;
 
@@ -251,7 +251,7 @@ const findMatchingStep = (featureRegistry, currentStep, isOutline) => {
       .map((matcherSource) => `"${matcherSource}"`)
       .join(", ");
     throw new Error(
-      `Ambiguous step definition: "${scenarioSentence}" matches ${matchingSteps.length} step definitions: ${competingMatchers}`
+      `Ambiguous step definition: "${scenarioSentence}" matches ${matchingSteps.length} step definitions: ${competingMatchers}`,
     );
   }
 
@@ -260,20 +260,20 @@ const findMatchingStep = (featureRegistry, currentStep, isOutline) => {
     scenarioType,
     scenarioSentence,
     matchingSteps[0],
-    currentStep.stepArgument
+    currentStep.stepArgument,
   );
 };
 
 const isFunctionForScenario = (
   scenarioSentence,
   stepDefinitionFunction,
-  isOutline
+  isOutline,
 ) => {
   if (stepDefinitionFunction.stepRegExp) {
     if (isOutline && /<[\w]*>/.test(scenarioSentence)) {
       return isPotentialStepFunctionForScenario(
         scenarioSentence,
-        stepDefinitionFunction.stepRegExp
+        stepDefinitionFunction.stepRegExp,
       );
     } else return scenarioSentence.match(stepDefinitionFunction.stepRegExp);
   }
@@ -299,7 +299,7 @@ const asScenarioText = (stepFunctionDef) =>
 
 const isPotentialStepFunctionForScenario = (
   scenarioDefinition,
-  regStepFunc
+  regStepFunc,
 ) => {
   //so this one is tricky, to ensure we only find the
   // step definition corresponding to actual steps function in the case of outlined gherkin
@@ -328,7 +328,7 @@ const isPotentialStepFunctionForScenario = (
   ) {
     let fixedPart = currentScenarioPart.input.substring(
       0,
-      currentScenarioPart.index
+      currentScenarioPart.index,
     );
     let idxCutScenarioPart =
       currentScenarioPart.index + currentScenarioPart[0].length;
@@ -345,7 +345,7 @@ const isPotentialStepFunctionForScenario = (
     // matched nothing at all, and a guard that tested the first while dereferencing the second threw
     // on the null. One escape-aware pass gives one answer: the real group, in raw coordinates.
     const groupInStepFunc = /\([a-zA-Z0-9!|,:?*+.^=${}><\\\-]+\)/g.exec(
-      maskEscapedParens(currentStepFuncLeft)
+      maskEscapedParens(currentStepFuncLeft),
     );
     // The scenario sentence spells the step function's prefix as literal text, so the two are only
     // comparable in scenario-text coordinates — escapes collapsed, one character each.
@@ -364,7 +364,7 @@ const isPotentialStepFunctionForScenario = (
       currentStepFuncLeft =
         stepFuncPrefixAsScenarioText +
         currentStepFuncLeft.substring(
-          groupInStepFunc.index + groupInStepFunc[0].length
+          groupInStepFunc.index + groupInStepFunc[0].length,
         );
     } else if (
       groupInStepFunc &&
@@ -375,11 +375,11 @@ const isPotentialStepFunctionForScenario = (
       // we need to evaluate the regex against the scenario part
       const strRegexToEvaluate = currentStepFuncLeft.substring(
         0,
-        groupInStepFunc.index + groupInStepFunc[0].length
+        groupInStepFunc.index + groupInStepFunc[0].length,
       );
       const regexToEvaluate = new RegExp(strRegexToEvaluate);
       const regIntermediatePart = regexToEvaluate.exec(
-        currentScenarioPart.input
+        currentScenarioPart.input,
       );
       if (regIntermediatePart) {
         fixedPart = strRegexToEvaluate;
@@ -390,7 +390,7 @@ const isPotentialStepFunctionForScenario = (
     const partIndex = currentStepFuncLeft.indexOf(fixedPart);
     if (partIndex !== -1) {
       currentStepFuncLeft = currentStepFuncLeft.substring(
-        partIndex + fixedPart.length
+        partIndex + fixedPart.length,
       );
       currentScenarioDefLeft =
         currentScenarioDefLeft.substring(idxCutScenarioPart);
@@ -403,7 +403,7 @@ const isPotentialStepFunctionForScenario = (
     (currentScenarioDefLeft === "" && currentStepFuncLeft === "") ||
     evaluateStepFuncEndVsScenarioEnd(
       currentStepFuncLeft,
-      currentScenarioDefLeft
+      currentScenarioDefLeft,
     )
   );
 };
@@ -416,7 +416,7 @@ const holdsCapturingGroup = (stepFunctionDef) =>
 
 const evaluateStepFuncEndVsScenarioEnd = (
   stepFunctionDef,
-  scenarioDefinition
+  scenarioDefinition,
 ) => {
   // The leftover is regex SOURCE, so a capturing group in it must be evaluated as a regex. The old
   // test only recognised a group holding one of [sSdDwWbB*], which made the group's SPELLING the
@@ -426,7 +426,7 @@ const evaluateStepFuncEndVsScenarioEnd = (
   // that already took the regex branch still does.
   if (
     /\(.*(\?\:)?[.\\]*[sSdDwWbB*][*?+]?.*\)|\(\[.*\](?:[+?*]{1}|\{\d\})\)/g.test(
-      stepFunctionDef
+      stepFunctionDef,
     ) ||
     holdsCapturingGroup(stepFunctionDef)
   ) {
@@ -441,7 +441,7 @@ const injectVariable = (
   scenarioType,
   scenarioSentence,
   stepFunctionDefinition,
-  stepArgs
+  stepArgs,
 ) => {
   const stepObject = featureRegistry[scenarioType][stepFunctionDefinition];
 

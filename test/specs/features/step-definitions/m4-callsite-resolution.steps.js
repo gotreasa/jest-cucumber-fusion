@@ -63,7 +63,7 @@ describe("M4 — robust caller resolution", () => {
     Fusion("sample.feature");
 
     expect(mockState.loadedPath).toBe(
-      path.resolve("/virtual/user-project/step-definitions", "sample.feature")
+      path.resolve("/virtual/user-project/step-definitions", "sample.feature"),
     );
   });
 

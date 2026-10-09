@@ -39,7 +39,7 @@ And(
   (arrayPosition) => {
     const isAnArray = JSON.parse(arrayPosition);
     expect(isAnArray).toBeInstanceOf(Array);
-  }
+  },
 );
 
 And(/^the booster\(s\) should land back on the launch pad$/, () => {

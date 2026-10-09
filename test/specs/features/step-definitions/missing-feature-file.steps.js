@@ -17,7 +17,7 @@ describe("T1.3 — missing feature file", () => {
   test("Fusion throws loudly for a feature file that does not exist", () => {
     // Couples to jest-cucumber@4.5.0's loadFeature ENOENT wording; may need updating on upgrade.
     expect(() => Fusion("../does-not-exist-regression.feature")).toThrow(
-      /Feature file not found/
+      /Feature file not found/,
     );
   });
 });

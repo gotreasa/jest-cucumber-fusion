@@ -191,7 +191,7 @@ describe("L4 — a step matcher with escaped parentheses in a scenario outline",
     // row. A "fix" that bound a rewritten matcher would fail here.
     expect(mockState.verbs.given).toHaveBeenCalledWith(
       FUNCTION_CALL,
-      expect.any(Function)
+      expect.any(Function),
     );
 
     // (ii) IT ACTUALLY BINDS: the bound step runs once per example row, and each row's OWN value
@@ -211,7 +211,7 @@ describe("L4 — a step matcher with escaped parentheses in a scenario outline",
 
     const escaped = messageEscapingFusion(
       Fusion,
-      outlineFeature(TEMPLATE, ROWS)
+      outlineFeature(TEMPLATE, ROWS),
     );
 
     // Two DISTINCT wrong outcomes, both armed, asserted as one object so a failure names which one
@@ -226,7 +226,7 @@ describe("L4 — a step matcher with escaped parentheses in a scenario outline",
     // `escapedMessage: ""` is the blanket: nothing else may escape Fusion() either.
     expect({
       crashedOnTheNullDereference: /Cannot read properties of null/.test(
-        escaped
+        escaped,
       ),
       treatedAsHavingNoDefinition: /No step definition matches/.test(escaped),
       escapedMessage: escaped,

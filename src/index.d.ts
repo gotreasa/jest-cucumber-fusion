@@ -31,5 +31,5 @@ export function After(callback: () => void | Promise<void>): void;
 
 export function Fusion(
   feature: string,
-  options?: Parameters<typeof loadFeature>[1]
+  options?: Parameters<typeof loadFeature>[1],
 ): void;

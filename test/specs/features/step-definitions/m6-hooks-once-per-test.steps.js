@@ -79,10 +79,10 @@ afterAll(() => {
   expect(mixedTestsStarted + outlineOnlyRowsStarted).toBeGreaterThan(0);
   if (mixedTestsStarted > 0) expect(mixedLog.slice(-2)).toEqual(closingHooks);
   expect(mixedLog.filter((entry) => entry === "after:first")).toHaveLength(
-    mixedTestsStarted
+    mixedTestsStarted,
   );
   expect(outlineOnlyLog.filter((entry) => entry === "after")).toHaveLength(
-    outlineOnlyRowsStarted
+    outlineOnlyRowsStarted,
   );
   // Neither feature ran the other's hooks.
   expect(mixedLog.every((entry) => entry.includes(":"))).toBe(true);

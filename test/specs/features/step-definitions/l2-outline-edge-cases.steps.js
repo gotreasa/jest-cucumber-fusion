@@ -186,7 +186,7 @@ describe("L2 — scenario-outline step matching", () => {
       // capture from it. A "fix" that bound a rewritten matcher would fail here.
       expect(mockState.verbs.given).toHaveBeenCalledWith(
         LAMP,
-        expect.any(Function)
+        expect.any(Function),
       );
 
       runBoundStepAsJestCucumberWould(mockState.verbs.given, CONCRETE);
@@ -201,8 +201,8 @@ describe("L2 — scenario-outline step matching", () => {
       expect(
         fusionUnderLoudUnmatchedStepDetection(
           Fusion,
-          outlineFeature(TEMPLATE, CONCRETE)
-        )
+          outlineFeature(TEMPLATE, CONCRETE),
+        ),
       ).not.toThrow(/No step definition matches/);
     });
 
@@ -238,7 +238,7 @@ describe("L2 — scenario-outline step matching", () => {
       expect(mockState.verbs.given).toHaveBeenCalledTimes(1);
       expect(mockState.verbs.given).toHaveBeenCalledWith(
         ACCESS_CODE,
-        expect.any(Function)
+        expect.any(Function),
       );
 
       runBoundStepAsJestCucumberWould(mockState.verbs.given, CONCRETE);
@@ -253,8 +253,8 @@ describe("L2 — scenario-outline step matching", () => {
       expect(
         fusionUnderLoudUnmatchedStepDetection(
           Fusion,
-          outlineFeature(TEMPLATE, CONCRETE)
-        )
+          outlineFeature(TEMPLATE, CONCRETE),
+        ),
       ).not.toThrow(/No step definition matches/);
     });
 
@@ -290,13 +290,13 @@ describe("L2 — scenario-outline step matching", () => {
 
       fuse(
         Fusion,
-        outlineFeature("the access code is <code>", "the access code is ab12")
+        outlineFeature("the access code is <code>", "the access code is ab12"),
       );
 
       expect(mockState.verbs.given).toHaveBeenCalledTimes(1);
       runBoundStepAsJestCucumberWould(
         mockState.verbs.given,
-        "the access code is ab12"
+        "the access code is ab12",
       );
       expect(stepFn).toHaveBeenCalledWith("ab12");
     });
@@ -313,13 +313,13 @@ describe("L2 — scenario-outline step matching", () => {
 
       fuse(
         Fusion,
-        outlineFeature("the <channel> release is v1", "the beta release is v1")
+        outlineFeature("the <channel> release is v1", "the beta release is v1"),
       );
 
       expect(mockState.verbs.given).toHaveBeenCalledTimes(1);
       runBoundStepAsJestCucumberWould(
         mockState.verbs.given,
-        "the beta release is v1"
+        "the beta release is v1",
       );
       expect(stepFn).toHaveBeenCalledWith("beta", "v1");
     });
