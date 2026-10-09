@@ -201,7 +201,7 @@ setFusionConfiguration({
 });
 ```
 
-Options are merged lowest to highest: the defaults, then whatever `setFusionConfiguration` holds, then the options passed to one `Fusion` call. `errors` merges key-wise at every layer, so naming one validation in your setup file never switches off another.
+Options are merged lowest to highest: the defaults, then whatever `setFusionConfiguration` holds, then the options passed to one `Fusion` call. `errors` merges key-wise at every layer, so naming one validation in your setup file never switches off another. An option set to `undefined`, such as an unset environment variable forwarded as `{ tagFilter: process.env.TAGS }`, counts as not set and leaves the layer below in place.
 
 A second `setFusionConfiguration` call **replaces** what the first set rather than merging into it, which is how you clear or redefine a global. Jest gives each test file its own module registry and runs `setupFiles` inside it, so what you set there applies to that file and cannot reach another one.
 

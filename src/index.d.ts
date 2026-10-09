@@ -124,7 +124,8 @@ export function Fusion(feature: string, options?: FusionOptions): void;
  * Options are merged lowest to highest: the defaults, then whatever this setter holds, then the
  * options passed to one `Fusion()` call. A per-call option therefore still wins for its own
  * file, and `errors` merges key-wise at every layer, so naming one validation never switches
- * off another.
+ * off another. An option set to `undefined`, such as an unset environment variable forwarded
+ * as `{ tagFilter: process.env.TAGS }`, counts as not set and leaves the layer below in place.
  *
  * A second call REPLACES what the first set rather than merging into it, which is what lets a
  * global be cleared or redefined. Jest gives each test file its own module registry and runs

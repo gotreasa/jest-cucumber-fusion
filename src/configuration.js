@@ -30,6 +30,17 @@ const defaultOptions = () => ({
   scenarioNameTemplate: undefined,
 });
 
+// An option whose value is `undefined` is NOT SET, at every layer and inside `errors`, so it
+// never overrides the layer below. Forwarding an unset environment variable,
+// `{ tagFilter: process.env.TAGS }`, is the ordinary way to write one, and a key-wise
+// Object.assign would otherwise copy that `undefined` over a global the consumer set on purpose
+// (finding F4 of the PR #16 review). `errors: undefined` already meant "no change"; this makes
+// every key agree with it.
+const keysThatAreSet = (options) =>
+  Object.fromEntries(
+    Object.entries(options).filter(([, value]) => value !== undefined)
+  );
+
 // What ONE layer's `errors` contributes, in the three forms a consumer may write it:
 //
 //   true        -> every key on. An explicit reset of all three.
@@ -44,7 +55,7 @@ const errorsNamedBy = (errors) => {
   if (errors === true) return everyValidation(true);
   if (errors === false) return everyValidation(false);
 
-  return errors || {};
+  return keysThatAreSet(errors || {});
 };
 
 // The middle layer. Replaced wholesale by each setFusionConfiguration call, never merged into:
@@ -104,7 +115,11 @@ const mergeFusionOptions = (perCallOptions) => {
   const perCall = perCallOptions || {};
   // Lowest to highest, and a fresh object every call: the per-call options are never written
   // into the global, so one file's option cannot configure another file of the same run.
-  const merged = Object.assign(defaultOptions(), globalOptions, perCall);
+  const merged = Object.assign(
+    defaultOptions(),
+    keysThatAreSet(globalOptions),
+    keysThatAreSet(perCall)
+  );
 
   return Object.assign(merged, {
     errors: errorsAcross([globalOptions, perCall]),
