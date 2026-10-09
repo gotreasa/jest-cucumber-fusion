@@ -280,6 +280,32 @@ global; exactly nine public exports); public API and 2.0.0-compatible names and 
       keeps its old name (F17 was scoped to the lines F16 moved).
 - [x] Signed commits: `37dccbe` refactor, `0b241c5` types header. Push stays Gearoid's call.
 
+## Codecov on PR #16 (Gearoid, 2026-10-09: "There are failures from codecov in the PR body")
+
+- [x] RCA (`nw-troubleshooter`, re-verified on the host): `codecov/patch` (94.48%) and
+      `codecov/project` both fail against Codecov's default target, the base's 100%. 18 lines
+      uncovered, 352 of 370 locally, matching Codecov exactly. Three causes: (A) 8 lines in
+      `configuration.js` ran only in the v5 child Jest runs and the baseline scripts, which
+      Istanbul never sees; (B) 5 lines in `keywords.js` and `scenario-name.js` that no test
+      reached; (C) 5 defensive arms the real parsers never trigger.
+- [x] Fix, Gearoid chose "Unit tests + narrow mock" for C. No gate weakened, no
+      `codecov.yml`, no ignore pragma. Three test files:
+      - `global-configuration-in-process.steps.js` (A): the refusal of a string, `null` and an
+        array; a global `tagFilter`; replace semantics; `errors` merged per key; `errors:
+        undefined`.
+      - `unpinned-refusals.steps.js` (B): the asterisk step refusal; a template returning `""`;
+        a template throwing a non-Error.
+      - `defensive-arms.steps.js` (C): `tagFilterFor` with a parser that throws a string;
+        `stepArgumentFrom` with an empty docString and an empty argument; `bucketForKeyword`
+        with no dialect name; `feature-source` loaded once with only `gherkin.compile`
+        overridden (`jest.isolateModules` + `jest.doMock`), to throw and to return a pickle step
+        whose `astNodeIds` name no step.
+- [x] Measured: line coverage 100% in every `src/` file (was 95.13%); suite 36 suites, 790
+      passed, 2 skipped (the tag-filtered scenario and the unbound scenario with the step check
+      off, both by design); 17 of 17 vectors exit 0; `tsd` green; prettier clean.
+      Branch-only partials remain (for example `feature-source.js` 165-183); they did not count
+      in Codecov's line figure before and are not addressed.
+
 ## Blockers
 
-None. PR held for Gearoid's go.
+None. Draft PR #16 is open; pushing new commits is Gearoid's call.
