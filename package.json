@@ -23,7 +23,7 @@
     "commit": "git-cz",
     "semantic-release": "semantic-release",
     "fmt": "npx prettier --write .",
-    "prepare": "husky",
+    "prepare": "node scripts/prepare-hooks.js",
     "build": "node scripts/build-cjs.js",
     "prepack": "npm run build"
   },
