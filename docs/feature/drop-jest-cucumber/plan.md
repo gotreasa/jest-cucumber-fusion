@@ -150,6 +150,16 @@ Parked outside the repo while the tree was frozen, applied here after the amend.
   be recorded: DES keeps one result per sealed input.
 - Later releases: richer failing-step message with feature file and line (3.1); `jest` as a
   peerDependency (R10); Node 24.9+ or ESM to follow the cucumber majors.
+- **ES module and TypeScript examples** (Gearoid, 2026-10-09: follow-up PR after #16 merges).
+  The old "examples are provided in both ECMAScript and TypeScript" line was never true: `master`
+  has no `.ts` or `.mjs` file under `test/`. A probe (job tmp `esm-ts-probe.sh`) shows a native
+  `.steps.mjs` file passes under `NODE_OPTIONS=--experimental-vm-modules jest`, with a relative
+  feature path (Jest hands `callsites` a plain path, not a `file://` URL) and with an
+  `import.meta.url` path. A `.ts` steps file was not run (no `ts-jest` or Babel preset installed).
+  Scope: one tested `.steps.mjs` and one `.steps.ts` example, a second Jest project wired into
+  `npm test`, an "ES modules and TypeScript" section in `RunningTheExamples.md`, and a fix to
+  `docs/Language.md:77`, which says ES module syntax needs a transform such as Babel (the
+  probe ran native ESM with `--transform '{}'`).
 
 ## Post-delivery probes (2026-10-08, on `b4b15b6`, disposable copies only)
 
