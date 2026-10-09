@@ -11,6 +11,8 @@
 // file's Fusion calls and cannot reach another file. It is per-file configuration, not shared
 // mutable state, and that is the whole reason this option can be set in one place.
 
+const { describeValue } = require("./value-description");
+
 // Fusion's three validation keys. stepsMustMatchFeatureFile decides between the
 // unmatched-step refusal and a visible skipped test; scenariosMustMatchFeatureFile gates the
 // duplicate declared-title check; allowScenariosNotInFeatureFile is accepted and vestigial,
@@ -71,9 +73,7 @@ const isAnOptionObject = (candidate) =>
 const refuseNonOptionObject = (whatItWasGiven) =>
   new Error(
     `setFusionConfiguration needs an options object.\n\n` +
-      `WHAT: it was given ${typeof whatItWasGiven} ${JSON.stringify(
-        whatItWasGiven
-      )}.\n` +
+      `WHAT: it was given ${describeValue(whatItWasGiven)}.\n` +
       `WHY:  the argument is merged under every Fusion() call of this test file, so anything\n` +
       `      that is not an options object leaves the whole file silently unconfigured, and\n` +
       `      the mistake then looks like a bug in the feature files.\n` +

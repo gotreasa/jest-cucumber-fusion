@@ -11,6 +11,8 @@
 //
 // Pure: no filesystem, no parser, no Jest global. The port calls it; it calls the template.
 
+const { describeValue } = require("./value-description");
+
 // Kept as the first line of the refusal because the previous engine used it, so anything a
 // consumer greps for still matches.
 const TEMPLATE_FAILED =
@@ -50,9 +52,7 @@ const templateVariablesFor = (loadedFeature, scenario) => {
 };
 
 const describeWhatCameBack = (answer) =>
-  typeof answer === "string"
-    ? `the empty string`
-    : `${typeof answer} ${JSON.stringify(answer)}`;
+  typeof answer === "string" ? `the empty string` : describeValue(answer);
 
 const refuseUnusableName = (scenarioTitle, what, how) =>
   new Error(
