@@ -104,7 +104,7 @@ Matching ignores case on both sides. The expression and every tag are lowercased
 
 A scenario is selected on the tags that reach it, which is the union of its own tags, its feature's tags and, for a Scenario Outline row, that Examples set's tags. A scenario the filter excludes is also exempt from `stepsMustMatchFeatureFile`: excluding a half-written scenario is one of the reasons to reach for a filter, so Fusion does not ask for its steps to be bound.
 
-An expression that cannot be parsed is refused when the file is collected, naming the expression you wrote. It never becomes a filter that quietly selects nothing.
+An expression that cannot be parsed is refused when the file is collected, naming the expression you wrote. So is an expression with an operand that is not a tag, such as `smoke` written for `@smoke`, because no tag in a feature file could ever match it. Neither becomes a filter that quietly selects nothing.
 
 ## Scenario title templates
 

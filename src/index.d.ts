@@ -92,7 +92,8 @@ export interface FusionOptions {
    * excluded is not one you are asking to have wired.
    *
    * An expression that cannot be parsed is refused at collection, before anything is
-   * registered, and the refusal names the expression you wrote.
+   * registered, and the refusal names the expression you wrote. So is one with an operand
+   * that is not a tag, such as `smoke` written for `@smoke`: it could never match.
    */
   tagFilter?: string;
   /**
