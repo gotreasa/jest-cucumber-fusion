@@ -21,10 +21,10 @@
  *
  * HOW IT READS THE SOURCE. Comments in this package name jest-cucumber, describe and test
  * constantly -- they explain what is being replaced. A grep would therefore flag prose. So
- * each file is scanned once into two texts: one with comments removed (used to find require
- * targets) and one with comments AND string contents removed (used to find references to a
- * Jest global). A regex method call such as `pattern.test(text)` is not a reference to the
- * Jest `test`, so an identifier reached through a dot is never counted.
+ * each file is scanned with its comments removed to find require targets. Obligation 3 is not
+ * a text search at all: it runs ESLint with the repository's config, which knows scope, so a
+ * local `const it`, a key `test:` or `pattern.test(text)` is never mistaken for the Jest
+ * global. (A text search did until 2026-10-09, and it also missed `globalThis.describe`.)
  *
  * CURRENT STATUS against the 2.0.0 tree:
  *   RED   — src/index.js requires jest-cucumber, requires callsites and names beforeEach and
@@ -34,6 +34,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { ESLint } = require("eslint");
 
 const repositoryRoot = path.resolve(__dirname, "..", "..", "..");
 const sourceRoot = path.join(repositoryRoot, "src");
@@ -43,20 +44,6 @@ const THE_DEPENDENCY_BEING_REMOVED = "jest-cucumber";
 
 // The one module allowed to touch the Jest runner, and what counts as touching it.
 const TEST_REGISTRATION = "src/test-registration.js";
-const JEST_GLOBALS = [
-  "describe",
-  "test",
-  "it",
-  "expect",
-  "beforeEach",
-  "afterEach",
-  "beforeAll",
-  "afterAll",
-];
-const JEST_GLOBAL_REFERENCE = new RegExp(
-  `(?<![\\w$.])(${JEST_GLOBALS.join("|")})(?![\\w$])`,
-  "g"
-);
 
 // The public surface, and the only list this law compares the real export set against.
 //
@@ -178,7 +165,6 @@ const theSourceTree = everyJavaScriptFileUnder(sourceRoot).map((absolute) => {
     unreadableRequires: unreadableRequiresIn(
       stripped(source, { blankStrings: false })
     ),
-    identifiers: stripped(source, { blankStrings: true }),
   };
 });
 
@@ -285,32 +271,90 @@ describe("the dependency direction inside src/ is inward", () => {
     });
   });
 
-  test(`only ${TEST_REGISTRATION} touches a Jest global`, () => {
-    const offenders = [];
-
-    theSourceTree.forEach((each) => {
-      if (each.modulePath === TEST_REGISTRATION) return;
-      const named = new Set();
-      let match = JEST_GLOBAL_REFERENCE.exec(each.identifiers);
-      while (match) {
-        named.add(match[1]);
-        match = JEST_GLOBAL_REFERENCE.exec(each.identifiers);
-      }
-      if (named.size > 0) {
-        offenders.push(
-          `${each.modulePath} names ${[...named].sort().join(", ")}`
-        );
-      }
+  test(`only ${TEST_REGISTRATION} touches a Jest global`, async () => {
+    // Checked by ESLint, with the repository's own config, because ESLint knows scope: a local
+    // `const it`, an object key `test:` or `pattern.test(text)` is not the Jest global, which a
+    // text search over the source could not tell apart (it flagged all three). Each probe is
+    // linted as if it were the file named, so the per-file config applies exactly as it does
+    // to the real tree.
+    // The config is required here and handed over, because ESLint's own loader uses a dynamic
+    // import(), which Jest's module sandbox refuses.
+    const eslint = new ESLint({
+      cwd: repositoryRoot,
+      overrideConfigFile: true,
+      overrideConfig: require(path.join(repositoryRoot, "eslint.config.js")),
     });
+    const jestGlobalErrors = async (code, filePath) =>
+      (await eslint.lintText(code, { filePath }))[0].messages
+        .filter((message) => message.severity === 2)
+        .map((message) => `${message.ruleId}: ${message.message}`);
 
-    // WHAT: every module other than the test-registration port that names a Jest global.
+    const CORE = path.join(repositoryRoot, "src", "a-core-module.js");
+    const PORT = path.join(repositoryRoot, TEST_REGISTRATION);
+    const refused = {
+      "a bare describe": await jestGlobalErrors(
+        'describe("x", () => {});\n',
+        CORE
+      ),
+      "globalThis.describe": await jestGlobalErrors(
+        'globalThis.describe("x", () => {});\n',
+        CORE
+      ),
+      "global.test": await jestGlobalErrors(
+        'global.test("x", () => {});\n',
+        CORE
+      ),
+      "globalThis.beforeEach": await jestGlobalErrors(
+        "globalThis.beforeEach(() => {});\n",
+        CORE
+      ),
+    };
+    const allowed = {
+      "a local named it, a key named test and a regex test":
+        await jestGlobalErrors(
+          'const it = /x/;\nmodule.exports = { test: it.test("x") };\n',
+          CORE
+        ),
+      "describe in the registration port": await jestGlobalErrors(
+        'describe("x", () => {});\n',
+        PORT
+      ),
+    };
+    // The real tree, file by file through lintText: lintFiles' own file search also reaches a
+    // dynamic import().
+    const realTree = (
+      await Promise.all(
+        theSourceTree.map(async (each) =>
+          (
+            await jestGlobalErrors(
+              fs.readFileSync(
+                path.join(repositoryRoot, each.modulePath),
+                "utf8"
+              ),
+              path.join(repositoryRoot, each.modulePath)
+            )
+          ).map((error) => `${each.modulePath} ${error}`)
+        )
+      )
+    ).flat();
+
+    // WHAT: the Jest globals reached outside the test-registration port, by name or through
+    //       globalThis or global, and the code that must stay allowed.
     // WHY:  running under Jest is the product, so this is not about leaving Jest. It is about
     //       registration ORDER: binding every step before registering anything, hooks once per
     //       test, skipped scenarios as test.skip. The package's real bugs have lived there, and
     //       they stay findable while one module is the only one that registers.
     // HOW:  pass nothing but values across the boundary and let src/test-registration.js be
-    //       the only module that registers anything.
-    expect(offenders).toStrictEqual([]);
+    //       the only module that registers anything. The rules live in eslint.config.js.
+    expect({
+      notRefused: Object.keys(refused).filter(
+        (probe) => refused[probe].length === 0
+      ),
+      wronglyRefused: Object.keys(allowed).filter(
+        (probe) => allowed[probe].length > 0
+      ),
+      realTree,
+    }).toStrictEqual({ notRefused: [], wronglyRefused: [], realTree: [] });
   });
 
   test("src/index.js exports exactly the public surface and nothing more", () => {

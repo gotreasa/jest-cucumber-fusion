@@ -2,7 +2,25 @@
 // owns formatting, so nothing here is about layout.
 const js = require("@eslint/js");
 const globals = require("globals");
-const jest = require("eslint-plugin-jest");
+const jestPlugin = require("eslint-plugin-jest");
+
+const JEST_GLOBALS = [
+  "describe",
+  "test",
+  "it",
+  "expect",
+  "beforeEach",
+  "afterEach",
+  "beforeAll",
+  "afterAll",
+  "jest",
+];
+const ONLY_REGISTRATION_MAY =
+  "Only src/test-registration.js may touch a Jest global; pass it a value instead.";
+const restrictedJestGlobals = JEST_GLOBALS.map((name) => ({
+  name,
+  message: ONLY_REGISTRATION_MAY,
+}));
 
 module.exports = [
   {
@@ -15,6 +33,28 @@ module.exports = [
       sourceType: "commonjs",
       ecmaVersion: 2022,
       globals: globals.node,
+    },
+  },
+  {
+    // Only src/test-registration.js may touch a Jest global, so registration order lives in one
+    // module (docs/Architecture.md, section 5, rule 2). A bare name is refused with a message
+    // here; reaching one through globalThis or global would get past no-undef, so that is
+    // refused too. Scope-aware: a local `const it` or a key `test:` is not the global.
+    // Pinned by test/specs/arch/dependency-direction.steps.js.
+    files: ["src/**/*.js"],
+    ignores: ["src/test-registration.js"],
+    rules: {
+      "no-restricted-globals": ["error", ...restrictedJestGlobals],
+      "no-restricted-properties": [
+        "error",
+        ...["globalThis", "global"].flatMap((object) =>
+          JEST_GLOBALS.map((property) => ({
+            object,
+            property,
+            message: ONLY_REGISTRATION_MAY,
+          }))
+        ),
+      ],
     },
   },
   {
@@ -31,10 +71,10 @@ module.exports = [
   },
   {
     files: ["test/**/*.js"],
-    ...jest.configs["flat/recommended"],
+    ...jestPlugin.configs["flat/recommended"],
     settings: { jest: { version: 30 } },
     rules: {
-      ...jest.configs["flat/recommended"].rules,
+      ...jestPlugin.configs["flat/recommended"].rules,
       "jest/no-standalone-expect": [
         "error",
         {
