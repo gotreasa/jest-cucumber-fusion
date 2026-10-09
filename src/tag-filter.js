@@ -50,14 +50,14 @@ const operandsOf = (node) =>
         .filter((child) => child !== null && typeof child === "object")
         .flatMap(operandsOf);
 
-// The parser saw the lowercased expression; name the operand as the consumer wrote it when it can
-// be found in their text, and as parsed otherwise (an escaped character, for one).
-const asWritten = (expression, operand) => {
-  const at = lowercased(expression).indexOf(operand);
-  return at === -1
-    ? operand
-    : String(expression).slice(at, at + operand.length);
-};
+// The parser saw the lowercased expression; name the operand as the consumer wrote it, matched
+// as a WHOLE token of their text, and as parsed when no token matches (an escaped character,
+// for one). A substring search would find `smoke` inside `@Smoke`, and an offset taken from the
+// lowercased text drifts wherever lowercasing changes a length ("İ" becomes two code units).
+const asWritten = (expression, operand) =>
+  String(expression)
+    .split(/[\s()]+/)
+    .find((token) => lowercased(token) === operand) || operand;
 
 // Returns a predicate over a list of tag names, or raises the refusal if the expression cannot
 // be read. Raising rather than answering false for everything is deliberate: an unparseable
@@ -66,7 +66,9 @@ const asWritten = (expression, operand) => {
 //
 // The parser accepts a bare word such as `smoke` as an operand, but no tag Gherkin hands Fusion
 // lacks its "@", so such an operand can never match and leads to the same silent outcome. It is
-// refused with the same first line, as 2.0.0 refused it (finding F1 of the PR #16 review).
+// refused with the same first line (finding F1 of the PR #16 review). 2.0.0 refused a lone bare
+// word the same way, but let a bare operand inside a longer expression through, or failed on it
+// with a ReferenceError.
 const tagFilterFor = (expression, parseExpression) => {
   let parsed;
 
