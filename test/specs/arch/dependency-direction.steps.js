@@ -148,6 +148,8 @@ const DEPENDENCY_PATTERNS = [
   /\bexport\s[^"';]*?\bfrom\s*(['"])([^'"]+)\1/g,
   /\bimport\s*\(\s*(['"])([^'"]+)\1\s*\)/g,
   /\brequire\s*\(\s*(['"])([^'"]+)\1\s*\)/g,
+  // Node's own modules, reached without an import (found by the PR #16 review round 4, F5).
+  /\bgetBuiltinModule\s*\(\s*(['"])([^'"]+)\1\s*\)/g,
 ];
 
 const requireTargetsIn = (code) =>
@@ -159,9 +161,13 @@ const requireTargetsIn = (code) =>
 // template) cannot be checked against the table, so it is counted and refused rather than
 // silently skipped.
 const unreadableRequiresIn = (code) => {
-  const calls = (code.match(/\b(?:import|require)\s*\(/g) || []).length;
+  const calls = (
+    code.match(/\b(?:import|require|getBuiltinModule)\s*\(/g) || []
+  ).length;
   const literal = [
-    ...code.matchAll(/\b(?:import|require)\s*\(\s*(['"])[^'"]+\1\s*\)/g),
+    ...code.matchAll(
+      /\b(?:import|require|getBuiltinModule)\s*\(\s*(['"])[^'"]+\1\s*\)/g,
+    ),
   ].length;
   return calls - literal;
 };

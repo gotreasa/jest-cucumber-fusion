@@ -22,7 +22,7 @@ import url from "url";
 import callerSites from "callsites";
 import * as gherkin from "@cucumber/gherkin";
 import * as messages from "@cucumber/messages";
-// The named export, not the default: 9.1.0 publishes both, and `default` is interop
+// The named export, not the default: 11.0.1 publishes both, and `default` is interop
 // scaffolding a later major could drop without that being a documented breaking change.
 import { parse as parseTagExpression } from "@cucumber/tag-expressions";
 
