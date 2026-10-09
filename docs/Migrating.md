@@ -66,10 +66,7 @@ Each row was observed by running the same steps file under `jest-cucumber-fusion
 
 ## What else changes when coming from version 2?
 
-Versions 1 and 2 of this package ran on `jest-cucumber` 4, which brought two behaviours that 0.8.1 never had and version 3 removes. Both affect version 2 users only:
-
-- **The `pending()` check.** Version 2 skipped a scenario whose step function called a function named `pending`. Version 3 runs every step as written.
-- **Outline step matching.** Version 2 matched a Scenario Outline step against its template text, so a row whose value did not fit the definition's regular expression still ran, with no captured values. Version 3 matches each row's substituted text, so that row now reports an unmatched step.
+Versions 1 and 2 of this package matched a Scenario Outline step against its template text, so a row whose value did not fit the definition's regular expression still ran, with no captured values. Version 3 matches each row's substituted text, so that row now reports an unmatched step, and a step definition that relied on running with no captures needs a regular expression that accepts the row's value.
 
 The global configuration import and the version 3 rows of the table above complete the list; [Migrating from version 2](./AdditionalConfiguration.md#migrating-from-version-2) shows the configuration change.
 

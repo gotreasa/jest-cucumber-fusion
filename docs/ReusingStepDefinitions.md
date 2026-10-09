@@ -1,6 +1,6 @@
 # Re-using step definitions
 
-One of the advantage of using jest-cucumber-fusion is that it will manage your test suite scope inside its execution
+One of the advantages of using jest-cucumber-fusion is that it will manage your test suite scope inside its execution
 Your automation code easy to read: it reads pretty much like your feature file. 
 You can then reuse the same steps repeatedly in multiple scenarios.
 
@@ -14,7 +14,7 @@ Scenario: Reusing a SpaceX rocket
   Then I'm happy
 ```
 
-Write you step definitions as usual but require (or import) your shared step definition file
+Write your step definitions as usual but require (or import) your shared step definition file
 ```javascript
 // reuse-rocket.steps.js
 const { Given, Fusion } = require( '@g_package/jest-cucumber-fusion' )
@@ -35,7 +35,7 @@ require( './reuse-code' )
 Fusion( '../reuse-rocket.feature' )
 ```
 
-Place you shared step definitions in a shared step definition file, jest-cucumber-fusion takes care of the rest
+Place your shared step definitions in a shared step definition file, jest-cucumber-fusion takes care of the rest
 ```javascript
 // reuse-code.js
 const { Then } = require( '@g_package/jest-cucumber-fusion' )
@@ -48,10 +48,10 @@ Then( 'I\'m happy', () => {
 
 
 ### Managing dependencies
-Though it is not best practice, you sometime need to pass value to the shared step definitions file, like in this example:
+Though it is not best practice, you sometimes need to pass a value to the shared step definitions file, like in this example:
 
 ```gherkin
-# reuse-rocket.feature
+# reuse-definition.feature
 Feature: Rocket reuse
 
 Scenario: Reusing a SpaceX rocket
@@ -86,7 +86,7 @@ Fusion( '../reuse-definition.feature' )
 ```
 
 
-Inside you shared step file, be careful to call the accessor inside your test step function not outside
+Inside your shared step file, be careful to call the accessor inside your test step function not outside
 ```javascript
 // reuse-code.js
 const { When, Then, And } = require( '@g_package/jest-cucumber-fusion' )

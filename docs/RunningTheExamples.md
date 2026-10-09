@@ -1,8 +1,8 @@
 # Running the examples
 
-Note that examples are provided in both ECMAScript and TypeScript.
+The examples are the feature files and step definition files under `test/specs/features`, written in JavaScript (CommonJS).
 
-First, build jest-cucumber-fusion: 
+First, install the dependencies:
 
 ```
 $ npm install

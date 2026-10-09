@@ -34,6 +34,14 @@ On, a step with no registered definition is refused when the step definition fil
 ```text
 Fusion found 2 steps in the feature "Rocket launching" that no registered step definition matches.
 
+WHY:  Fusion runs each step through the definition registered for that step's own
+      Gherkin keyword, so a step with no definition has nothing to run and the
+      scenario holding it cannot be reported honestly.
+HOW:  register a definition for each step below. The starter code under each one is
+      the verb, the matcher and the parameters that step needs. Or pass
+      errors: { stepsMustMatchFeatureFile: false } to have the scenarios holding them
+      reported as skipped tests instead.
+
   1. No step definition matches: "the launch pad is clear"
      Given("the launch pad is clear", () => {});
 

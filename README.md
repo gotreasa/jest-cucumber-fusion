@@ -104,7 +104,7 @@ And( /^the booster\(s\) should land back on the launch pad$/, () => {
     expect(rocket.boostersLanded).toBe(true)
 } )
 
-But( 'nobody should doubt me ever again', () => {
+And( 'nobody should doubt me ever again', () => {
     expect('people').not.toBe('haters')
 } )
 ```
@@ -134,7 +134,7 @@ And( /^the booster\(s\) should land back on the launch pad$/, () => {
     expect(rocket.boostersLanded).toBe(true)
 } )
 
-But( 'nobody should doubt me ever again', () => {
+And( 'nobody should doubt me ever again', () => {
     expect('people').not.toBe('haters')
 } )
 

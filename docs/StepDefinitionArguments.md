@@ -10,7 +10,7 @@ Scenario: Depositing a paycheck
 ```
 
 ```javascript
-const { Before, Given, When, Then, Fusion } = require( '../../../../src' )
+const { Before, Given, When, Then, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { BankAccount } = require( '../../../src/bank-account' )
 let myAccount

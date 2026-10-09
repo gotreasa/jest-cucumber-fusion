@@ -3,7 +3,7 @@
 ```gherkin
 Feature: Online sales
 
-Scenario Outline: Selling an item
+Scenario Outline: Selling an <Item>
   Given I have a(n) <Item>
   When I sell the <Item>
   Then I should get $<Amount>
@@ -13,11 +13,11 @@ Scenario Outline: Selling an item
   | Item                                           | Amount |
   | Autographed Neil deGrasse Tyson book           | 100    |
   | Rick Astley t-shirt                            | 22     |
-  | An idea to replace EVERYTHING with blockchains | $0     |
+  | An idea to replace EVERYTHING with blockchains | 0      |
 ```
 
 ```javascript
-const { Before, Given, When, Then, Fusion } = require( '../../../../src' )
+const { Before, Given, When, Then, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { OnlineSales } = require( '../../../src/online-sales' )
 let onlineSales
