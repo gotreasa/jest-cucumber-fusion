@@ -170,8 +170,6 @@ const starterCodeForShape = (steps) => {
   )}, (${parameters.join(", ")}) => {});`;
 };
 
-const starterCodeFor = (step) => starterCodeForShape([step]);
-
 // The unbound steps of one feature, each named once (a Background step is unbound in every
 // scenario), grouped by shape in order of first appearance. Every row of an outline, and any
 // two steps that differ only in their values, share a shape. The consumer writes ONE definition
@@ -232,6 +230,11 @@ const unmatchedStepRefusal = (featureTitle, unboundSteps) => {
       `${entries.join("\n\n")}\n`
   );
 };
+
+// The starter code for ONE step, as the refusal would suggest it on its own. Kept as an export
+// for probes that drive the generator directly (plan, 2026-10-08 refactor: "keep the
+// starterCodeFor export").
+const starterCodeFor = (step) => starterCodeForShape([step]);
 
 module.exports.starterCodeFor = starterCodeFor;
 module.exports.unmatchedStepRefusal = unmatchedStepRefusal;

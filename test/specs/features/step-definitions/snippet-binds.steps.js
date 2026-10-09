@@ -369,19 +369,22 @@ describe("one definition per step shape", () => {
       "I weigh 1.5 kilo",
       "I weigh 5 kilo",
       'I say "a"',
-      'I say "b c"',
+      'I say "b\u2028c"',
+      // Unbound in a second scenario too, as a Background step is in every one: named once.
+      "I weigh 1 kilo",
     ],
     "shapes"
   );
 
-  test("counts and names every unbound step", () => {
+  test("counts and names every unbound step, each once", () => {
     expect(outcome.message).toMatch(/^Fusion found 5 steps /);
+    expect(outcome.message.split('"I weigh 1 kilo"').length - 1).toBe(1);
     for (const stepText of [
       "I weigh 1 kilo",
       "I weigh 1.5 kilo",
       "I weigh 5 kilo",
       'I say "a"',
-      'I say "b c"',
+      'I say "b\u2028c"',
     ])
       expect(outcome.message).toContain(`"${stepText}"`);
   });
@@ -396,6 +399,21 @@ describe("one definition per step shape", () => {
   test("binds every step when all of them are pasted", () => {
     expect(outcome.pasteError).toBeNull();
   });
+});
+
+// starterCodeFor, kept for probes that drive the generator directly, answers for one step
+// exactly what the refusal suggests for it.
+test("starterCodeFor gives one step's starter code, as the refusal does", () => {
+  const { starterCodeFor } = require("../../../../src/code-suggestion");
+  expect(
+    starterCodeFor({
+      keyword: "given",
+      stepText: "I weigh 1.5 kilo",
+      stepArgument: [],
+    })
+  ).toBe(
+    String.raw`Given(/^I weigh ([-+]?\d*\.?\d+) kilo$/, (arg0, table) => {});`
+  );
 });
 
 // A greedy "(.*)" spans several quoted arguments and the text between them, so the matcher for
