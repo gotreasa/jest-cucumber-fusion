@@ -48,8 +48,8 @@ const readFeatureText = (absoluteFeatureFilePath) => {
   if (!fs.existsSync(absoluteFeatureFilePath))
     throw new Error(
       `Feature file not found (${absoluteFeatureFilePath})` +
-        `. Fusion resolves a relative feature path against the directory of the file that` +
-        ` called it, which here is ${path.dirname(absoluteFeatureFilePath)}.`
+        `. Fusion resolves a feature path relative to the directory of the file that calls` +
+        ` Fusion, so check the path from there.`
     );
 
   return fs.readFileSync(absoluteFeatureFilePath, "utf8");
