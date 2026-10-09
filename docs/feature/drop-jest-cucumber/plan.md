@@ -504,8 +504,16 @@ Each fix went RED first on its new test, for the stated reason, then GREEN with 
       10 on Node 18 and 22 with Jest 30 and Node 22 with Jest 27. Properties 863 of 863
       (seed 2026). Differential against 2.0.0: seed 1010, 150 cases, 0 diffs; wild seed 808,
       35 diffs, all the documented F3 class.
-- [ ] PR body and squash message corrected: "33 suites, 774 tests"; "14 files, about 27 KB";
-      the F3 paragraph; the fixes above. Editing the PR and pushing are Gearoid's call.
+- [x] PR body and squash message rebuilt (Gearoid: "Update the PR body to reflect the
+      changes", 2026-10-09): numbers, the second-round fixes, the F3 breaking-change line, docs
+      links on the branch, mutation marked as measured before the fixes. The squash message
+      passes commitlint with no warning: two lines that a conventional-commits parser read as
+      footers were rewrapped (`errors:` inside BREAKING CHANGE, which would have cut the note
+      short, and `alert #1`, now `alert 1`). Stored body re-read: all 7 sections survived.
+- [x] Decisions (Gearoid, 2026-10-09): **keep** the shared `value-description` helper and the
+      reworded, now enforced rule 4 (he first asked whether the core requires gherkin; it does
+      not, only the `feature-source` port does); **keep** `"([^"]*)"` in starter code; **push**.
+      Pushed `be4df4f..1728797`; the pre-push hook (tests, tsd, baselines) passed.
 
 ## Blockers
 
