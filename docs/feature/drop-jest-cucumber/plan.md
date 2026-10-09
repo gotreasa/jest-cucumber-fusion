@@ -10,7 +10,8 @@ runtime-scope alert, reachable only through jest-cucumber 4.5.0 and `@cucumber/g
 close L5 (empty docstring inside an outline, `docs/feature/review-hardening/plan.md:67`).
 
 - Branch: `worktree-drop-jest-cucumber`, from `master` at `40aa6a5` (2.0.0).
-- Issue / tracker: none (Dependabot alert #1; Jira item pending Gearoid's decision). PR: [#16](https://github.com/gotreasa/jest-cucumber-fusion/pull/16) (draft, opened 2026-10-09).
+- Issue / tracker: Dependabot alert #1. No Jira item: Gearoid ruled on 2026-10-09 that this
+  repository gets none, as it is unrelated to nWave or Brix Consulting. PR: [#16](https://github.com/gotreasa/jest-cucumber-fusion/pull/16) (draft, opened 2026-10-09).
 - Size: **L**, estimated 15 to 25 paid turns.
 
 ## Decisions (Gearoid, 2026-10-07)
@@ -160,6 +161,14 @@ Parked outside the repo while the tree was frozen, applied here after the amend.
   `npm test`, an "ES modules and TypeScript" section in `RunningTheExamples.md`, and a fix to
   `docs/Language.md:77`, which says ES module syntax needs a transform such as Babel (the
   probe ran native ESM with `--transform '{}'`).
+- **Dependabot on `master`** (checked 2026-10-09, 6 open). #1 `uuid` (runtime, via
+  jest-cucumber and `@cucumber/messages`): absent from this branch's lockfile, so the merge
+  removes it. The other 5 are dev-only copies bundled inside the npm CLI 11.21.0 that
+  `@semantic-release/npm` (`^11.6.2`) pulls in: `ip-address` 10.5.0 (#33, #34, #59; fixed in
+  10.7.1), `brace-expansion` 5.0.9 (#55; 5.0.12), `undici` 6.28.0 (#46, low; 6.28.1). 11.21.0
+  is the newest npm 11, and npm 12.2.0 bundles the same three versions, so no release fixes
+  them yet; `overrides` cannot reach bundled dependencies. None ships (`files: ["src/"]`); they
+  run only in the CI release job. Left open so they close when an npm release bundles the fixes.
 - **Node and Jest version matrix** (Gearoid, 2026-10-09: follow-up, not PR #16). Today CI runs
   only Node 24 (`node-version: 24`) with the lockfile's Jest 30. Two by-hand runs exist, both
   with scripts in the job tmp directory, not the repository: the smoke test on 2026-10-08 (Node
