@@ -13,6 +13,5 @@ const { Given, Fusion } = require("../../../src");
 Given("the shop is open", () => {});
 
 Fusion("template-names.feature", {
-  // eslint-disable-next-line getter-return
   scenarioNameTemplate: () => undefined,
 });

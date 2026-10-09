@@ -33,7 +33,6 @@ let required = null;
 let loadFailure = null;
 
 try {
-  // eslint-disable-next-line import/no-unresolved
   required = require(THE_LIBRARY);
 } catch (thrown) {
   loadFailure = thrown;
