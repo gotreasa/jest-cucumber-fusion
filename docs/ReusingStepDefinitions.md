@@ -64,7 +64,7 @@ Scenario: Reusing a SpaceX rocket
 
 You will now need to encapsulate the variables in an accessor function and pass the accessor to the constructor/init of your file
 ```javascript
-// reuse-rocket.steps.js
+// reuse-definition.steps.js
 const { Given, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../../src/rocket' )
