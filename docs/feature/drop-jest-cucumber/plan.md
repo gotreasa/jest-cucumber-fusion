@@ -327,6 +327,20 @@ global; exactly nine public exports); public API and 2.0.0-compatible names and 
       off, both by design); 17 of 17 vectors exit 0; `tsd` green; prettier clean.
       Branch-only partials remain (for example `feature-source.js` 165-183); they did not count
       in Codecov's line figure before and are not addressed.
+- [x] Branch gaps (Gearoid, 2026-10-09: "add the tests and the Given(42) refusal"). Istanbul
+      listed 21 untaken arms in 15 places. 6 were reachable through the public API, each
+      proven by a probe: `errors: true`; two duplicated titles (plural message); a file with
+      no `Feature:`; `scenariosMustMatchFeatureFile: false` in-process; a step throwing a
+      non-Error; a matcher neither string nor RegExp, which was **silently ignored** (0.8.1 the
+      same, observed; `undefined` threw a raw `TypeError`). The other 9 are defensive
+      `|| []` and parser-shape guards, left as they are.
+      - `branch-behaviours.steps.js` pins the 6; the matcher test was RED first.
+      - `src/index.js` refuses an unsupported matcher at the call, with a WHY/HOW message, and
+        uses one `Object.prototype.toString` regex test (the chained-object check's) in place of
+        `constructor === RegExp`. `docs/Migrating.md` gains the version 3 row.
+      - Measured: 37 suites, 796 passed, 2 skipped; branch coverage 88.67% to 92.72%
+        (`configuration.js`, `test-registration.js` now 100%); 17 of 17 vectors exit 0;
+        prettier clean. Remaining branch gaps are exactly the 9 defensive guards.
 
 ## Blockers
 
