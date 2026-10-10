@@ -38,9 +38,18 @@ const BUILT_FILES = [
   "dist/index.d.cts",
 ];
 
+// The prepare script runs at install time from a directory or a `file:` dependency, so it ships
+// (see the prepare test below); nothing else from scripts/ does.
+const INSTALL_TIME_FILES = ["scripts/prepare-hooks.js"];
+
 const isRuntimeFile = (file) =>
-  ["package.json", "README.md", "LICENSE", ...BUILT_FILES].includes(file) ||
-  /^src\/[^/]+\.(js|d\.ts)$/.test(file);
+  [
+    "package.json",
+    "README.md",
+    "LICENSE",
+    ...BUILT_FILES,
+    ...INSTALL_TIME_FILES,
+  ].includes(file) || /^src\/[^/]+\.(js|d\.ts)$/.test(file);
 
 test("the package carries only runtime files", () => {
   const files = packedFiles();
@@ -61,6 +70,20 @@ test("the package carries the entry point, its types and every source module", (
     .readdirSync(path.join(repositoryRoot, "src"))
     .map((name) => `src/${name}`);
   expect(files).toEqual(expect.arrayContaining(sourceModules));
+});
+
+// npm runs the `prepare` script when the package is installed from a directory or a `file:`
+// dependency, so any script file it runs must be in the package. The packed 3.0.0 ran
+// scripts/prepare-hooks.js without shipping it, and such an install failed with
+// MODULE_NOT_FOUND (fresh fuzz of PR #16, 2026-10-10, finding B4).
+test("every file the published prepare script runs is in the package", () => {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"),
+  );
+  const prepare = (manifest.scripts && manifest.scripts.prepare) || "";
+  const scriptFiles = prepare.match(/[\w./-]+\.(?:c|m)?js\b/g) || [];
+  const files = packedFiles();
+  expect(scriptFiles.filter((file) => !files.includes(file))).toEqual([]);
 });
 
 // The Node versions the package declares are Jest 30's own, because jest is a runtime dependency
