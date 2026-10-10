@@ -73,8 +73,8 @@ const answerFromTemplate = (loadedFeature, scenario, scenarioNameTemplate) => {
   try {
     return scenarioNameTemplate(templateVariablesFor(loadedFeature, scenario));
   } catch (templateFailure) {
-    // A consumer's template can throw anything, so it is read as anything: its message when it
-    // has one, otherwise the value itself.
+    // A consumer's template can throw anything, so it is read as anything: its message when that
+    // is truthy, otherwise the value itself.
     const thrown = /** @type {any} */ (templateFailure);
     throw refuseUnusableName(
       scenario.title,

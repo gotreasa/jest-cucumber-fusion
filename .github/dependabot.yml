@@ -13,6 +13,14 @@ updates:
       prefix: fix
       prefix-development: chore
       include: scope
+    ignore:
+      # The type check (jsconfig.json) holds these on purpose. @types/node follows the oldest
+      # Node the package supports (18), so it flags newer Node APIs. TypeScript 7 cannot
+      # install yet: typescript-eslint, through eslint-plugin-jest, accepts <6.1.0 only.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     groups:
       # Minor and patch bumps land as one PR; majors stay as separate PRs so
       # one breaking change cannot hold the rest back.

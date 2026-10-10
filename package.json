@@ -52,6 +52,7 @@
     "@secretlint/secretlint-rule-pattern": "^13.0.7",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
     "@types/jest": "^30.0.0",
+    "@types/node": "^18.19.130",
     "czg": "1.14.0",
     "esbuild": "0.28.2",
     "eslint": "^10.12.0",
