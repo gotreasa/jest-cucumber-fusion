@@ -26,7 +26,8 @@
     "fmt": "npx prettier --write .",
     "prepare": "node scripts/prepare-hooks.js",
     "build": "node scripts/build-cjs.js",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "typecheck": "tsc -p jsconfig.json"
   },
   "repository": {
     "type": "git",
@@ -50,6 +51,7 @@
     "@eslint/js": "^10.0.1",
     "@secretlint/secretlint-rule-pattern": "^13.0.7",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
+    "@types/jest": "^30.0.0",
     "czg": "1.14.0",
     "esbuild": "0.28.2",
     "eslint": "^10.12.0",
@@ -62,7 +64,8 @@
     "prettier": "3.9.9",
     "secretlint": "^13.0.7",
     "semantic-release": "^25.0.5",
-    "tsd": "^0.33.0"
+    "tsd": "^0.33.0",
+    "typescript": "^6.0.3"
   },
   "publishConfig": {
     "access": "public"
