@@ -833,6 +833,24 @@ README section and the CallBack fix). Measured with ts-jest 29.4.14, TypeScript 
       TS2345 three times, the CommonJS consumer fails too.
 - [x] Suite 45 suites 1,096 passed; tsd; 6 of 6 baselines; lint; Prettier.
 
+## 3.0.0-beta4 in three throwaway projects (Gearoid, 2026-10-10)
+
+- [x] Staged from `1c043af` (stage `ce9fac23-7df1-4879-beef-5d86045b999a`, 19 files, 73.0 kB,
+      shasum `d4cb6cbd55a9b5cb3041de75541c9d2b361a6073`); Gearoid approved with 2FA; `beta`
+      points at it, `latest` stays 2.0.0. Version reverted, nothing committed.
+- [x] Three projects in the job's tmp, each set up as the README says, installed from npm
+      (Node 22.22, Jest 30.5.2): `cjs-library` (Background table, Outline, hooks, shared
+      steps with an accessor, CommonJS `setupFiles` name template) 5 of 5, ESLint clean,
+      loads `dist/index.cjs`; `esm-coffee` (docstring, `jest.fn` from `@jest/globals`,
+      shared ES module steps, ES module `setupFiles` `not @wip`) 2 passed 1 skipped, ESLint
+      clean, loads `src/index.js`; `ts-weather` (ts-jest ES module preset, typed captures and
+      table, async docstring step) 4 of 4, `tsc --noEmit` clean. No `jest-cucumber` or `uuid`
+      in any tree.
+- [ ] Found while writing them: Fusion binds a step only through its own keyword's
+      definitions (`And I order` needs `And(...)`), as its refusal says, but the README never
+      states it; Cucumber users expect keyword-agnostic matching. A Getting Started note is
+      Gearoid's call.
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of
