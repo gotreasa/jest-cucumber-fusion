@@ -73,12 +73,13 @@ const answerFromTemplate = (loadedFeature, scenario, scenarioNameTemplate) => {
   try {
     return scenarioNameTemplate(templateVariablesFor(loadedFeature, scenario));
   } catch (templateFailure) {
+    // A consumer's template can throw anything, so it is read as anything: its message when it
+    // has one, otherwise the value itself.
+    const thrown = /** @type {any} */ (templateFailure);
     throw refuseUnusableName(
       scenario.title,
       `the scenarioNameTemplate threw: ${
-        templateFailure && templateFailure.message
-          ? templateFailure.message
-          : templateFailure
+        thrown && thrown.message ? thrown.message : thrown
       }`,
       "make the template total over the four variables it is handed: featureTitle, " +
         "featureTags, scenarioTitle and scenarioTags. A tag list may be empty, and a title " +

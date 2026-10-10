@@ -47,6 +47,10 @@ jobs:
     - name: Linting
       run: npm run lint
 
+    # TypeScript checks src/ as JavaScript (jsconfig.json); nothing is compiled or shipped.
+    - name: Type checking
+      run: npm run typecheck
+
   # The packed package in a fresh consumer project on each Node floor the docs promise:
   # CommonJS from 18.14, ES modules from 20.11 (and the documented failure below it). The
   # repository's own suite needs Node 20.11, so the tarball is built on Node 24 first.
