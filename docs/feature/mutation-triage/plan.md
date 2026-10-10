@@ -38,7 +38,9 @@ Stryker 9, command runner over the behaviour suite (`--testPathIgnorePatterns /p
       gap mutants killed; all 39 equivalent and 63 wording mutants survive as expected
       (mutants matched across runs by file, line, column, mutator and replacement).
 - [x] Suite (49 suites, 1,128 passed, 3 skipped), 7 of 7 baselines, tsd, lint, Prettier
-- [ ] Commit, push, PR (a `test:` change: releases nothing)
+- [x] Commit, push, PR (a `test:` change: releases nothing): PR #33, squash-merged as
+      `984c618` on 2026-10-10
+- [x] Fix the docString point below (asked by Gearoid on 2026-10-10), as a `fix:` with its test
 
 ## Verdicts
 
@@ -89,9 +91,13 @@ listed keywords (#124, #320, #522), and how a thrown template or parser error is
 (#582, #711). The suite pins each refusal's first line and its meaning, deliberately not every
 word: these mutants change wording, never what a reader is told to do.
 
-### Noticed, not changed
+### Noticed, then fixed
 
 Two unbound steps with the same text are named once, from the first one, so if only the second
-carries a docstring the starter code omits the `docString` parameter
-(`Given("the note", () => {});`). The suggestion still binds both steps; the docstring arrives as
-an unnamed extra argument. A usability point, left for a decision.
+carried a docstring the starter code omitted the `docString` parameter
+(`Given("the note", () => {});`). The suggestion still bound both steps; the docstring arrived as
+an unnamed extra argument. Fixed in `stepsByShape` (`src/code-suggestion.js`): a later
+appearance that carries a Gherkin argument stands in for a first one that does not, so the
+suggestion is now `Given("the note", (docString) => {});`. Pinned by "a docString parameter is
+suggested when only a later step with the same text has one" in `mutation-survivors.steps.js`,
+which failed before the fix.
