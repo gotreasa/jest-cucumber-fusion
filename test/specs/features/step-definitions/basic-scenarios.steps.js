@@ -1,6 +1,6 @@
-const { Given, When, Then, And, But, Fusion } = require("../../../../src");
+import { Given, When, Then, And, But, Fusion } from "../../../../src/index.js";
 
-const { Rocket } = require("../../../src/rocket");
+import { Rocket } from "../../../src/rocket.js";
 
 let rocket;
 let rocketOnTheLaunchpad;

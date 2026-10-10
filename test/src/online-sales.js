@@ -30,4 +30,4 @@ class OnlineSales {
   }
 }
 
-module.exports.OnlineSales = OnlineSales;
+export { OnlineSales };

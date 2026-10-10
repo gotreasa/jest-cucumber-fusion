@@ -20,7 +20,7 @@
  * NOT fabricate a binding for the unmatched step.)
  */
 
-const { Fusion } = require("../../../../src");
+import { Fusion } from "../../../../src/index.js";
 
 let thrownError = null;
 try {

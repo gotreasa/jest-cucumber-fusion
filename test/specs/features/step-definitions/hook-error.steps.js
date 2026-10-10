@@ -3,28 +3,40 @@
  * RCA: docs/feature/review-hardening/discuss/rca.md (T1, MED).
  *
  * A Before/After hook that throws must surface (fail loudly), not be swallowed. The wrapper
- * routes hooks into jest by calling the global beforeEach/afterEach with the registered hook
- * (src/index.js:122-133). This characterization pins CURRENT behaviour: a throwing Before hook
- * IS wired into jest's per-test setup (so jest will report the failure), rather than dropped.
+ * routes hooks into jest through src/test-registration.js, which calls the global
+ * beforeEach/afterEach once per feature with each registered hook. This characterization pins
+ * CURRENT behaviour: a throwing Before hook IS carried into jest's per-test setup (so jest
+ * will report the failure), rather than caught and dropped on the way.
  *
- * MECHANISM: drive the REAL wrapper (Fusion + real src/index.js); fake ONLY the external
- * jest-cucumber (capture its callback), and spy on the global beforeEach so the hook wiring is
- * captured without registering a real, throwing hook that would poison the suite.
+ * MECHANISM: drive the REAL wrapper (Fusion + real src/index.js) and substitute ONLY the
+ * driven port that owns test registration, src/test-registration.js — the seam that replaced
+ * the external jest-cucumber this file used to fake. The double captures the registry the
+ * port was handed, so the throwing hook is observed without ever registering a real one that
+ * would poison the suite.
  *
- * CURRENT STATUS: GREEN (guard/characterization) — the wrapper already wires throwing hooks
- * into beforeEach. This test exists so that regression to silent-swallow is caught.
+ * CURRENT STATUS: GREEN (guard/characterization) — the wrapper carries throwing hooks
+ * through untouched. This test exists so that regression to silent-swallow is caught.
  */
 
-const mockState = { capturedCallback: null, feature: null };
+import { jest } from "@jest/globals";
 
-jest.mock("jest-cucumber", () => ({
-  loadFeature: jest.fn(() => mockState.feature),
-  defineFeature: jest.fn((feature, callback) => {
-    mockState.capturedCallback = callback;
+const mockState = { registryHandedToThePort: null };
+
+// Registered before Fusion is imported: a static import would load the real port first.
+jest.unstable_mockModule("../../../../src/test-registration.js", () => ({
+  registerFeature: jest.fn((loadedFeature, featureRegistry) => {
+    // The real port reads both arguments; a double that accepted less would hide a wiring
+    // defect rather than reveal one.
+    expect(loadedFeature).toBeDefined();
+    expect(Array.isArray(loadedFeature.scenarios)).toBe(true);
+    expect(featureRegistry).toBeDefined();
+    expect(Array.isArray(featureRegistry.before)).toBe(true);
+
+    mockState.registryHandedToThePort = featureRegistry;
   }),
 }));
 
-const { Before, Given, Fusion } = require("../../../../src");
+const { Before, Given, Fusion } = await import("../../../../src/index.js");
 
 Before(() => {
   throw new Error("hook failure — Before threw");
@@ -32,28 +44,16 @@ Before(() => {
 Given(/^some precondition$/, () => {});
 
 describe("T1.4 — hook errors surface", () => {
-  test("a throwing Before hook is wired into jest's beforeEach, not swallowed", () => {
-    mockState.feature = {
-      title: "Hook wiring",
-      scenarios: [{ title: "any scenario", steps: [] }],
-      scenarioOutlines: [],
-    };
+  test("a throwing Before hook is carried into jest's per-test setup, not swallowed", () => {
+    // Any committed feature file does: the registration port is doubled, so the feature is
+    // never bound or registered — it only has to exist, so that the real feature-source port
+    // resolves and parses it the way it does in production.
+    Fusion("../m6-hooks-once-per-test.feature");
 
-    Fusion("hook-error.feature");
-
-    const beforeEachSpy = jest
-      .spyOn(global, "beforeEach")
-      .mockImplementation(() => {});
-    try {
-      // Exercise the wrapper's suite wiring; the scenario body is irrelevant here.
-      mockState.capturedCallback(() => {});
-
-      // The wrapper must have handed the throwing hook to jest's beforeEach.
-      expect(beforeEachSpy).toHaveBeenCalledTimes(1);
-      const wiredHook = beforeEachSpy.mock.calls[0][0];
-      expect(() => wiredHook()).toThrow("hook failure — Before threw");
-    } finally {
-      beforeEachSpy.mockRestore();
-    }
+    // Exactly one before hook crossed the seam, and it is the throwing one — not a wrapper
+    // that swallowed it.
+    expect(mockState.registryHandedToThePort.before).toHaveLength(1);
+    const wiredHook = mockState.registryHandedToThePort.before[0];
+    expect(() => wiredHook()).toThrow("hook failure — Before threw");
   });
 });

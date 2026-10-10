@@ -1,6 +1,6 @@
-const { When, Then, And } = require("../../../../src");
+import { When, Then, And } from "../../../../src/index.js";
 
-module.exports = exports = (fnRocket) => {
+export default (fnRocket) => {
   When("I relaunch the rocket", () => {
     const rocketUsed = fnRocket();
     rocketUsed.launch();

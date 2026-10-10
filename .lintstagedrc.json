@@ -1,0 +1,5 @@
+{
+  "*": "secretlint",
+  "*.js": ["eslint --max-warnings 0", "prettier --write"],
+  "*.{md,ts}": "prettier --write"
+}

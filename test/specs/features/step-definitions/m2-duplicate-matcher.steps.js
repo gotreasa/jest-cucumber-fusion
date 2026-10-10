@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 /**
  * Regression test — M2: duplicate matcher-source overwrite.
  * RCA: docs/feature/review-hardening/discuss/rca.md (M2, MED).
@@ -12,17 +13,24 @@
  * must NOT throw — that is the H1 ambiguity case, handled elsewhere.
  *
  * MECHANISM: registration happens synchronously inside Given(...) via addDefinitionFunction, so
- * this drives the public surface (Given) directly — no jest-cucumber needed. jest.resetModules
- * gives each test a fresh module singleton so registrations don't leak between tests.
+ * this drives the public surface (Given) directly — no jest-cucumber needed. Each test starts
+ * from a fresh Fusion and an empty registry, so registrations don't leak between tests. Since
+ * the registry moved to the store every copy of the dual package shares (src/shared-state.js,
+ * on globalThis), jest.resetModules alone no longer empties it, so the store is cleared too.
  *
  * CURRENT STATUS: RED — the duplicate registration silently overwrites and never throws.
  */
 
-describe("M2 — duplicate matcher-source registration", () => {
-  beforeEach(() => jest.resetModules());
+const SHARED_STATE = Symbol.for("@g_package/jest-cucumber-fusion@3");
 
-  test("re-registering an identical regex source (same step type) throws and names the matcher", () => {
-    const { Given } = require("../../../../src");
+describe("M2 — duplicate matcher-source registration", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    delete globalThis[SHARED_STATE];
+  });
+
+  test("re-registering an identical regex source (same step type) throws and names the matcher", async () => {
+    const { Given } = await import("../../../../src/index.js");
     Given(/^I have (\d+) apples$/, () => {});
 
     let error = null;
@@ -37,8 +45,8 @@ describe("M2 — duplicate matcher-source registration", () => {
     expect(error.message).toContain("I have (\\d+) apples");
   });
 
-  test("re-registering an identical string pattern (same step type) throws and names the matcher", () => {
-    const { Given } = require("../../../../src");
+  test("re-registering an identical string pattern (same step type) throws and names the matcher", async () => {
+    const { Given } = await import("../../../../src/index.js");
     Given("I am on the checkout page", () => {});
 
     let error = null;
@@ -52,8 +60,8 @@ describe("M2 — duplicate matcher-source registration", () => {
     expect(error.message).toContain("I am on the checkout page");
   });
 
-  test("registering two DIFFERENT sources (same step type) does NOT throw — that is H1 ambiguity, not a duplicate", () => {
-    const { Given } = require("../../../../src");
+  test("registering two DIFFERENT sources (same step type) does NOT throw — that is H1 ambiguity, not a duplicate", async () => {
+    const { Given } = await import("../../../../src/index.js");
     Given(/^I have (.*)$/, () => {});
     expect(() => Given(/^I have (\d+) apples$/, () => {})).not.toThrow();
   });

@@ -11,7 +11,7 @@
  * synchronously. This test exists so that a regression to a silent no-op is caught.
  */
 
-const { Fusion } = require("../../../../src");
+import { Fusion } from "../../../../src/index.js";
 
 describe("T1.3 — missing feature file", () => {
   test("Fusion throws loudly for a feature file that does not exist", () => {

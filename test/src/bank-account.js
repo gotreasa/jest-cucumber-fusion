@@ -14,4 +14,4 @@ class BankAccount {
   }
 }
 
-module.exports.BankAccount = BankAccount;
+export { BankAccount };
