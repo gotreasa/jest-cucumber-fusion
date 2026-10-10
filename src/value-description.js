@@ -23,4 +23,32 @@ const asText = (value) => {
 
 const describeValue = (value) => `${typeof value} ${asText(value)}`;
 
-export { describeValue };
+// How a report quotes what the consumer's code threw: its message when that is truthy,
+// otherwise the value itself, as text. textOf is the text step alone, for a value already known
+// to be the message.
+//
+// A template literal cannot make text of a Symbol, of an object with no prototype, or of an
+// object whose message getter or toString throws, so quoting those crashed the report and the
+// consumer saw a TypeError instead of their own failure (the PR #36 fuzz run). String() makes
+// the same text as a template literal for everything else and accepts a Symbol; anything still
+// unprintable is named as describeValue names it. The message is read once, so a getter that
+// answers differently each time cannot be quoted as one thing and checked as another.
+const textOf = (value) => {
+  try {
+    return String(value);
+  } catch {
+    return describeValue(value);
+  }
+};
+
+const describeThrown = (thrown) => {
+  let message;
+  try {
+    message = thrown == null ? undefined : thrown.message;
+  } catch {
+    return describeValue(thrown);
+  }
+  return textOf(message ? message : thrown);
+};
+
+export { describeThrown, describeValue, textOf };

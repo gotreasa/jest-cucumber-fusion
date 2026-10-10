@@ -10,6 +10,7 @@
 import { findMatchingStep } from "./step-matching.js";
 import { unmatchedStepRefusal } from "./code-suggestion.js";
 import { nameForScenario } from "./scenario-name.js";
+import { describeThrown, textOf } from "./value-description.js";
 
 // BIND BEFORE REGISTERING. Every step of every scenario is matched up front, so a refusal
 // (an unmatched step, an ambiguous one, an unsupported keyword) leaves Fusion() on the way
@@ -70,8 +71,15 @@ const namedScenarios = (loadedFeature, scenarios, scenarioNameTemplate) =>
 // match. Recognised by its tag rather than instanceof, which fails for an error made in another
 // realm (Node's own, from inside Jest's test context). Anything that cannot be rewritten (a
 // frozen error) is wrapped with the original as its cause; anything else thrown is wrapped.
-const isError = (value) =>
-  Object.prototype.toString.call(value) === "[object Error]";
+// Reading the tag can itself throw, for a Proxy whose traps throw or one that was revoked; such
+// a value is no Error, so it is wrapped like any other.
+const isError = (value) => {
+  try {
+    return Object.prototype.toString.call(value) === "[object Error]";
+  } catch {
+    return false;
+  }
+};
 
 const decorationOf = (stepText, stepArguments, originalMessage) =>
   `Failing step: "${stepText}"\n\n` +
@@ -90,13 +98,13 @@ const decorateInPlace = (failure, decorated) => {
 const decorate = (stepText, stepArguments, failure) => {
   if (!isError(failure))
     return new Error(
-      decorationOf(
-        stepText,
-        stepArguments,
-        failure && failure.message ? failure.message : failure,
-      ),
+      decorationOf(stepText, stepArguments, describeThrown(failure)),
     );
-  const decorated = decorationOf(stepText, stepArguments, failure.message);
+  const decorated = decorationOf(
+    stepText,
+    stepArguments,
+    textOf(failure.message),
+  );
   try {
     return decorateInPlace(failure, decorated);
   } catch {
