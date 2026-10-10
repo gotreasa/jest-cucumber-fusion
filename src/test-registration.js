@@ -62,12 +62,47 @@ const namedScenarios = (loadedFeature, scenarios, scenarioNameTemplate) =>
 // quotes, the JSON of the arguments it was called with, then the original message, each on
 // its own line with a blank line between. Every consumer failure output, and anything that
 // greps it, is this shape.
-const decorate = (stepText, stepArguments, failure) =>
-  new Error(
-    `Failing step: "${stepText}"\n\n` +
-      `Step arguments: ${JSON.stringify(stepArguments)}\n\n` +
-      `Error: ${failure && failure.message ? failure.message : failure}`,
-  );
+//
+// An Error is decorated IN PLACE and rethrown, as jest-cucumber did: its class, its stack
+// frames in the consumer's steps file (Jest's code frame) and properties such as expect's
+// matcherResult all survive. A new Error lost every one of them (fresh review of PR #16,
+// 2026-10-10, finding B1). The stack's first line repeats the message, so it is rewritten to
+// match. Recognised by its tag rather than instanceof, which fails for an error made in another
+// realm (Node's own, from inside Jest's test context). Anything that cannot be rewritten (a
+// frozen error) is wrapped with the original as its cause; anything else thrown is wrapped.
+const isError = (value) =>
+  Object.prototype.toString.call(value) === "[object Error]";
+
+const decorationOf = (stepText, stepArguments, originalMessage) =>
+  `Failing step: "${stepText}"\n\n` +
+  `Step arguments: ${JSON.stringify(stepArguments)}\n\n` +
+  `Error: ${originalMessage}`;
+
+const decorateInPlace = (failure, decorated) => {
+  const oldHeader = `${failure.name}: ${failure.message}`;
+  const { stack } = failure;
+  failure.message = decorated;
+  if (typeof stack === "string" && stack.startsWith(oldHeader))
+    failure.stack = `${failure.name}: ${decorated}${stack.slice(oldHeader.length)}`;
+  return failure;
+};
+
+const decorate = (stepText, stepArguments, failure) => {
+  if (!isError(failure))
+    return new Error(
+      decorationOf(
+        stepText,
+        stepArguments,
+        failure && failure.message ? failure.message : failure,
+      ),
+    );
+  const decorated = decorationOf(stepText, stepArguments, failure.message);
+  try {
+    return decorateInPlace(failure, decorated);
+  } catch {
+    return new Error(decorated, { cause: failure });
+  }
+};
 
 // One test body: the scenario's steps, in order, each awaited before the next begins. A step
 // that throws or whose promise rejects ends the scenario there: running on would report a
