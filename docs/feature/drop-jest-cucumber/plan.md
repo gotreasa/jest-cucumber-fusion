@@ -929,8 +929,20 @@ bugs in source. Gearoid chose all four groups:
       tsconfig.
 - [x] Re-verified: suite 48 suites, 1,114 passed, 3 skipped, 100% lines; 7 of 7 baselines;
       tsd; lint; Prettier.
-- [ ] Full Stryker re-run (background, on a copy); push; PR body (73.3 kB, baselines, mutation,
-      the new commits).
+- [x] Full Stryker 9 re-run on a copy of `2e65a36` (command runner, behaviour suite; packaging
+      and arch tests excluded: they pack or lint the tree, and the arch test linted Stryker's
+      own sandbox, 126 false findings, on the first attempt): 85.65%, 722 of 843 killed, 0
+      timeouts, about 18 minutes at 3 workers. Pushed; CI green including `compat` on 18.14.0,
+      20.11.0 and 22; PR body and squash message updated (jest peer in BREAKING CHANGE).
+- [x] Code frame confirmed in a real consumer: a failing step in the library-loans project now
+      shows `> 41 | expect( library.fineFor( daysLate ) ).toBe( fine )` and the frame
+      `test/features/lending.steps.js:41:43`.
+- [x] 3.0.0-beta5 from `2e65a36` (stage `4f2cc82d-c460-4e4d-bdb1-c3069e90b700`, 20 files,
+      77.2 kB, shasum `53b28017f89f3b7dd10389272e11fcf5e836348c`; npm login renewed after an
+      E401). Berlin Clock `19c1327`, Node 24.21: one Jest (30.5.2, the peer deduped), BDD 50,
+      unit 85, pact 16 + 1 identical to 2.0.0; the Jest step 14 suites, 152 tests; OpenAPI and
+      InSpec (29) pass. Trial worktree left for Gearoid.
+- [ ] After merge: add `lint` and the three `compat (...)` checks to master's ruleset.
 
 ## Blockers
 
