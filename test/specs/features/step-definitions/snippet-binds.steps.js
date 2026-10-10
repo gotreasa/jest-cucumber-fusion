@@ -166,6 +166,13 @@ const EXAMPLES = [
     "a 3\u2028line",
     String.raw`Given(/^a (\d+)\u2028line$/, (arg0) => {});`,
   ],
+  // U+2029 likewise; only U+2028 was pinned, so dropping its escape survived mutation testing
+  // (triage of 2026-10-10).
+  [
+    "given",
+    "a 4\u2029para",
+    String.raw`Given(/^a (\d+)\u2029para$/, (arg0) => {});`,
+  ],
   // A line terminator inside a quoted argument: "." never matches one, so the old "(.*)" could
   // not bind the step it was suggested for; the negated class does. Found by the PR #16
   // adversarial review, 2026-10-09.
