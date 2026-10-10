@@ -166,7 +166,7 @@ PAGES.forEach((page) => {
     ["test", "--silent", "--", "--coverage=false", "--json"],
     { cwd: project, env: environment },
   );
-  let results = null;
+  let results;
   try {
     results = JSON.parse(tests.stdout);
   } catch {

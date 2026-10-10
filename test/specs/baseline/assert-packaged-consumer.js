@@ -663,7 +663,7 @@ const documentedEsModuleRun = run(
   ["test", "--silent", "--", "--coverage=false", "--json"],
   { cwd: esModuleDirectory, env: documentedEnvironment },
 );
-let documentedResults = null;
+let documentedResults;
 try {
   documentedResults = JSON.parse(documentedEsModuleRun.stdout);
 } catch {
@@ -705,7 +705,7 @@ const typeScriptRun = (style) => {
     ["test", "--silent", "--", "--coverage=false", "--json"],
     { cwd: directory, env: documentedEnvironment },
   );
-  let passed = null;
+  let passed;
   try {
     passed = JSON.parse(tests.stdout).numPassedTests;
   } catch {
