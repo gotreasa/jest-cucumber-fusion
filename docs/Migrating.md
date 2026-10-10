@@ -5,7 +5,7 @@ This package continues [b-yond-infinite-network/jest-cucumber-fusion](https://gi
 What changes depends on where you start:
 
 - **From `jest-cucumber-fusion` 0.8.x** (the b-yond package): follow the steps below, then read the behaviour changes, because several silent behaviours now fail loudly.
-- **From `@g_package/jest-cucumber-fusion` 2.x**: only the global configuration import moves, plus the version 3 rows of the behaviour table. See [Migrating from version 2](./AdditionalConfiguration.md#migrating-from-version-2).
+- **From `@g_package/jest-cucumber-fusion` 2.x**: three things change. The global configuration import moves, Scenario Outline steps match their substituted text, and an outline step's docstring and data table always receive the Examples values. Then check the version 3 rows of the behaviour table. See [What else changes when coming from version 2?](#what-else-changes-when-coming-from-version-2)
 
 ## How do I switch from the b-yond package?
 
@@ -65,15 +65,29 @@ Each row was observed by running the same steps file under `jest-cucumber-fusion
 | A step matcher that is neither a string nor a regular expression, such as `Given(42, fn)` | accepted and ignored, so the step later failed as having no definition (`undefined` threw a `TypeError` instead) | refused at the call: `Unsupported step matcher: Given was given number 42.` | 3.0.0 |
 | Two scenarios declared with the same title, ignoring case | the suite failed: `More than one scenario found in feature file that match scenario title ...` | the suite still fails by default, now with `Duplicate scenario title`, naming each title and how often it is declared; `errors: { scenariosMustMatchFeatureFile: false }` allows them | 3.0.0 |
 
-`tagFilter`, data tables, docstrings (an empty one included), Background, `# language:` headers and chaining a step definition with `And(chain)` behave as they did in 0.8.1.
+`tagFilter`, data tables, docstrings (an empty one included), Background, `# language:` headers and chaining a step definition with `And(chain)` (see [What the package exports](./AdditionalConfiguration.md#what-the-package-exports)) behave as they did in 0.8.1.
 
 ## What else changes when coming from version 2?
+
+Version 2 relied on `jest-cucumber`, and global configuration went through that package's own setter. Version 3 does not depend on it, so the import in your `setupFiles` script moves (shown in CommonJS, as version 2 setup files were):
+
+```javascript
+// Before (version 2)
+const setJestCucumberConfiguration = require( 'jest-cucumber' ).setJestCucumberConfiguration
+setJestCucumberConfiguration( { tagFilter: '@ui and not @slow' } )
+
+// After (version 3)
+const { setFusionConfiguration } = require( '@g_package/jest-cucumber-fusion' )
+setFusionConfiguration( { tagFilter: '@ui and not @slow' } )
+```
+
+The options object is the same shape. Two corrections to what earlier versions of the configuration page said: the `errors` keys are the three that [Configuration options](./AdditionalConfiguration.md#disabling-scenario--step-definition-validation) lists, not four, and `scenarioNameTemplate` now names Scenario Outline rows too, where in version 2 it was silently ignored on them.
 
 Versions 1 and 2 of this package matched a Scenario Outline step against its template text, so a row whose value did not fit the definition's regular expression still ran, with no captured values. Version 3 matches each row's substituted text, so that row now reports an unmatched step, and a step definition that relied on running with no captures needs a regular expression that accepts the row's value.
 
 The same change reaches a step's docstring and data table. Version 2 substituted a row's values into them, except when the step was bound by a regular expression and its own text held no placeholder: that step received the `<name>` text as written. Version 3 substitutes in every case, as Cucumber does, so a docstring or table cell that needs a literal `<name>` must use a placeholder name that is not an Examples column.
 
-The global configuration import and the version 3 rows of the table above complete the list; [Migrating from version 2](./AdditionalConfiguration.md#migrating-from-version-2) shows the configuration change.
+The global configuration import above and the version 3 rows of the behaviour table complete the list.
 
 ## What does the migration cost?
 

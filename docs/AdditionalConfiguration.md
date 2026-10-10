@@ -1,22 +1,32 @@
 # Configuration Options
 
-The examples on this page are ES modules. For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+This page is the reference for what the package exports and for every option `Fusion` accepts. It assumes the set-up from [Getting Started](../README.md#getting-started). The examples are ES modules; for CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+
+## What the package exports
+
+| Export | Call it as | What it does |
+|---|---|---|
+| `Given`, `When`, `Then`, `And`, `But` | `Given( stringOrRegExp, stepFunction )` | Registers a step definition for steps with that keyword. Returns a chain you can hand to another verb. |
+| | `Then( And( stringOrRegExp, stepFunction ) )` | The chained form: registers the same definition under a second keyword, so a step binds to it with either. |
+| `Before`, `After` | `Before( hookFunction )` | Runs the function before or after every scenario of the file. It receives no arguments and may be `async`. |
+| `Fusion` | `Fusion( featurePath, options? )` | Reads the feature file (relative to the calling file) and registers one Jest test per scenario and per outline row. Call it once, after the step definitions. |
+| `setFusionConfiguration` | `setFusionConfiguration( options )` | Sets options for every `Fusion` call of a test file, from a Jest `setupFiles` script. See [Global configuration](#global-configuration). |
+
+TypeScript types: `StepArgument` (what a step receives: a `string`, or a table's rows as `Array<Record<string, string>>`), `CallBack`, `StepChain`, `FusionOptions`, `FusionErrorOptions` and `ScenarioNameTemplateVars`.
+
+A step binds only to a definition registered with its own keyword: an `And` step needs an `And(...)` definition, and a `Then(...)` definition does not serve it. Use the chained form for a definition that several keywords share.
 
 ## Disabling scenario / step definition validation
 
-Cucumber's approach is to start with your feature file and execute the step definitions in the order defined in the feature file. Fusion generates the Jest tests from the feature file itself, so the two cannot drift apart: there is one test per scenario, named for that scenario, and each step runs the definition you registered for its keyword. What Fusion does validate is whether every step the feature file declares actually has a definition, and whether the file declares two scenarios it could not tell apart.
+Fusion generates the Jest tests from the feature file itself, so the two cannot drift apart: there is one test per scenario, named for that scenario, and each step runs the definition you registered for its keyword. What Fusion does validate is whether every step the feature file declares actually has a definition, and whether the file declares two scenarios it could not tell apart.
 
 By default both validations are on. The following keys control them:
 
 ```javascript
-import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
+import { Fusion } from '@g_package/jest-cucumber-fusion'
 
-
-//your javascript tests
-//....
-//Given( ...
-// 
-
+// your step definitions
+// Given( ...
 
 Fusion( 'rocket-launching.feature', {
   errors: {
@@ -72,6 +82,7 @@ You can specify a tag filter. Any scenario the expression excludes is registered
 For example, consider the following feature file:
 
 ```gherkin
+# filename: test/features/tagged-scenarios.feature
 Feature: Tagged scenarios
 
   @included
@@ -79,7 +90,7 @@ Feature: Tagged scenarios
     Given my scenario has a tag that is included in my tag filter
     When I execute my scenarios
     Then this scenario runs
-  
+
   @excluded
   Scenario: Tagged scenario that is not included
     Given my scenario has a tag that is NOT included in my tag filter
@@ -87,58 +98,59 @@ Feature: Tagged scenarios
     Then this scenario is reported as skipped
 ```
 
-Consider the following step definitions file:
+and this step definition file:
 
 ```javascript
-import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
+// filename: test/features/tagged-scenarios.steps.js
+import { Given, When, Then, Fusion } from '@g_package/jest-cucumber-fusion'
 
+let executed = false
 
-//your javascript tests
-//....
-//Given( ...
-// 
+Given( 'my scenario has a tag that is included in my tag filter', () => {} )
 
+When( 'I execute my scenarios', () => {
+    executed = true
+} )
 
-Fusion( 'rocket-launching.feature', { tagFilter: '@included and not @excluded' } )
+Then( 'this scenario runs', () => {
+    expect( executed ).toBe( true )
+} )
+
+Fusion( 'tagged-scenarios.feature', { tagFilter: '@included and not @excluded' } )
 ```
 
-In this case, the scenario tagged `@included` will be run, and the scenario tagged `@excluded` will be skipped. The expression language comes from `@cucumber/tag-expressions`: a tag is written `@name`, and names combine with `not`, `and` and `or`, grouped with parentheses.
+The scenario tagged `@included` runs, and the scenario tagged `@excluded` is reported as skipped. Its first and last steps have no definition, and that is allowed: a scenario the filter excludes is exempt from `stepsMustMatchFeatureFile`, because excluding a half-written scenario is one of the reasons to reach for a filter.
 
-Matching ignores case on both sides. The expression and every tag are lowercased before they are compared, so `@UI and not @Slow` selects the same scenarios as `@ui and not @slow`.
+The expression language comes from `@cucumber/tag-expressions`: a tag is written `@name`, and names combine with `not`, `and` and `or`, grouped with parentheses. Matching ignores case on both sides. The expression and every tag are lowercased before they are compared, so `@UI and not @Slow` selects the same scenarios as `@ui and not @slow`.
 
-A scenario is selected on the tags that reach it, which is the union of its own tags, its feature's tags and, for a Scenario Outline row, that Examples set's tags. A scenario the filter excludes is also exempt from `stepsMustMatchFeatureFile`: excluding a half-written scenario is one of the reasons to reach for a filter, so Fusion does not ask for its steps to be bound.
+A scenario is selected on the tags that reach it, which is the union of its own tags, its feature's tags and, for a Scenario Outline row, that Examples set's tags.
 
 An expression that cannot be parsed is refused when the file is collected, naming the expression you wrote. So is an expression with an operand that is not a tag, such as `smoke` written for `@smoke`, because no tag in a feature file could ever match it. Neither becomes a filter that quietly selects nothing.
 
 ## Scenario title templates
 
-In some cases, having more control over the scenario titles is desired. For example, imagine scenarios that are tagged with with issue ids like so:
+In some cases, having more control over the scenario titles is desired. For example, imagine scenarios that are tagged with issue ids like so:
 
-```
-Feature: Tagged scenarios
+```gherkin
+# filename: test/features/issue-tracked.feature
+Feature: Issue tracking
 
     @issue-1234
     Scenario: Scenario tagged with issue
-        ...
-        ...
-        ...        
+        Given a scenario that fixes an issue
 ```
 
-Use a `scenarioNameTemplate` function to be provided to generate the scenario title as desired. For example:
+Provide a `scenarioNameTemplate` function to generate the scenario title as desired. For example:
 
 ```javascript
-import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
+// filename: test/features/issue-tracked.steps.js
+import { Given, Fusion } from '@g_package/jest-cucumber-fusion'
 
+Given( 'a scenario that fixes an issue', () => {} )
 
-//your javascript tests
-//....
-//Given( ...
-// 
-
-
-Fusion( 'rocket-launching.feature', {
-    scenarioNameTemplate: (vars) => {
-        return `${vars.scenarioTitle} (${vars.scenarioTags.join(',')})`
+Fusion( 'issue-tracked.feature', {
+    scenarioNameTemplate: ( vars ) => {
+        return `${vars.scenarioTitle} (${vars.scenarioTags.join( ',' )})`
     }
 } )
 ```
@@ -152,7 +164,7 @@ The following info is available in the `vars` argument:
 * `scenarioTitle` - string
 * `scenarioTags` - string[]
 
-`scenarioTitle` is the title of the individual test being named. For a Scenario Outline that is each **row's** own substituted title, so every row gets its own name: a template is no longer silently inert on outline rows, as it was before version 3.
+`scenarioTitle` is the title of the individual test being named. For a Scenario Outline that is each **row's** own substituted title, so every row gets its own name.
 
 `featureTags` holds the feature's declared tags and `scenarioTags` the rest of the tags that reached the scenario, which for an Examples row includes that Examples set's tags. The two lists are disjoint, and a tag declared on both the feature and the scenario appears in `featureTags` only.
 
@@ -178,15 +190,12 @@ Please note that the path is relative to the file that calls `Fusion`, so if you
 
 To avoid repeating the same configuration settings in every step definition file, you can set them once with `setFusionConfiguration`. Settings passed to a `Fusion` call take precedence over the global ones for that call.
 
-First specify a configuration JavaScript file in the `setupFiles` section of your Jest configuration, like so:
+First list a configuration script in the `setupFiles` of your Jest configuration, for example in `package.json`:
 
-```javascript
-{
-  ...
-  "setupFiles": [
-    "./jest-fusion-config"
-  ],
-  ...
+```json
+"jest": {
+  "testMatch": [ "**/*.steps.js" ],
+  "setupFiles": [ "./jest-fusion-config.js" ]
 }
 ```
 
@@ -223,18 +232,4 @@ A second `setFusionConfiguration` call **replaces** what the first set rather th
 
 An argument that is not an options object is refused in the setup file itself, before any step definition file loads. An unknown key is accepted and ignored, exactly as it is per call.
 
-### Migrating from version 2
-
-Version 2 of this package relied on `jest-cucumber`, and global configuration went through that package's own setter. Version 3 does not depend on it, so the import moves. Shown in CommonJS, as version 2 setup files were:
-
-```javascript
-// Before (version 2)
-const setJestCucumberConfiguration = require('jest-cucumber').setJestCucumberConfiguration;
-setJestCucumberConfiguration({ tagFilter: '@ui and not @slow' });
-
-// After (version 3)
-const { setFusionConfiguration } = require('@g_package/jest-cucumber-fusion');
-setFusionConfiguration({ tagFilter: '@ui and not @slow' });
-```
-
-The options object is the same shape, with two corrections worth reading: the `errors` keys are the three listed at the top of this page, not the four earlier versions of this document described, and `scenarioNameTemplate` now also names Scenario Outline rows.
+Coming from version 2, where global configuration went through `jest-cucumber`'s own setter? [Migrating to version 3](./Migrating.md) shows the change.
