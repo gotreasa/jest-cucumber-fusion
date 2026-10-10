@@ -755,6 +755,20 @@ Walked the README literally in a fresh `npm init` project on the packed tarball:
 - [x] The rest of the CommonJS flow worked as written: coverage (100% of `rocket.js`) and the
       `setupFiles` global (its `@smoke` filter skips the untagged scenario).
 
+## ESLint as its own CI check (Gearoid, 2026-10-10, option B)
+
+Gearoid: "ESLint needs to be added to the CI since prettier is already there". It already ran
+as the Linting step of the required `integration` job; he chose B, its own required check.
+
+- [x] Master has no ESLint (no `lint` script, no config: it arrives with this PR), so the job
+      is on PR #16, not a separate PR (a branch off master was tried and removed unused).
+- [x] `lint` job in `integration.yml` (checkout, Node 24, `npm ci`, `npm run lint`); the
+      Linting step leaves `integration`, which now `needs: lint` so semantic-release never
+      releases code that fails it. The auto-merge comment names the three checks.
+- [ ] Add `lint` to master's required status checks (ruleset; today `prettier` and
+      `integration`). AFTER #16 merges: required earlier, every PR off master (Dependabot's)
+      waits for a check master cannot run yet.
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of

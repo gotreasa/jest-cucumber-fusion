@@ -27,7 +27,29 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Its own check, so a lint failure is named as one. A required check on master, beside
+  # prettier and integration.
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24
+
+    - name: Integrating
+      run: npm ci
+
+    - name: Linting
+      run: npm run lint
+
   integration:
+    # Waits for lint, so semantic-release never releases code that fails it.
+    needs: lint
     runs-on: ubuntu-latest
     # semantic-release pushes the version tag, creates the GitHub release, and
     # comments on released issues/PRs — all of which need write access. The
@@ -50,9 +72,6 @@ jobs:
 
     - name: Integrating
       run: npm ci
-
-    - name: Linting
-      run: npm run lint
 
     - name: Testing
       run: npm test

@@ -17,7 +17,7 @@ jobs:
       uses: dependabot/fetch-metadata@v3
 
     # Only queues the merge: GitHub completes it once the required checks on
-    # master (prettier, integration) pass. Majors are left for a human.
+    # master (prettier, lint, integration) pass. Majors are left for a human.
     - name: Enable auto-merge for minor and patch updates
       if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
       run: gh pr merge --auto --merge "$PR_URL"
