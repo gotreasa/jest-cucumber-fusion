@@ -1,6 +1,6 @@
 # Jest Cucumber Fusion
 
-Write 'pure' cucumber test in Jest without syntax clutter 
+Write Cucumber feature files and run them as Jest tests, without the scaffolding.
 
 [![Build Status](https://github.com/gotreasa/jest-cucumber-fusion/workflows/Continuous%20Integration/badge.svg)](https://github.com/gotreasa/jest-cucumber-fusion/actions?query=workflow%3A%22Continuous+Integration%22)
 [![Codecov](https://codecov.io/gh/gotreasa/jest-cucumber-fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/gotreasa/jest-cucumber-fusion)
@@ -11,11 +11,7 @@ Write 'pure' cucumber test in Jest without syntax clutter
 
 
 ## Overview
-Jest-Cucumber-Fusion handle the writing of the corresponding Jest test steps using an uncluttered cucumber style.
-Instead of using `describe` and `it` blocks, you instead write a Jest test for each scenario, and then define `Given`, `When`, and `Then` step definitions inside of your Jest tests. 
-Jest-Cucumber-Fusion then allows you to link these Cucumber tests to your javascript Cucumber feature steps.
-Adding a `Fusion`call, the links between your Feature definition and your Steps definition is handled automatically and the necessary scaffolding is build behind the scene.
-Now use jest naturally in your project like you would use the native Cucumber library.
+Jest Cucumber Fusion runs your Cucumber feature files as Jest tests. You write the feature file in Gherkin, and a step definition file with a `Given`, `When`, `Then`, `And` or `But` definition for each step. A `Fusion` call at the end of the step definition file links the two: Fusion reads the feature and creates one Jest test per scenario, so you write no `describe` or `it` blocks yourself. Everything else is plain Jest: `expect`, mocks, coverage and reporting.
 
 The style of this package began with [Jest-cucumber](https://github.com/bencompton/jest-cucumber), which it was originally built on top of. Since version 3 it no longer depends on that package: it runs on Jest and [@cucumber/gherkin](https://github.com/cucumber/gherkin) directly, and owns the whole test lifecycle itself.
 
@@ -23,8 +19,7 @@ This package continues [b-yond-infinite-network/jest-cucumber-fusion](https://gi
 
 ## Motivation
 
-Jest-cucumber is an amazing project but forces you to write a lot of repetitive scaffolding code to setup the link betwen Jest and Cucumber.
-With Jest-Cucumber-Fusion, it really takes only the minimal code possible:
+Jest-cucumber has you write a `defineFeature` block, a `test` for every scenario and a callback for every step to link Jest and Cucumber. With Jest Cucumber Fusion you write only:
  - a Cucumber Feature file with gherkin sentences
  - a Cucumber Step definition file with your javascript validation code, ended with the `Fusion` function to link the two
 
@@ -34,7 +29,7 @@ With Jest-Cucumber-Fusion, it really takes only the minimal code possible:
 
 These steps set up a project whose files are ES modules (they use `import` and `export`), which is the recommended way to use Fusion. If your project is CommonJS (it uses `require`), or you need Node 18, follow the same steps with the changes in [Using CommonJS instead](#using-commonjs-instead).
 
-You need Node 20.11 or newer.
+For ES modules you need Node 20.11 or newer.
 
 ### Install Jest and Jest Cucumber Fusion:
 
@@ -44,13 +39,15 @@ npm install --save-dev jest @g_package/jest-cucumber-fusion
 
 Coming from `jest-cucumber-fusion` 0.8.x or from version 2 of this package? Your feature and step definition files keep their shape; the import name changes, and several behaviours that used to pass silently now fail with a message saying what to fix. [Migrating to version 3](./docs/Migrating.md) lists each change, observed under both versions.
 
-### Add the following to your package.json configuration:
+### Set these keys in your package.json:
 
 ```json
 "type": "module",
 "scripts": { "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js" },
 "jest": { "testMatch": [ "**/*.steps.js" ] }
 ```
+
+Replace any `type` and `scripts.test` that are already there rather than adding a second copy: `npm init -y` writes `"type": "commonjs"` and a placeholder `test` script, and when a key appears twice in `package.json` the last one silently wins.
 
 - `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, name your files `.mjs` instead, and change `testMatch` to `[ "**/*.steps.mjs" ]`.
 - Jest runs ES modules only in its ES module mode, which Node's `--experimental-vm-modules` flag turns on. This form of the `test` script is the one Jest's own documentation gives, and it does not depend on your shell's syntax. Node prints an `ExperimentalWarning` about the flag on each run. That is expected.
@@ -110,6 +107,8 @@ import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 ```
 
 Import only the keywords your steps use. `But` is also available.
+
+**A step binds only to a definition registered with its own keyword.** An `And` step needs an `And(...)` definition, and a `Then(...)` definition with the same text does not serve it. That is why the steps below define `And` for the two `And` lines of the feature. When one definition should serve several keywords, chain it: `Then( And( 'text', fn ) )` registers the same definition under both. A step with no definition makes Fusion refuse the file, naming the step and suggesting the code to add.
 
 ### Load any dependency you need to do your test
 
@@ -204,8 +203,8 @@ Jest reports one test for the scenario, named after it, and fails it at the firs
 Writing your steps in TypeScript? See [Using TypeScript](#using-typescript).
 
 ## Adding coverage
-Since we're using jest, it is very easy to generate the code coverage of your Cucumber test:
-```javascript
+Fusion's tests are Jest tests, so Jest's coverage works as usual. Set these keys in your `package.json`:
+```json
 "jest": {
     "testMatch": [
       "**/*.steps.js"
@@ -218,6 +217,8 @@ Since we're using jest, it is very easy to generate the code coverage of your Cu
     "collectCoverage": true
   }
 ```
+
+For TypeScript step files, match `**/*.steps.ts` instead (see [Using TypeScript](#using-typescript)).
 
  
 ## Setting options once for a whole run
@@ -465,7 +466,7 @@ Here ts-jest checks types while it runs the tests, so a type error fails `npm te
 
 ### Typed step definitions
 
-The [Getting Started](#getting-started) example works as TypeScript once its files end in `.ts`. A step may also declare the type of each argument it receives: a capture or a docstring arrives as a `string`, and a data table as an `Array<Record<string, string>>` of its rows. For example, with this feature:
+To move the [Getting Started](#getting-started) example to TypeScript, renaming its files to `.ts` is not enough under `strict`: `tsc --noEmit` then reports the `Rocket` class's fields as undeclared (`TS2339`) and `let rocket` as an implicit `any` (`TS7034`). Declare the fields in the class and write `let rocket: Rocket`, as the example below does. A step may also declare the type of each argument it receives: a capture or a docstring arrives as a `string`, and a data table as an `Array<Record<string, string>>` of its rows. For example, with this feature:
 
 ```gherkin
 ###filename: test/features/launch.feature
@@ -530,12 +531,19 @@ An argument you leave undeclared has the type `StepArgument` (`string | Array<Re
 
 ## Additional Documentation 
 
-  * [Gherkin tables](./docs/GherkinTables.md)
+Using the package:
+
   * [Step definition arguments](./docs/StepDefinitionArguments.md)
+  * [Gherkin tables](./docs/GherkinTables.md)
   * [Scenario outlines](./docs/ScenarioOutlines.md)
-  * [Re-using step definitions](./docs/ReusingStepDefinitions.md)  
-  * [Configuration options](./docs/AdditionalConfiguration.md)
-  * [Running the examples](./docs/RunningTheExamples.md)
+  * [Re-using step definitions](./docs/ReusingStepDefinitions.md)
   * [Language](./docs/Language.md)
-  * [Architecture](./docs/Architecture.md)
+  * [Configuration options](./docs/AdditionalConfiguration.md): every export and option
   * [Migrating to version 3](./docs/Migrating.md)
+
+Working on the package:
+
+  * [Running the examples](./docs/RunningTheExamples.md)
+  * [Architecture](./docs/Architecture.md)
+
+Every example on the guide pages above runs as written: the repository's tests copy each one into a fresh project and run it.

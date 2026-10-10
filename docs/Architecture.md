@@ -1,5 +1,7 @@
 # Architecture
 
+This page is for contributors: how Fusion is built and why. To use the package, start with the [README](../README.md#getting-started). To work on it, clone the repository and follow [Running the examples](./RunningTheExamples.md) to get the suite running, then read on.
+
 ## 1. Overview
 
 jest-cucumber-fusion lets you write Gherkin feature files and run them as part of an ordinary Jest run, with coverage, and with no separate Cucumber runner process.
@@ -19,7 +21,7 @@ Fusion's source is ES modules, and so are its dependencies, pinned exactly:
 | `@cucumber/tag-expressions` | 11.0.1 | reading a `tagFilter` expression |
 | `callsites` | 4.2.0 | finding the file that called `Fusion`, so a relative feature path resolves against it |
 
-All four publish ES modules only, and Jest cannot `require` an ES module. Most consumers `require` Fusion from a CommonJS `.steps.js` file under their own Jest, so the package is dual, through the `exports` map in `package.json`:
+All four publish ES modules only, and Jest cannot `require` an ES module. New projects are recommended to use ES modules, but many existing consumers `require` Fusion from a CommonJS `.steps.js` file under their own Jest, so the package is dual, through the `exports` map in `package.json`:
 
 - `import` resolves to `src/index.js`, the ES module source, for steps written as ES modules under Jest's ES module mode;
 - `require` resolves to `dist/index.cjs`, a CommonJS bundle that `scripts/build-cjs.js` builds with esbuild before every pack (the `prepack` script), with the four dependencies inlined. It ships with `dist/THIRD_PARTY_LICENSES.txt`, their MIT notices, and `dist/index.d.cts`, the typings for TypeScript consumers that `require`.
@@ -38,7 +40,7 @@ flowchart LR
   steps["Consumer steps file (*.steps.js), required or imported"]
   setup["Optional setupFiles script, calls setFusionConfiguration"]
   features["Feature files (Gherkin)"]
-  jest["Jest 30 on Node 22"]
+  jest["Jest 30, on any Node the engines field allows"]
   fusion["jest-cucumber-fusion"]
   gherkin["@cucumber/gherkin 42.0.1"]
   messages["@cucumber/messages 34.2.1"]

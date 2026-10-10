@@ -857,6 +857,38 @@ README section and the CallBack fix). Measured with ts-jest 29.4.14, TypeScript 
       states it; Cucumber users expect keyword-agnostic matching. A Getting Started note is
       Gearoid's call.
 
+## Documentation review: gSmith Sage, nWave documentarist + reviewer, adversarial (2026-10-10)
+
+Gearoid asked for the review, then "Fix all of the issues in PR 16". Reports (verbatim, job tmp
+`docreview/`): Sage REJECTED (3 blocking); documentarist needs-revision 8/10; its paired
+reviewer APPROVED; the adversarial synthesis ran every disputed example: 2 BLOCKING, 6
+SHOULD-FIX, 12 NICE-TO-HAVE, 7 REJECTED. Re-verified by Koru: README:468 claim (8 tsc errors),
+GherkinTables (fails with an honest TodoList; the fixture's `indexOf` wipes the list), `npm init
+-y` writes `"type": "commonjs"`. Root cause: the guide examples were never run by a test.
+
+- [x] Guard first: `test/specs/baseline/assert-doc-examples.js` writes every `filename:`-named
+      block of each guide page into a fresh ES module project on the packed tarball and runs
+      the README's `npm test`. RED on today's pages (no page named its files); with only
+      filenames added to GherkinTables, RED with the reviewer's own evidence (`Failing step:
+      "I should see the following todo list:"`, Expected 2, Received 3).
+- [x] #2 GherkinTables (Then lists all three, TodoList shown, dead After gone, table prose),
+      #3 Language (all five definitions, both variants, `Fusion` call; #20 `When as Als`),
+      #6 README layout and code under test on every page, #7 StepDefinitionArguments prose,
+      H1, docstring example, #19 `tagged-scenarios.feature` (and a complete template
+      example). Guard GREEN: 6 pages, 11 suites, 12 tests. Outline names checked.
+- [x] #1 README:468 now names the TS2339/TS7034 errors and the fix, #4 the keyword rule and
+      the chained form in Getting Started, #5 "Set these keys" with the `npm init -y` warning,
+      #10 "For ES modules you need Node 20.11", #12 coverage fenced json, in package.json, TS
+      testMatch, one setupFiles spelling, #14 Overview and Motivation rewritten.
+- [x] #8 Migrating:8 names all three v2 changes, #11 the v2 setter and the errors-keys note
+      moved to Migrating (two links that pointed at the removed section fixed), #15 export
+      table, #16 orientation, #17 Getting Started link, #18 chained form in the table.
+- [x] #9 Architecture wording and diagram label, #13 contributor pointer, clone step, README
+      list split into using / working on. `test/src/todo-list.js`: `includes`, not
+      `indexOf`; the repo's own tables feature still passes, now for the right reason.
+- [x] Re-verified: suite 45 suites 1,096 passed; 7 of 7 baselines; tsd; lint; Prettier.
+- [ ] Push and update the PR body.
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of
