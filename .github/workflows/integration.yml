@@ -23,7 +23,7 @@ jobs:
       uses: creyD/prettier_action@v4.6
       with:
         # This part is also where you can pass other options, for example:
-        prettier_options: --check **/*.{js,md,ts}
+        prettier_options: --check **/*.{js,cjs,md,ts}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -46,6 +46,40 @@ jobs:
 
     - name: Linting
       run: npm run lint
+
+  # The packed package in a fresh consumer project on each Node floor the docs promise:
+  # CommonJS from 18.14, ES modules from 20.11 (and the documented failure below it). The
+  # repository's own suite needs Node 20.11, so the tarball is built on Node 24 first.
+  compat:
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18.14.0', '20.11.0', '22']
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Setup Node 24 to build
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24
+
+    - name: Integrating
+      run: npm ci
+
+    - name: Packing
+      run: npm pack --pack-destination "$RUNNER_TEMP"
+
+    - name: Setup Node ${{ matrix.node }}
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ matrix.node }}
+
+    - name: Consumer smoke test
+      run: bash test/compat/consumer-smoke.sh "$RUNNER_TEMP"/*.tgz
 
   integration:
     # Waits for lint, so semantic-release never releases code that fails it.

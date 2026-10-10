@@ -5,10 +5,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    # chore(deps) is not a release type, so a Dependabot merge never publishes
-    # a new npm version on its own.
+    # A production dependency bump is fix(deps), so merging it releases a patch:
+    # the CommonJS build bundles @cucumber/gherkin and the others, and a consumer
+    # gets their fixes only through a new release of this package. Development
+    # bumps stay chore(deps-dev), which releases nothing.
     commit-message:
-      prefix: chore
+      prefix: fix
+      prefix-development: chore
       include: scope
     groups:
       # Minor and patch bumps land as one PR; majors stay as separate PRs so
