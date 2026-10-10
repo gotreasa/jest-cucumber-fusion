@@ -846,6 +846,12 @@ README section and the CallBack fix). Measured with ts-jest 29.4.14, TypeScript 
       clean, loads `src/index.js`; `ts-weather` (ts-jest ES module preset, typed captures and
       table, async docstring step) 4 of 4, `tsc --noEmit` clean. No `jest-cucumber` or `uuid`
       in any tree.
+- [x] Berlin Clock on beta4 (Gearoid asked, 2026-10-10): throwaway worktree of `main`
+      `19c1327` (the 2.0.0 baseline's commit), Node 24.21, Jest 30.5.2, installed from npm,
+      resolves `dist/index.cjs`; only `uuid` is 14.0.2 under its own `jest-junit`. BDD 50,
+      unit 85, pact consumer 16 and provider 1, each identical test by test to 2.0.0; the Jest
+      step of `npm test` 14 suites, 152 tests, exit 0; OpenAPI and InSpec (29) pass. The unit
+      group alone misses the 100% line threshold at 99.38%, exactly as 2.0.0 does.
 - [ ] Found while writing them: Fusion binds a step only through its own keyword's
       definitions (`And I order` needs `And(...)`), as its refusal says, but the README never
       states it; Cucumber users expect keyword-agnostic matching. A Getting Started note is
