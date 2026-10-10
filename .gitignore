@@ -88,3 +88,6 @@ dist
 .nwave/*
 !.nwave/des-config.json
 !.nwave/local-config.json
+
+# Release tarball semantic-release leaves for the staging step (CI only)
+release/
