@@ -11,7 +11,7 @@
 //
 // Pure: no filesystem, no parser, no Jest global. The port calls it; it calls the template.
 
-import { describeValue } from "./value-description.js";
+import { describeThrown, describeValue } from "./value-description.js";
 
 // Kept as the first line of the refusal because the previous engine used it, so anything a
 // consumer greps for still matches.
@@ -75,11 +75,7 @@ const answerFromTemplate = (loadedFeature, scenario, scenarioNameTemplate) => {
   } catch (templateFailure) {
     throw refuseUnusableName(
       scenario.title,
-      `the scenarioNameTemplate threw: ${
-        templateFailure && templateFailure.message
-          ? templateFailure.message
-          : templateFailure
-      }`,
+      `the scenarioNameTemplate threw: ${describeThrown(templateFailure)}`,
       "make the template total over the four variables it is handed: featureTitle, " +
         "featureTags, scenarioTitle and scenarioTags. A tag list may be empty, and a title " +
         "may hold any character a feature file allows.",

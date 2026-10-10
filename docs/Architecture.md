@@ -110,6 +110,7 @@ flowchart TB
   cfg --> ss
   idx --> ss
   sn --> vd
+  treg --> vd
   vd --> nutil
 
   fsrc --> kw
@@ -134,7 +135,7 @@ flowchart TB
 | `index.js` | The public surface. Writes the registry the verbs and hooks register into (kept in `shared-state`), refuses a duplicate matcher in the same keyword bucket, supports the chained form where a step chain returned by one verb is handed to another, and orchestrates one `Fusion` call. It exports no port. | `util`, `configuration`, `feature-source`, `test-registration`, `shared-state` |
 | `configuration.js` | The option defaults, the global layer `setFusionConfiguration` writes, and the merge of defaults, then global, then per-call. `errors` merges key by key at every layer, so naming one validation never switches another off, and an option set to `undefined` counts as not set. Refuses a setter argument that is not an options object. The global layer is kept in `shared-state`. | `value-description`, `shared-state` |
 | `shared-state.js` | The state every copy of the dual package in one test file must share: the step and hook registry and the global configuration, on `globalThis` under a key naming the major version. A value is created only when absent, so a copy that loads second never resets what the first registered. Jest gives each test file its own global, so the state stays per file. | nothing |
-| `value-description.js` | Names a value a refusal was given, as its type and its JSON form, falling back to `util.inspect` for a value JSON cannot hold (a BigInt, a circular object, a function), and never throwing. | `util` |
+| `value-description.js` | Names a value a refusal was given, as its type and its JSON form, falling back to `util.inspect` for a value JSON cannot hold (a BigInt, a circular object, a function), and never throwing. Also quotes what a consumer's template or step threw: its message when that is truthy, otherwise the value as text, never throwing either (a Symbol, an object with no prototype, a `message` getter that throws). | `util` |
 | `feature-source.js` | Driven port for everything outside the process. Resolves the feature path against the calling file, reads the bytes, parses the Gherkin, checks for duplicate declared scenario titles, builds the tag filter, compiles pickles, recovers each step's keyword, and returns one plain loaded-feature value. The only module that may touch the filesystem, the parser or the caller stack. | `fs`, `path`, `url`, `callsites`, `@cucumber/gherkin`, `@cucumber/messages`, `@cucumber/tag-expressions`, `keywords`, `step-argument`, `tag-filter` |
 | `keywords.js` | Maps an AST step keyword, in whatever dialect the feature declared, onto exactly one of the five registry buckets, or refuses. Compiled pickles throw the keyword away, so it has to be recovered and mapped before a lookup can be honest. | nothing |
 | `step-argument.js` | Turns a pickle's Gherkin argument into the shape a step function receives: a data table becomes an array of header-keyed row objects, a docstring becomes a string. An empty docstring and a header-only table survive as real values rather than as absence. | nothing |
@@ -142,7 +143,7 @@ flowchart TB
 | `step-matching.js` | Finds the one registered definition that owns a step, extracts its regex captures and appends the Gherkin argument when the step carries one. An unbound step is a returned result, so the caller can decide; two matching definitions are a refusal, because there is no reading under which Fusion could pick one. | nothing |
 | `scenario-name.js` | Produces the name of one test: the scenario's own title, or the answer from a `scenarioNameTemplate` called with the four documented variables. A template that throws, or that answers with anything other than a non-empty string, is refused. | `value-description` |
 | `code-suggestion.js` | Builds the single refusal that names every unbound step of a feature. Steps of one shape (the same text apart from their values, such as the rows of an outline) share one entry and one starter definition, in Fusion's own verb idiom, whose captures cover every one of them, so pasting every snippet at once binds them all. | nothing |
-| `test-registration.js` | Driven port over the Jest runner. Binds every step and names every test before registering anything, then registers one `describe`, the hooks once per feature, and one `test` or `test.skip` per scenario. Owns the failing-step decoration. The only module that may name a Jest global. | `step-matching`, `code-suggestion`, `scenario-name`, Jest globals |
+| `test-registration.js` | Driven port over the Jest runner. Binds every step and names every test before registering anything, then registers one `describe`, the hooks once per feature, and one `test` or `test.skip` per scenario. Owns the failing-step decoration. The only module that may name a Jest global. | `step-matching`, `code-suggestion`, `scenario-name`, `value-description`, Jest globals |
 
 ## 4. What happens when you call Fusion
 
