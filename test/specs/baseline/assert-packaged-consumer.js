@@ -282,7 +282,7 @@ const writeTheConsumerProject = (projectDirectory) => {
   });
 };
 
-// A second consumer, set up exactly as the README's "Using ES modules" section says: "type":
+// A second consumer, set up exactly as the README's Getting Started (ES modules) says: "type":
 // "module", the README's testMatch, the documented `npm test` script, an ES module setupFiles
 // script, a shared step file that exports a function (docs/ReusingStepDefinitions.md), a
 // relative import with its extension, and `jest` imported from @jest/globals. The README's
@@ -631,7 +631,7 @@ if (
   documentedCounts.failed !== 0
 ) {
   failures.push(
-    'WHAT: the consumer set up as the README\'s "Using ES modules" says exited ' +
+    "WHAT: the consumer set up as the README's Getting Started (ES modules) says exited " +
       `${documentedEsModuleRun.status} with ${JSON.stringify(documentedCounts)}, not exit 0\n` +
       "          with 1 passed, 1 skipped and 0 failed.\n" +
       "    WHY:  a reader copies that set-up as written. If it finds no tests, loses the setup\n" +

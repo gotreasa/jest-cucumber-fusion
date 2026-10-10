@@ -1,5 +1,7 @@
 # Configuration Options
 
+The examples on this page are ES modules. For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+
 ## Disabling scenario / step definition validation
 
 Cucumber's approach is to start with your feature file and execute the step definitions in the order defined in the feature file. Fusion generates the Jest tests from the feature file itself, so the two cannot drift apart: there is one test per scenario, named for that scenario, and each step runs the definition you registered for its keyword. What Fusion does validate is whether every step the feature file declares actually has a definition, and whether the file declares two scenarios it could not tell apart.
@@ -7,7 +9,7 @@ Cucumber's approach is to start with your feature file and execute the step defi
 By default both validations are on. The following keys control them:
 
 ```javascript
-const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
 
 
 //your javascript tests
@@ -88,7 +90,7 @@ Feature: Tagged scenarios
 Consider the following step definitions file:
 
 ```javascript
-const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
 
 
 //your javascript tests
@@ -125,7 +127,7 @@ Feature: Tagged scenarios
 Use a `scenarioNameTemplate` function to be provided to generate the scenario title as desired. For example:
 
 ```javascript
-const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
 
 
 //your javascript tests
@@ -193,7 +195,7 @@ And set up that file, like so:
 ```javascript
 //jest-fusion-config.js
 
-const { setFusionConfiguration } = require('@g_package/jest-cucumber-fusion');
+import { setFusionConfiguration } from '@g_package/jest-cucumber-fusion'
 
 setFusionConfiguration({
   tagFilter: '@ui and not @slow',
@@ -203,17 +205,17 @@ setFusionConfiguration({
 });
 ```
 
-If your steps are ES modules (see [Using ES modules](../README.md#using-es-modules)), the setup file can be one too. It imports the same function:
+In a CommonJS project (see [Using CommonJS instead](../README.md#using-commonjs-instead)), the setup file requires the same function:
 
 ```javascript
-//jest-fusion-config.js (in a package with "type": "module")
+//jest-fusion-config.js (CommonJS)
 
-import { setFusionConfiguration } from '@g_package/jest-cucumber-fusion';
+const { setFusionConfiguration } = require('@g_package/jest-cucumber-fusion');
 
 setFusionConfiguration({ tagFilter: '@ui and not @slow' });
 ```
 
-Either style of setup file works with either style of steps, because both share one global configuration.
+Either style of setup file works with either style of steps, because both share one global configuration. To keep a CommonJS setup file in a `"type": "module"` project, name it `jest-fusion-config.cjs`, since there a `.js` file is read as an ES module and `require` does not exist.
 
 Options are merged lowest to highest: the defaults, then whatever `setFusionConfiguration` holds, then the options passed to one `Fusion` call. `errors` merges key-wise at every layer, so naming one validation in your setup file never switches off another. An option set to `undefined`, such as an unset environment variable forwarded as `{ tagFilter: process.env.TAGS }`, counts as not set and leaves the layer below in place. `null` is a value, so `{ tagFilter: null }` clears a global filter for that call.
 
@@ -223,7 +225,7 @@ An argument that is not an options object is refused in the setup file itself, b
 
 ### Migrating from version 2
 
-Version 2 of this package relied on `jest-cucumber`, and global configuration went through that package's own setter. Version 3 does not depend on it, so the import moves:
+Version 2 of this package relied on `jest-cucumber`, and global configuration went through that package's own setter. Version 3 does not depend on it, so the import moves. Shown in CommonJS, as version 2 setup files were:
 
 ```javascript
 // Before (version 2)

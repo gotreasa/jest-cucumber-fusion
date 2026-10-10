@@ -1,5 +1,7 @@
 # Gherkin tables
 
+The examples on this page are ES modules. For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+
 ```gherkin
 Feature: Todo List
 
@@ -18,9 +20,9 @@ Scenario: Adding an item to my todo list
 ```
 
 ```javascript
-const { Before, After, Given, When, Then, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Before, After, Given, When, Then, Fusion } from '@g_package/jest-cucumber-fusion'
 
-const { TodoList } = require( '../../src/todo-list' )
+import { TodoList } from '../../src/todo-list.js'
 let todoList
 
 

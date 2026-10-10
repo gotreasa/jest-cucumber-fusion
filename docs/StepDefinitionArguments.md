@@ -1,5 +1,7 @@
 ## Step definition arguments
 
+The examples on this page are ES modules. For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+
 ```gherkin
 Feature: Getting rich writing software
 
@@ -10,9 +12,9 @@ Scenario: Depositing a paycheck
 ```
 
 ```javascript
-const { Before, Given, When, Then, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Before, Given, When, Then, Fusion } from '@g_package/jest-cucumber-fusion'
 
-const { BankAccount } = require( '../../../src/bank-account' )
+import { BankAccount } from '../../../src/bank-account.js'
 let myAccount
 
 

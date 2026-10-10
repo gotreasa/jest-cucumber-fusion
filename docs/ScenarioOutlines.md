@@ -1,5 +1,7 @@
 # Scenario outlines
 
+The examples on this page are ES modules. For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+
 ```gherkin
 Feature: Online sales
 
@@ -17,9 +19,9 @@ Scenario Outline: Selling an <Item>
 ```
 
 ```javascript
-const { Before, Given, When, Then, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Before, Given, When, Then, Fusion } from '@g_package/jest-cucumber-fusion'
 
-const { OnlineSales } = require( '../../../src/online-sales' )
+import { OnlineSales } from '../../../src/online-sales.js'
 let onlineSales
 let salesPrice
 

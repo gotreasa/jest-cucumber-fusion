@@ -769,6 +769,42 @@ as the Linting step of the required `integration` job; he chose B, its own requi
       `integration`). AFTER #16 merges: required earlier, every PR off master (Dependabot's)
       waits for a check master cannot run yet.
 
+## ES modules as the recommended path (Gearoid, 2026-10-10)
+
+Asked: walk the docs as a new user with an ES module project; "I want ESM modules to be the
+recommended path but that people can fall back to CJS". Counterargument put first (ES module
+steps need Jest's experimental mode, Node 20.11 and an imported `jest`); proceeded, docs only.
+
+- [x] Walk of the CJS-first README as an ES module user, on the tarball: every file needed
+      translating from a section at the end (E1); `src/rocket.js` used `module.exports`, so
+      the steps failed `does not provide an export named 'Rocket'` (E2); the ESLint config
+      failed `require is not defined` (E3); every other guide used `require` (E4).
+- [x] README: Getting Started is ES modules (Node 20.11, `"type": "module"` or `.mjs`, the
+      flag in the `test` script, `export class Rocket`, imports with `.js`, `jest` from
+      `@jest/globals`, the `setupFiles` key shown, an ES module `eslint.config.js`). A new
+      "Using CommonJS instead" section gives every CommonJS file in full (package.json,
+      `src/rocket.js`, steps, setup script, ESLint), when to choose it, and mixing styles.
+- [x] Guides: ReusingStepDefinitions ES module first with a "Written as CommonJS" section;
+      AdditionalConfiguration, GherkinTables, StepDefinitionArguments, ScenarioOutlines and
+      Language converted to `import` with a note pointing at the CommonJS section (Language's
+      renamed keywords become `Given as Gegeven`). The version 2 migration snippets stay
+      CommonJS. Migrating links to Getting Started.
+- [x] Verified from the README's own text in fresh projects: ES module path `npm test` 1
+      passed, its `setupFiles` 1 skipped (the `@smoke` filter), `npx eslint .` exit 0, 3
+      `no-standalone-expect` reports without the option, a real standalone `expect` still
+      caught; the CommonJS fallback the same (1 passed, 1 skipped, exit 0). Suite 45 suites
+      1,096 passed; 6 of 6 baselines; lint; Prettier.
+- [x] Guides run as ES modules by a general-purpose subagent (pages copied byte for byte into
+      fresh `"type": "module"` projects on the tarball, no Babel): GherkinTables,
+      StepDefinitionArguments, ScenarioOutlines (3), both Language examples (renamed keywords
+      included, after completing their `...`), the AdditionalConfiguration setup file as an ES
+      module and as `.cjs`; all exit 0. Its findings, re-checked against source: Language's
+      claim that ES module renaming needs Babel was false (fixed); the CommonJS setup file
+      needs `.cjs` in a `"type": "module"` project (said); the version 2 snippet is now
+      labelled CommonJS. Rejected: a feature file named `rocket-launching.feature` with title
+      "Tagged scenarios" is legal. Left, pre-existing: the `...` fragments in Language,
+      trailing spaces and an unused `TodoList` in GherkinTables, a `##` page title.
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of

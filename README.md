@@ -32,7 +32,9 @@ With Jest-Cucumber-Fusion, it really takes only the minimal code possible:
 
 ## Getting Started
 
-These steps set up a project whose files are CommonJS (they use `require`), which needs no other set-up. For steps written as ES modules, see [Using ES modules](#using-es-modules).
+These steps set up a project whose files are ES modules (they use `import` and `export`), which is the recommended way to use Fusion. If your project is CommonJS (it uses `require`), or you need Node 18, follow the same steps with the changes in [Using CommonJS instead](#using-commonjs-instead).
+
+You need Node 20.11 or newer.
 
 ### Install Jest and Jest Cucumber Fusion:
 
@@ -42,9 +44,21 @@ npm install --save-dev jest @g_package/jest-cucumber-fusion
 
 Coming from `jest-cucumber-fusion` 0.8.x or from version 2 of this package? Your feature and step definition files keep their shape; the import name changes, and several behaviours that used to pass silently now fail with a message saying what to fix. [Migrating to version 3](./docs/Migrating.md) lists each change, observed under both versions.
 
+### Add the following to your package.json configuration:
+
+```json
+"type": "module",
+"scripts": { "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js" },
+"jest": { "testMatch": [ "**/*.steps.js" ] }
+```
+
+- `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, name your files `.mjs` instead, and change `testMatch` to `[ "**/*.steps.mjs" ]`.
+- Jest runs ES modules only in its ES module mode, which Node's `--experimental-vm-modules` flag turns on. This form of the `test` script is the one Jest's own documentation gives, and it does not depend on your shell's syntax. Node prints an `ExperimentalWarning` about the flag on each run. That is expected.
+- `testMatch` tells Jest that your step definition files are the test files.
+
 ### Lay out your project
 
-The examples below use this layout. Any layout works, as long as each `require` path and each `Fusion` path matches where your files are.
+The examples below use this layout. Any layout works, as long as each `import` path and each `Fusion` path matches where your files are.
 
 ```
 your-project/
@@ -61,7 +75,7 @@ The code under test in these examples is a small class of your own:
 
 ```javascript
 //filename: src/rocket.js
-class Rocket {
+export class Rocket {
     constructor() {
         this.isInSpace = false
         this.boostersLanded = false
@@ -72,8 +86,6 @@ class Rocket {
         this.boostersLanded = true
     }
 }
-
-module.exports = { Rocket }
 ```
 
 ### Add a Feature file:
@@ -90,19 +102,10 @@ Scenario: Launching a SpaceX rocket
   And nobody should doubt me ever again
 ```
 
-### Add the following to your package.json configuration:
-
-```javascript
-"scripts": { "test": "jest" },
-"jest": { "testMatch": [ "**/*.steps.js" ] }
-```
-
-`testMatch` tells Jest that your step definition files are the test files. Run the tests with `npm test`.
-
 ### Add a Cucumber step definition file and load Fusion
 ```javascript
 //filename: test/features/rocket-launching.steps.js
-const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 
 ```
 
@@ -112,20 +115,22 @@ Import only the keywords your steps use. `But` is also available.
 
 ```javascript
 //filename: test/features/rocket-launching.steps.js
-const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 
-const { Rocket } = require( '../../src/rocket' )
+import { Rocket } from '../../src/rocket.js'
 let rocket
 
 ```
+
+A relative import names the file in full, extension included: `'../../src/rocket.js'`, not `'../../src/rocket'`.
 
 ### Add steps definitions:
 
 ```javascript
 //filename: test/features/rocket-launching.steps.js
-const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 
-const { Rocket } = require( '../../src/rocket' )
+import { Rocket } from '../../src/rocket.js'
 let rocket
 
 Given( 'I am Elon Musk attempting to launch a rocket into space', () => {
@@ -149,13 +154,19 @@ And( 'nobody should doubt me ever again', () => {
 } )
 ```
 
+`expect` and the other test globals work as usual. The `jest` object (for `jest.fn()` and friends) is not a global in Jest's ES module mode. Add `@jest/globals` to your `devDependencies` and import it:
+
+```javascript
+import { jest } from '@jest/globals'
+```
+
 ### Adding the Fusion() call at the end of the Step definition file
 You have to match it with your Cucumber Feature definition file. The path is relative to the step definition file, so a feature file beside it is named on its own:
 ```javascript
 //filename: test/features/rocket-launching.steps.js
-const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 
-const { Rocket } = require( '../../src/rocket' )
+import { Rocket } from '../../src/rocket.js'
 let rocket
 
 Given( 'I am Elon Musk attempting to launch a rocket into space', () => {
@@ -190,6 +201,8 @@ npm test
 
 Jest reports one test for the scenario, named after it, and fails it at the first step that fails.
 
+TypeScript finds the matching type definitions with no configuration, for ES modules and CommonJS alike.
+
 ## Adding coverage
 Since we're using jest, it is very easy to generate the code coverage of your Cucumber test:
 ```javascript
@@ -215,13 +228,20 @@ Options can be passed to a single `Fusion` call:
 Fusion( 'rocket-launching.feature', { tagFilter: '@smoke and not @slow' } )
 ```
 
-Or set once for every step definition file of a run, from a script listed in Jest's `setupFiles`:
+Or set once for every step definition file of a run, from a script that Jest's `setupFiles` lists:
 
 ```javascript
-//jest-fusion-config.js
-const { setFusionConfiguration } = require( '@g_package/jest-cucumber-fusion' )
+//filename: jest-fusion-config.js
+import { setFusionConfiguration } from '@g_package/jest-cucumber-fusion'
 
 setFusionConfiguration( { tagFilter: '@smoke and not @slow' } )
+```
+
+```json
+"jest": {
+    "testMatch": [ "**/*.steps.js" ],
+    "setupFiles": [ "./jest-fusion-config.js" ]
+}
 ```
 
 A per-call option still wins for its own file. See [Configuration options](./docs/AdditionalConfiguration.md) for every option and for the merge order.
@@ -239,6 +259,113 @@ npm install --save-dev eslint @eslint/js globals eslint-plugin-jest
 ```
 
 Then add an `eslint.config.js` to your project:
+
+```javascript
+//filename: eslint.config.js
+import js from '@eslint/js'
+import globals from 'globals'
+import jest from 'eslint-plugin-jest'
+
+export default [
+  js.configs.recommended,
+  {
+    languageOptions: { sourceType: 'module', globals: globals.node },
+  },
+  {
+    files: [ '**/*.steps.js' ],
+    ...jest.configs[ 'flat/recommended' ],
+    rules: {
+      ...jest.configs[ 'flat/recommended' ].rules,
+      // Fusion runs each step and hook inside the test it makes for the scenario.
+      'jest/no-standalone-expect': [ 'error', {
+        additionalTestBlockFunctions: [ 'Given', 'When', 'Then', 'And', 'But', 'Before', 'After' ],
+      } ],
+    },
+  },
+]
+```
+
+Run it with `npx eslint .`. Without the `jest/no-standalone-expect` options, every `expect` in the steps file above is reported as `Expect must be inside of a test block`. With them, an `expect` that really is outside a step, a hook or a test is still reported.
+
+If your shared step files are not named `*.steps.js` (see [Re-using step definitions](./docs/ReusingStepDefinitions.md)), add their names to `files`.
+
+## Using CommonJS instead
+
+Fusion ships a CommonJS build beside its ES modules: `require` gets the CommonJS build and `import` gets the ES modules. Use CommonJS if your project already is CommonJS, if you need Node 18 (CommonJS runs on Node 18.14 and newer), or if you would rather not run Jest's experimental ES module mode. CommonJS needs no Jest set-up at all.
+
+The steps in [Getting Started](#getting-started) work with these changes.
+
+**package.json.** Leave out `"type": "module"`, and run Jest directly:
+
+```json
+"scripts": { "test": "jest" },
+"jest": { "testMatch": [ "**/*.steps.js" ] }
+```
+
+**The code under test** exports with `module.exports`:
+
+```javascript
+//filename: src/rocket.js
+class Rocket {
+    constructor() {
+        this.isInSpace = false
+        this.boostersLanded = false
+    }
+
+    launch() {
+        this.isInSpace = true
+        this.boostersLanded = true
+    }
+}
+
+module.exports = { Rocket }
+```
+
+**Step definition files** `require` the same names. A relative `require` may leave the extension out:
+
+```javascript
+//filename: test/features/rocket-launching.steps.js
+const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+
+const { Rocket } = require( '../../src/rocket' )
+let rocket
+
+Given( 'I am Elon Musk attempting to launch a rocket into space', () => {
+    rocket = new Rocket()
+} )
+
+When( 'I launch the rocket', () => {
+    rocket.launch()
+} )
+
+Then( 'the rocket should end up in space', () => {
+    expect(rocket.isInSpace).toBe(true)
+} )
+
+And( /^the booster\(s\) should land back on the launch pad$/, () => {
+    expect(rocket.boostersLanded).toBe(true)
+} )
+
+And( 'nobody should doubt me ever again', () => {
+    expect('people').not.toBe('haters')
+} )
+
+
+Fusion( 'rocket-launching.feature' )
+```
+
+The `jest` object is a global, as in any CommonJS Jest project.
+
+**A global configuration script** `require`s `setFusionConfiguration`:
+
+```javascript
+//filename: jest-fusion-config.js
+const { setFusionConfiguration } = require( '@g_package/jest-cucumber-fusion' )
+
+setFusionConfiguration( { tagFilter: '@smoke and not @slow' } )
+```
+
+**ESLint.** The configuration file is CommonJS too, with `sourceType: 'commonjs'`:
 
 ```javascript
 //filename: eslint.config.js
@@ -265,68 +392,10 @@ module.exports = [
 ]
 ```
 
-Run it with `npx eslint .`. Without the `jest/no-standalone-expect` options, every `expect` in the steps file above is reported as `Expect must be inside of a test block`. With them, an `expect` that really is outside a step, a hook or a test is still reported.
+**Mixing the two styles** works. A CommonJS shared step library can serve ES module step files, and a CommonJS setup script can configure ES module steps: both styles share one set of step definitions and one global configuration. An ES module imports a CommonJS file by its full name, for example `import './shared-steps.cjs'`.
 
-If your shared step files are not named `*.steps.js` (see [Re-using step definitions](./docs/ReusingStepDefinitions.md)), add their names to `files`.
+The other pages in this documentation show ES modules. To use one of their examples in CommonJS, turn each `import { … } from '…'` into `const { … } = require( '…' )` and each `export` into `module.exports`.
 
-This configuration is for CommonJS files. If your project is `"type": "module"` (see [Using ES modules](#using-es-modules)), two things change. Name the file `eslint.config.cjs`, because in that project an `eslint.config.js` is read as an ES module, where `require` does not exist. And set `sourceType: 'module'`, so that ESLint can parse the `import` lines in your steps.
-
-## Using ES modules
-
-The package ships both module styles: `require` gets a CommonJS build and `import` gets the ES module source. You do not have to choose one style for the whole project. A steps file, a shared step file and a `setupFiles` script may each use either style, and they share one set of step definitions and one global configuration.
-
-Steps written as ES modules need three things that CommonJS steps do not.
-
-**Node 20.11 or newer.** CommonJS steps run on Node 18.14 and newer.
-
-**Jest's ES module mode.** Jest runs ES modules only when Node starts with `--experimental-vm-modules`. Put the flag in your `test` script, in the form Jest's own documentation gives, which does not depend on your shell's syntax:
-
-```json
-"scripts": { "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js" }
-```
-
-Node prints an `ExperimentalWarning` about the flag on each run. That is expected.
-
-**Files that Node reads as ES modules.** Choose one of these:
-
-- Add `"type": "module"` to your `package.json`. Your files keep the `.js` extension, and the `testMatch` above stays as it is.
-- Name your files with the `.mjs` extension instead, and change `testMatch` to find them:
-
-  ```json
-  "jest": { "testMatch": [ "**/*.steps.mjs" ] }
-  ```
-
-Then import the same names that the CommonJS examples require:
-
-```javascript
-//filename: test/features/rocket-launching.steps.js (in a package with "type": "module")
-import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
-import { Rocket } from '../../src/rocket.js'
-```
-
-Some differences from CommonJS to know about:
-
-- A relative import names the file in full, extension included: `'../../src/rocket.js'`, not `'../../src/rocket'`.
-- `expect`, `describe` and the other test globals work as before, but Jest does not give the `jest` object as a global. Import it, after you add `@jest/globals` to your `devDependencies`:
-
-  ```javascript
-  import { jest } from '@jest/globals'
-  ```
-
-- A global configuration script imports `setFusionConfiguration`, and is listed in `setupFiles` as before:
-
-  ```javascript
-  //filename: jest-fusion-config.js (in a package with "type": "module")
-  import { setFusionConfiguration } from '@g_package/jest-cucumber-fusion'
-
-  setFusionConfiguration( { tagFilter: '@smoke and not @slow' } )
-  ```
-
-- Shared step definitions are imported instead of required. [Re-using step definitions](./docs/ReusingStepDefinitions.md#written-as-es-modules) shows both of its examples as ES modules.
-
-TypeScript finds the matching type definitions for either style, with no configuration.
-
- 
 ## Additional Documentation 
 
   * [Gherkin tables](./docs/GherkinTables.md)
