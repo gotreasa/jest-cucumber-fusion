@@ -2,9 +2,16 @@
 // Project: https://github.com/gotreasa/jest-cucumber-fusion#readme
 // Originally written by Pelle Johnsen <https://github.com/pjoe> for DefinitelyTyped.
 
-export type CallBack = (
-  ...args: ReadonlyArray<string | Array<Record<string, string>>>
-) => void | Promise<void>;
+/** What Fusion passes a step: a capture or a docstring as a string, a data table as its rows. */
+export type StepArgument = string | Array<Record<string, string>>;
+
+// Declared through a method so its parameters are checked bivariantly: a step may declare
+// the narrower type it receives, such as `(count: string) => ...`, which a plain function type
+// refuses under strictFunctionTypes. A type Fusion never passes, such as `number`, is still
+// refused, and an undeclared parameter is still a StepArgument.
+export type CallBack = {
+  step(...args: ReadonlyArray<StepArgument>): void | Promise<void>;
+}["step"];
 
 export interface StepChain {
   stepSentence: string | RegExp;

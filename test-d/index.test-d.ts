@@ -18,3 +18,25 @@ expectType<StepChain>(But(When("a chained step", () => {})));
 // Genuine misuse: a bare number matches neither the (name, callback) form nor
 // the single StepChain form.
 expectError(And(42));
+
+// A step may declare the arguments it receives: each capture and a docstring
+// arrive as a string, a data table as an array of row records. Under strict
+// function types these were refused (TS2345) until 2026-10-10, because the
+// callback type promised every argument could be either.
+expectType<StepChain>(Given(/^I launch (\d+) rockets$/, (count: string) => {}));
+expectType<StepChain>(
+  When(/^(\w+) pays (\w+)$/, (payer: string, payee: string) => {}),
+);
+expectType<StepChain>(
+  Then("the rows are", (table: Array<Record<string, string>>) => {}),
+);
+expectType<StepChain>(Given("an async step", async (text: string) => {}));
+
+// An argument left undeclared is still either kind, so using it as a string
+// needs a check first.
+Given(/^(.*)$/, (value) => {
+  expectType<string | Array<Record<string, string>>>(value);
+});
+
+// A type Fusion never passes is still refused.
+expectError(Given(/^(\d+)$/, (count: number) => {}));
