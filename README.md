@@ -229,7 +229,7 @@ Options can be passed to a single `Fusion` call:
 Fusion( 'rocket-launching.feature', { tagFilter: '@smoke and not @slow' } )
 ```
 
-Or set once for every step definition file of a run, from a script that Jest's `setupFiles` lists:
+Or set once for every step definition file of a run, from a script that Jest's `setupFiles` lists. A global tag filter applies to every feature, so a scenario without a matching tag, such as the untagged rocket scenario above, is reported as skipped:
 
 ```javascript
 //filename: jest-fusion-config.js
@@ -444,7 +444,7 @@ export default {
 
 ### CommonJS
 
-Leave out `"type": "module"` and `isolatedModules`, and use ts-jest's default preset:
+Leave out `"type": "module"`, compile to CommonJS, and use ts-jest's default preset:
 
 ```json
 "scripts": {
@@ -452,6 +452,19 @@ Leave out `"type": "module"` and `isolatedModules`, and use ts-jest's default pr
   "typecheck": "tsc --noEmit"
 }
 ```
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "strict": true,
+    "types": [ "jest" ]
+  }
+}
+```
+
+`"module": "CommonJS"` is what lets ts-jest check types here. With `NodeNext` or `Node16`, ts-jest warns `TS151002` and asks for `isolatedModules`, which would switch its checking off.
 
 ```javascript
 //filename: jest.config.js
@@ -528,6 +541,14 @@ Fusion( 'launch.feature' )
 ```
 
 An argument you leave undeclared has the type `StepArgument` (`string | Array<Record<string, string>>`), which you can import from the package.
+
+## Troubleshooting
+
+- **`SyntaxError: Unexpected token 'with'`** when Jest loads your ES module steps: your Node is older than 20.11, which ES module steps need. Upgrade Node, or [use CommonJS](#using-commonjs-instead), which runs from Node 18.14.
+- **`npm warn EBADENGINE` on Node 18**, naming `brace-expansion` or `lru-cache`: these come from Jest 30's own dependencies, not from Fusion. CommonJS steps still run on Node 18.14 and newer.
+- **ESLint on Node 18:** ESLint 10 itself needs Node 20.19 or newer. On Node 18.18 or newer, install ESLint 9 and the matching Jest plugin instead (`npm install --save-dev eslint@9 @eslint/js@9 eslint-plugin-jest@28 globals`); the configuration above works with them.
+- **`No step definition matches`** for a step you did define: the step's keyword decides which definitions it can bind to. An `And` step needs an `And(...)` definition (see [Getting Started](#add-a-cucumber-step-definition-file-and-load-fusion)).
+- **Jest prints only the summary, without the list of tests:** Jest shortens its output when it detects an AI agent's environment variables, such as `AI_AGENT` or `CLAUDECODE`. Run it from a terminal that does not have them.
 
 ## Additional Documentation 
 

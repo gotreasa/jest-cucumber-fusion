@@ -89,6 +89,26 @@ The same change reaches a step's docstring and data table. Version 2 substituted
 
 The global configuration import above and the version 3 rows of the behaviour table complete the list.
 
+### Other differences from 2.0.0
+
+Measured by running the same feature and step files under 2.0.0 and 3.0.0. Each one fixes something 2.0.0 got wrong, refused, or reported unhelpfully, so none should need a change in a working project.
+
+| Situation | 2.0.0 | 3.0.0 |
+|---|---|---|
+| A `Rule:` with tags, under a `tagFilter` | the Rule's tags were ignored | they count, like the feature's tags, and reach `scenarioNameTemplate` in `scenarioTags` |
+| A tag filter naming a non-ASCII tag (`@ünï`), a repeated tag (`@b and not @b`) or an escaped space | refused: `Could not parse tag filter` | accepted |
+| A `tagFilter` of only spaces | every scenario was skipped | no filter: every scenario runs |
+| A Scenario Outline with no `Examples` | the suite failed with `jest-cucumber`'s "has 0 step(s)" message | runs once as a plain scenario, the `<placeholder>` text as written, as Cucumber does |
+| A feature in Slovenian, Persian, Malayalam or the `en-tx` dialect | could not run | runs, like the other 76 Gherkin languages |
+| A step that throws a string, `undefined` or a rejection with no value | the reporter crashed: `Cannot create property 'message' on string` | reported as the failing step, with what was thrown |
+| `Fusion` handed to `forEach`, or called from code built with `new Function` | the feature path resolved against the working directory | resolved against the calling file |
+| A failing step's error | rethrown with the step's details prefixed to its message | the same: the step's own error, its class and its stack frames in your steps file are kept |
+| A step definition with no function, `Given('the shop is open')` | accepted, then failed when the step ran: `stepFn is not a function` | refused at the call: `Missing step function: ...` |
+| `Fusion()` with no path, a number, or a directory | Node's raw `paths[1]` argument error, or `EISDIR` | refused, naming what it was given |
+| `errors: 0` (or another non-boolean) | read as "no change", leaving every check on | refused: `errors` must be `true`, `false` or an object |
+| A `scenarioNameTemplate` that is not a function, or is `async` | reported as a template that threw, or that "returned object {}" | refused, saying it is not a function, or that it returned a Promise |
+| `setFusionConfiguration(...)`, then `jest.resetModules()` | the global configuration was cleared with the modules | kept for the rest of the test file: it lives on the file's global, which both module styles share. Call `setFusionConfiguration({})` to clear it |
+
 ## What does the migration cost?
 
 Expect the first run to fail wherever a steps file depended on one of the old silent behaviours. Where a file relied on a second `Before` replacing the first, both hooks now run, so the two may need to merge into one; where a file registered the same step twice, keep one definition. The message for each case lists the step and the definitions involved, so fixing it takes a reading of the message rather than a search through the file.

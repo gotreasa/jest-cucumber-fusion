@@ -423,14 +423,22 @@ const writeTheTypeScriptProject = (directory, installedFrom, style) => {
     path.join(directory, "tsconfig.json"),
     `${JSON.stringify(
       {
-        compilerOptions: {
-          target: "ES2022",
-          module: "NodeNext",
-          moduleResolution: "NodeNext",
-          ...(esModule ? { isolatedModules: true } : {}),
-          strict: true,
-          types: ["jest"],
-        },
+        compilerOptions: esModule
+          ? {
+              target: "ES2022",
+              module: "NodeNext",
+              moduleResolution: "NodeNext",
+              isolatedModules: true,
+              strict: true,
+              types: ["jest"],
+            }
+          : // CommonJS, as the README says: with NodeNext ts-jest warns TS151002.
+            {
+              target: "ES2022",
+              module: "CommonJS",
+              strict: true,
+              types: ["jest"],
+            },
       },
       null,
       2,

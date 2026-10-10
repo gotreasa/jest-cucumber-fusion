@@ -889,6 +889,49 @@ GherkinTables (fails with an honest TodoList; the fixture's `indexOf` wipes the 
 - [x] Re-verified: suite 45 suites 1,096 passed; 7 of 7 baselines; tsd; lint; Prettier.
 - [ ] Push and update the PR body.
 
+## Fresh adversarial review, fuzz and smoke (2026-10-10)
+
+Three new general-purpose agents, given only the repo, PR #16 and a tarball of `54f3b8f`
+(shasum `5bdaeb7f`). Adversarial: ship with fixes. Fuzz: 3,540 oracle cases, 1,600 differential
+against 2.0.0, 80 probes, 677/677 dialect keywords; no core crash or wrong result. Smoke: ESM,
+CJS, TS x Node 18.19/20.9/20.11/22/24 x Jest 27/29/30, all as documented. Koru re-verified the
+bugs in source. Gearoid chose all four groups:
+
+- [x] A1 `30b0060`: the step's own error is decorated in place (message and stack header) and
+      rethrown; a frozen one is wrapped with it as `cause`. Recognised by its tag, not
+      `instanceof` (cross-realm). Test first: 5 of 6 RED, then GREEN; existing byte-for-byte
+      failure tests unchanged.
+- [x] A2 `f6995d9`: the prepare script ships and exits quietly when husky is absent (any other
+      error still fails). Two tests RED first (a file the prepare script runs is missing from
+      the package; `npm run prepare` without node_modules failed). Hooks still install here.
+- [x] A3 `29e597b`: registry buckets are `Object.create(null)`; table columns are defined, not
+      assigned, so rows stay plain objects. Test RED first with the fuzz's own refusal text.
+- [x] C `540a8b4` (`feat!`): `jest` is a peer (`>=27`) and a devDependency; lockfile diff is
+      457 `"dev": true` flags plus metadata. Migrating and Architecture updated; the packaged
+      consumer still gets a Jest (npm 7+ installs a missing peer).
+- [x] D `71c19fa`: Dependabot production bumps are `fix(deps)` (dev stays `chore`); a `compat`
+      job runs `test/compat/consumer-smoke.sh` on Node 18.14.0, 20.11.0 and 22 after packing
+      on 24. Run locally on nvm 18.16.1, 20.9.0 (both: CJS pass, ESM fails as documented),
+      20.11.1 and 22.21.1 (both pass). Caught on the way: `node -p` colours a boolean under
+      FORCE_COLOR. Prettier CI glob covers `.cjs`.
+- [x] B code `9347b0a`: refusals naming the mistake for a step without a function, Fusion() path
+      not a string or a directory, a template that is not a function or returns a Promise,
+      and `errors` that is not true, false or an object. 6 tests RED first. Declined: refusing
+      a feature with no scenarios, because `branch-behaviours` pins that such a file registers
+      nothing (a steps file may carry it beside other tests).
+- [x] B docs: Migrating's "Other differences from 2.0.0" table (fuzz-measured; the
+      resetModules row measured on 2.0.0 and 3.0.0: 2.0.0 cleared the global, 3.0.0 keeps
+      it); TS CommonJS tsconfig `"module": "CommonJS"` (probed: no TS151002, tsc clean, npm
+      test still catches TS2322; Node16/NodeNext warn, Node10 breaks tsc); README
+      troubleshooting (ESLint 9 + eslint-plugin-jest 28 on Node 18.19 measured clean, once a
+      probe without Jest was fixed); excluded-scenario wording in index.d.ts; resetModules
+      note; global tagFilter caveat; the baseline's TS CommonJS consumer uses the README's
+      tsconfig.
+- [x] Re-verified: suite 48 suites, 1,114 passed, 3 skipped, 100% lines; 7 of 7 baselines;
+      tsd; lint; Prettier.
+- [ ] Full Stryker re-run (background, on a copy); push; PR body (73.3 kB, baselines, mutation,
+      the new commits).
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of

@@ -96,7 +96,8 @@ export interface FusionOptions {
    * set's tags. A scenario the expression excludes is registered through `test.skip` under its
    * own unannotated name, so Jest reports it as skipped: never run, and never absent from the
    * report. Its steps are also exempt from the unmatched-step check, because a scenario you
-   * excluded is not one you are asking to have wired.
+   * excluded is not one you are asking to have wired. They are still read, so a step with an
+   * unsupported keyword (`*`) or one that matches two definitions is refused all the same.
    *
    * An expression that cannot be parsed is refused at collection, before anything is
    * registered, and the refusal names the expression you wrote. So is one with an operand
