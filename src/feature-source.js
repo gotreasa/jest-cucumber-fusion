@@ -95,9 +95,15 @@ const parseFeature = (featureText) => {
   try {
     return { document: parser.parse(featureText), ids };
   } catch (parseFailure) {
-    throw new Error(`Error parsing feature Gherkin: ${parseFailure.message}`, {
-      cause: parseFailure,
-    });
+    // @cucumber/gherkin throws Errors only: plain ones, or its own exceptions, which all
+    // extend Error (dist/Errors.js). The cast states that contract for the type check rather
+    // than adding a branch for a non-Error that Gherkin never throws.
+    throw new Error(
+      `Error parsing feature Gherkin: ${/** @type {Error} */ (parseFailure).message}`,
+      {
+        cause: parseFailure,
+      },
+    );
   }
 };
 
@@ -105,8 +111,9 @@ const compilePickles = (document, absoluteFeatureFilePath, ids) => {
   try {
     return gherkin.compile(document, absoluteFeatureFilePath, ids);
   } catch (compileFailure) {
+    // Errors only, as for the parse above.
     throw new Error(
-      `Error parsing feature Gherkin: ${compileFailure.message}`,
+      `Error parsing feature Gherkin: ${/** @type {Error} */ (compileFailure).message}`,
       {
         cause: compileFailure,
       },
