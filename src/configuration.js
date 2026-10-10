@@ -59,6 +59,16 @@ const keysThatAreSet = (options) =>
 const errorsNamedBy = (errors) => {
   if (errors === true) return everyValidation(true);
   if (errors === false) return everyValidation(false);
+  // Anything else but an object, null or undefined is refused: `errors: 0` was read as "no
+  // change", leaving every validation on while the consumer meant off (fresh fuzz of PR #16).
+  if (errors !== undefined && errors !== null && !isAnOptionObject(errors))
+    throw new Error(
+      `The errors option must be true, false or an object, but was given ${describeValue(
+        errors,
+      )}.\n\n` +
+        `HOW:  pass errors: false to switch every validation off, or an object naming the ones\n` +
+        `      to change, for example errors: { stepsMustMatchFeatureFile: false }.`,
+    );
 
   return keysThatAreSet(errors || {});
 };

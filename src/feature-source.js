@@ -70,6 +70,13 @@ const readFeatureText = (absoluteFeatureFilePath) => {
         ` Fusion, so check the path from there.`,
     );
 
+  // A directory exists too, and reading it threw a raw EISDIR (fresh fuzz of PR #16).
+  if (fs.statSync(absoluteFeatureFilePath).isDirectory())
+    throw new Error(
+      `Feature path is a directory, not a feature file (${absoluteFeatureFilePath})` +
+        `. Name the .feature file itself, relative to the file that calls Fusion.`,
+    );
+
   return fs.readFileSync(absoluteFeatureFilePath, "utf8");
 };
 

@@ -90,11 +90,29 @@ const answerFromTemplate = (loadedFeature, scenario, scenarioNameTemplate) => {
 const nameForScenario = (loadedFeature, scenario, scenarioNameTemplate) => {
   if (!scenarioNameTemplate) return scenario.title;
 
+  // Named for what it is. Called anyway, a non-function was reported as a template that threw
+  // "scenarioNameTemplate is not a function" (fresh fuzz of PR #16, 2026-10-10).
+  if (typeof scenarioNameTemplate !== "function")
+    throw refuseUnusableName(
+      scenario.title,
+      `the scenarioNameTemplate is ${describeValue(scenarioNameTemplate)}, not a function.`,
+      "pass a function that takes the template variables and returns the test's name.",
+    );
+
   const answer = answerFromTemplate(
     loadedFeature,
     scenario,
     scenarioNameTemplate,
   );
+
+  // An async template's Promise was described as "object {}", its JSON (fresh fuzz of PR #16).
+  if (answer && typeof answer.then === "function")
+    throw refuseUnusableName(
+      scenario.title,
+      "the scenarioNameTemplate returned a Promise.",
+      "return the name directly. The template runs while Fusion registers the tests, before " +
+        "any of them runs, so it cannot wait for anything.",
+    );
 
   if (typeof answer !== "string" || answer.length === 0)
     throw refuseUnusableName(
