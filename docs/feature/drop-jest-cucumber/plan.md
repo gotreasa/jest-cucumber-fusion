@@ -2,6 +2,9 @@
 
 Living plan. Updated as the work moves; correct anything here that proves wrong.
 
+**Status: delivered (2026-10-10).** PR #16 merged as `1fe6a5d`; 3.0.0 published as `latest`, then
+3.0.1. Dependabot alert #1 (`uuid`) is fixed. See [After the merge](#after-the-merge-2026-10-10).
+
 ## Goal
 
 Remove the runtime dependency on `jest-cucumber` and build `Fusion()` directly on `jest` and
@@ -96,7 +99,9 @@ Raised by the architecture pass, then reproduced. Probe scripts in the job tmp d
 - [x] Docs: README and `docs/AdditionalConfiguration.md` updated (V5).
 - [x] Push branch and open PR. Held on 2026-10-07 ("nothing outward yet"); draft PR #16
       opened 2026-10-09 on Gearoid's go, and every later push on his go.
-- [ ] Release 3.0.0 via semantic-release on merge (squash with the PR body's message).
+- [x] Release 3.0.0 via semantic-release on merge (squash with the PR body's message). Squash
+      `1fe6a5d`; the first release run failed on an invalid `NPM_TOKEN` (nothing tagged); 3.0.0
+      released through the staged flow of PR #29 (see After the merge).
 
 ## Delivery log (2026-10-07)
 
@@ -765,9 +770,9 @@ as the Linting step of the required `integration` job; he chose B, its own requi
 - [x] `lint` job in `integration.yml` (checkout, Node 24, `npm ci`, `npm run lint`); the
       Linting step leaves `integration`, which now `needs: lint` so semantic-release never
       releases code that fails it. The auto-merge comment names the three checks.
-- [ ] Add `lint` to master's required status checks (ruleset; today `prettier` and
+- [x] Add `lint` to master's required status checks (ruleset; today `prettier` and
       `integration`). AFTER #16 merges: required earlier, every PR off master (Dependabot's)
-      waits for a check master cannot run yet.
+      waits for a check master cannot run yet. Done after the merge (ruleset 24375213).
 
 ## ES modules as the recommended path (Gearoid, 2026-10-10)
 
@@ -852,10 +857,10 @@ README section and the CallBack fix). Measured with ts-jest 29.4.14, TypeScript 
       unit 85, pact consumer 16 and provider 1, each identical test by test to 2.0.0; the Jest
       step of `npm test` 14 suites, 152 tests, exit 0; OpenAPI and InSpec (29) pass. The unit
       group alone misses the 100% line threshold at 99.38%, exactly as 2.0.0 does.
-- [ ] Found while writing them: Fusion binds a step only through its own keyword's
+- [x] Found while writing them: Fusion binds a step only through its own keyword's
       definitions (`And I order` needs `And(...)`), as its refusal says, but the README never
-      states it; Cucumber users expect keyword-agnostic matching. A Getting Started note is
-      Gearoid's call.
+      states it; Cucumber users expect keyword-agnostic matching. Now stated in Getting Started
+      and the configuration reference, with the chained form (documentation review, #4).
 
 ## Documentation review: gSmith Sage, nWave documentarist + reviewer, adversarial (2026-10-10)
 
@@ -887,7 +892,7 @@ GherkinTables (fails with an honest TodoList; the fixture's `indexOf` wipes the 
       list split into using / working on. `test/src/todo-list.js`: `includes`, not
       `indexOf`; the repo's own tables feature still passes, now for the right reason.
 - [x] Re-verified: suite 45 suites 1,096 passed; 7 of 7 baselines; tsd; lint; Prettier.
-- [ ] Push and update the PR body.
+- [x] Push and update the PR body (`1739d6b`, `54f3b8f`; CI green).
 
 ## Fresh adversarial review, fuzz and smoke (2026-10-10)
 
@@ -942,10 +947,45 @@ bugs in source. Gearoid chose all four groups:
       E401). Berlin Clock `19c1327`, Node 24.21: one Jest (30.5.2, the peer deduped), BDD 50,
       unit 85, pact 16 + 1 identical to 2.0.0; the Jest step 14 suites, 152 tests; OpenAPI and
       InSpec (29) pass. Trial worktree left for Gearoid.
-- [ ] After merge: add `lint` and the three `compat (...)` checks to master's ruleset.
+- [x] After merge: add `lint` and the three `compat (...)` checks to master's ruleset. Done:
+      it requires `prettier`, `integration`, `lint`, `compat (18.14.0)`, `compat (20.11.0)` and
+      `compat (22)`; nothing else in the ruleset changed.
+
+## After the merge (2026-10-10)
+
+- [x] PR #16 squash-merged as `1fe6a5d` with the linted message (byte-identical on master).
+      Dependabot alert #1 (`uuid`) fixed at the merge; #22 (callsites 4.2.0) closed itself.
+- [x] The release run failed `EINVALIDNPMTOKEN` (401) before tagging: nothing published. npm is
+      restricting 2FA-bypass tokens. Gearoid chose staging over trusted publishing: PR #29
+      (`cfcc532`) sets `npmPublish: false` + `tarballDir`, and a CI step runs `npm stage
+      publish ./release/*.tgz --tag latest` with a "Read and write (stage only)" `NPM_TOKEN`.
+      Rehearsed first (a dry run as a push to master: 3.0.0, no token; the step stages a
+      tarball), which caught `release/x.tgz` being read as a GitHub shorthand.
+- [x] 3.0.0: staged by CI (stage `c702399c`, shasum `9b051e21`), approved by Gearoid with 2FA;
+      npm `latest`, tag `v3.0.0`, GitHub release Latest; the shasum npm serves is the staged
+      one.
+- [x] Berlin Clock upgraded to 3.0.0 (its PR #861, merged `70c4001`): every group identical
+      to 2.0.0, the two `uuid` overrides removed (its `check:overrides` asked for it), CI
+      green. Its `detect-secrets` hook cannot run in a git worktree (Docker mounts only the
+      folder); the scan was run by hand with `.git` mounted, the hook skipped with its own
+      switch, and CI ran it again. Berlin Clock writes ES module syntax but Babel compiles it
+      to CommonJS, so it loads `dist/index.cjs`.
+- [x] Dependabot's `@eslint/js` 10 (#28) failed lint: ESLint 10's recommended set adds
+      `preserve-caught-error` and `no-useless-assignment`, five findings. PR #30 (`fb91d6c`)
+      keeps the parser's error as the refusal's `cause` (test first) and drops three useless
+      initialisers; lints clean under `@eslint/js` 9 and 10. It released 3.0.1 (stage
+      `94aab4cc`), approved by Gearoid. #28 rebased green and merged (`3b451de`).
+- [x] Open Dependabot alerts (8, all development scope) investigated: seven are in the npm
+      CLI's bundled dependencies (semantic-release requires `@semantic-release/npm`, which
+      requires npm; even npm 12.2.0 bundles the same versions), one is `sprintf-js` in Jest's
+      coverage tooling with no patched release. None reaches consumers. Dismissing or
+      leaving them is Gearoid's open call.
+- [x] npm view of 3.0.0 as a consumer: no advisory against the package or its four runtime
+      dependencies; all registry signatures verify; no provenance attestation. Socket: supply
+      chain 79 (2.0.0: 77), driven by the `jest` peer's tree; its only own alert is
+      filesystem access. 3.0.0-beta5's 80 is scan noise (same shipped code; unpublished).
 
 ## Blockers
 
-None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of
-draft and squash-merge with the PR body's message, which releases 3.0.0 through
-semantic-release; Dependabot should then close #22 (callsites 4.2.0) on its own.
+None: delivered. Next work is separate from this plan: provenance for staged releases, the
+open call on the Dependabot alerts, and triage of the 121 mutation survivors.
