@@ -95,7 +95,9 @@ const parseFeature = (featureText) => {
   try {
     return { document: parser.parse(featureText), ids };
   } catch (parseFailure) {
-    throw new Error(`Error parsing feature Gherkin: ${parseFailure.message}`);
+    throw new Error(`Error parsing feature Gherkin: ${parseFailure.message}`, {
+      cause: parseFailure,
+    });
   }
 };
 
@@ -103,7 +105,12 @@ const compilePickles = (document, absoluteFeatureFilePath, ids) => {
   try {
     return gherkin.compile(document, absoluteFeatureFilePath, ids);
   } catch (compileFailure) {
-    throw new Error(`Error parsing feature Gherkin: ${compileFailure.message}`);
+    throw new Error(
+      `Error parsing feature Gherkin: ${compileFailure.message}`,
+      {
+        cause: compileFailure,
+      },
+    );
   }
 };
 

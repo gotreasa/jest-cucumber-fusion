@@ -72,12 +72,21 @@ describe("defensive arms", () => {
   });
 
   test("feature-source: a compile failure after a good parse is refused by name", async () => {
+    const compilerFault = new Error("compiler fault");
     const { loadFeature } = await featureSourceWithCompile(() => {
-      throw new Error("compiler fault");
+      throw compilerFault;
     });
     expect(() => loadFeature(feature, mergeFusionOptions({}))).toThrow(
       "Error parsing feature Gherkin: compiler fault",
     );
+    // The compiler's own error is kept as the cause (ESLint 10's preserve-caught-error, PR #28).
+    let refusal;
+    try {
+      loadFeature(feature, mergeFusionOptions({}));
+    } catch (thrown) {
+      refusal = thrown;
+    }
+    expect(refusal.cause).toBe(compilerFault);
   });
 
   test("feature-source: a pickle step naming no AST step is refused as unresolvable", async () => {

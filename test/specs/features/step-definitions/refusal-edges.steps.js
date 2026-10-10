@@ -41,9 +41,13 @@ const refusalOf = (featurePath) => {
   }, realTest);
   try {
     Fusion(featurePath);
-    return { message: null, registered };
+    return { message: null, cause: null, registered };
   } catch (refusal) {
-    return { message: String(refusal.message), registered };
+    return {
+      message: String(refusal.message),
+      cause: refusal.cause,
+      registered,
+    };
   } finally {
     global.describe = realDescribe;
     global.test = realTest;
@@ -88,6 +92,18 @@ describe("refusal edges", () => {
     expect(notGherkin.message).toMatch(/^Error parsing feature Gherkin: /);
     expect(notGherkin.message).toContain("this line is not Gherkin");
     expect(notGherkin.registered).toEqual({ describe: 0, test: 0 });
+  });
+
+  // The parser's own error is kept as the refusal's cause, so its stack is not lost
+  // (ESLint 10's preserve-caught-error, found by Dependabot's @eslint/js 10 bump, PR #28).
+  test("the parser's own error is kept as the refusal's cause", () => {
+    expect({
+      isError: notGherkin.cause instanceof Error,
+      sameMessage:
+        notGherkin.cause &&
+        notGherkin.message ===
+          `Error parsing feature Gherkin: ${notGherkin.cause.message}`,
+    }).toEqual({ isError: true, sameMessage: true });
   });
 
   test("titles that differ only in letter case are one duplicated title, counted together", () => {
