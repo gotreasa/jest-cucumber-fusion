@@ -206,4 +206,16 @@ describe("starter code", () => {
       String.raw`Given(/^note (\d+)$/, (arg0, docString) => {});`,
     );
   });
+
+  // Found by the triage: a step named once is still read for its argument every time it
+  // appears, so a docstring on its second appearance is not lost.
+  test("a docString parameter is suggested when only a later step with the same text has one", () => {
+    const { refusal } = fusionOf(
+      "Feature: Notes\n" +
+        "  Scenario: Plain\n    Given the note\n" +
+        '  Scenario: With text\n    Given the note\n      """\n      hello\n      """\n',
+      () => {},
+    );
+    expect(refusal).toContain('Given("the note", (docString) => {});');
+  });
 });

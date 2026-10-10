@@ -177,15 +177,24 @@ const starterCodeForShape = (steps) => {
 // are equal, and as ambiguous when one is wider ("(\d+)" beside a decimal capture both match
 // "1"). A step with a table and the same step without one share a shape too; parameters do not
 // make two definitions distinct.
+//
+// A step named once still counts every time it appears: when only a later appearance carries
+// a Gherkin argument, that appearance stands in for the step, so the starter code has the
+// parameter the step will receive. The text is the same, so the entry reads the same.
 const stepsByShape = (unboundSteps) => {
   const groups = new Map();
-  const named = new Set();
+  const named = new Map();
   unboundSteps.forEach((step) => {
     const identity = `${step.keyword}\u0000${step.stepText}`;
-    if (named.has(identity)) return;
-    named.add(identity);
     const shape = shapeOf(step);
+    if (named.has(identity)) {
+      const position = named.get(identity);
+      const group = groups.get(shape);
+      if (group[position].stepArgument == null) group[position] = step;
+      return;
+    }
     if (!groups.has(shape)) groups.set(shape, []);
+    named.set(identity, groups.get(shape).length);
     groups.get(shape).push(step);
   });
   return [...groups.values()];
