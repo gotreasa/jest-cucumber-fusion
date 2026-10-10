@@ -10,12 +10,16 @@ import * as featureSource from "./feature-source.js";
 import * as testRegistration from "./test-registration.js";
 import { shared, replaceShared } from "./shared-state.js";
 
+// Each bucket is keyed by step text or regex source, so it has no prototype: a step whose text
+// is `constructor` or `toString` would otherwise find the inherited property and be refused as
+// a duplicate on its first registration (fresh fuzz of PR #16, 2026-10-10, B2).
+const emptyBucket = () => Object.create(null);
 const emptyStepsDefinition = () => ({
-  given: {},
-  when: {},
-  then: {},
-  and: {},
-  but: {},
+  given: emptyBucket(),
+  when: emptyBucket(),
+  then: emptyBucket(),
+  and: emptyBucket(),
+  but: emptyBucket(),
   before: [],
   after: [],
 });

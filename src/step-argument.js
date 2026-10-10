@@ -21,10 +21,18 @@ const asRowObjects = (dataTable) => {
 
   const columnNames = cellValues(header);
 
+  // defineProperty, not assignment: a column headed `__proto__` would otherwise call the
+  // prototype setter and vanish from the row (fresh fuzz of PR #16, 2026-10-10, B1). The row
+  // stays a plain object, so a consumer's toStrictEqual against a literal still holds.
   return bodyRows.map((row) =>
     cellValues(row).reduce(
       (rowObject, value, columnIndex) =>
-        Object.assign(rowObject, { [columnNames[columnIndex]]: value }),
+        Object.defineProperty(rowObject, columnNames[columnIndex], {
+          value,
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        }),
       {},
     ),
   );
