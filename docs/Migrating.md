@@ -46,7 +46,7 @@ Version 3 runs under the Jest your project already has. Steps files that `requir
 
 Your step files can stay CommonJS. Version 3 is written as ES modules on the latest Gherkin toolchain, and the package ships a CommonJS build beside them: `require` gets that build, so a steps file that `require`s the package works unchanged, with no Jest or Babel configuration. If you write your steps as ES modules, `import` gets the ES module source; run Jest in its ES module mode for that (the README's [Getting Started](../README.md#getting-started) gives the set-up, and recommends ES modules for new projects), on **Node 20.11 or newer**: `@cucumber/gherkin` 42 uses import attributes, which Node 18 and 20.9 cannot parse (`SyntaxError: Unexpected token 'with'`, measured). Mixing the two styles in one project, for example a shared step library written as CommonJS used by step files written as ES modules, works: both copies share one step registry and one global configuration.
 
-Installing the package also brings its own copy of Jest 30, because `jest` is one of its dependencies. When your project uses an older Jest, npm installs that copy alongside yours, under the package's own `node_modules`, and your tests keep running on your version. It costs disk space only.
+`jest` is a peer dependency (`>=27`): the package runs on your project's own Jest and installs no copy of its own. Version 2 listed `jest` as a dependency, so a project on an older Jest also got a nested Jest it never ran. If your project has no `jest` yet, install it beside the package, as [Getting Started](../README.md#getting-started) does; npm 7 and newer would otherwise install the newest Jest for you.
 
 ## What behaves differently?
 

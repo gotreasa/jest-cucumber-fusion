@@ -86,11 +86,26 @@ test("every file the published prepare script runs is in the package", () => {
   expect(scriptFiles.filter((file) => !files.includes(file))).toEqual([]);
 });
 
-// The Node versions the package declares are Jest 30's own, because jest is a runtime dependency
-// and the CommonJS build runs on all of them. The ES module entry needs more (Node 20.11, for
+// Fusion never imports jest: it registers through the runner's globals. So jest is a peer, and
+// the consumer's own Jest is the only one installed, instead of a nested Jest 30 beside an
+// older one (fresh adversarial review of PR #16, 2026-10-10, M2). This repository's own suite
+// still needs it, as a devDependency.
+test("jest is a peer dependency, not a runtime one", () => {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"),
+  );
+  expect({
+    runtime: (manifest.dependencies || {}).jest,
+    peer: (manifest.peerDependencies || {}).jest,
+    development: Boolean((manifest.devDependencies || {}).jest),
+  }).toEqual({ runtime: undefined, peer: ">=27", development: true });
+});
+
+// The Node versions the package declares are Jest 30's own: the CommonJS build runs on all of
+// them, and Jest 30 is the newest major the peer range allows. The ES module entry needs more (Node 20.11, for
 // the import attributes @cucumber/gherkin 42 uses), which docs/Migrating.md states. Found by the
 // PR #16 review round 4 (F2): no engines were declared, and the docs claimed Node 18 for both.
-test("the package declares the Node versions its runtime dependency jest supports", () => {
+test("the package declares the Node versions Jest 30 supports", () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"),
   );
