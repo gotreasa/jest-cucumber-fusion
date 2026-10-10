@@ -21,7 +21,7 @@
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "lint": "eslint . --max-warnings 0",
     "lint:secrets": "secretlint \"**/*\"",
-    "commit": "git-cz",
+    "commit": "czg",
     "semantic-release": "semantic-release",
     "fmt": "npx prettier --write .",
     "prepare": "node scripts/prepare-hooks.js",
@@ -50,7 +50,7 @@
     "@eslint/js": "^10.0.1",
     "@secretlint/secretlint-rule-pattern": "^13.0.7",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
-    "cz-conventional-changelog": "^3.3.0",
+    "czg": "1.14.0",
     "esbuild": "0.28.2",
     "eslint": "^10.12.0",
     "eslint-plugin-jest": "^29.16.6",
@@ -66,11 +66,6 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
   },
   "release": {
     "plugins": [
