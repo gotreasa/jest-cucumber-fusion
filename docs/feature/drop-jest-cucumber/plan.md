@@ -805,6 +805,34 @@ steps need Jest's experimental mode, Node 20.11 and an imported `jest`); proceed
       "Tagged scenarios" is legal. Left, pre-existing: the `...` fragments in Language,
       trailing spaces and an unused `TodoList` in GherkinTables, a `##` page title.
 
+## TypeScript (Gearoid, 2026-10-10)
+
+Asked: "For TypeScript users, how should they get started?", then "Do both on PR #16" (the
+README section and the CallBack fix). Measured with ts-jest 29.4.14, TypeScript 6.0.3, Jest
+30.5.2 on the tarball.
+
+- [x] Found: ts-jest in ES module mode does not type-check. With `module: NodeNext` it warns
+      TS151002 and transpiles only; `ESNext` + `Bundler` did not check either. A planted
+      `const n: number = boolean` passed `npm test`; `tsc --noEmit` caught it (TS2322). In
+      CommonJS mode ts-jest checks during the run.
+- [x] Found: `( count: string ) =>` failed TS2345 under strict, because `CallBack` (unchanged
+      since the DefinitelyTyped original, same in 2.0.0) promised every argument could be a
+      string or a table. Fixed `ffea880`, test first in `test-d`: declared through a method
+      (bivariant parameters), so `string`, two strings, rows and async steps compile, an
+      undeclared argument stays `StepArgument` (now exported), `number` is still refused. An
+      `any[]` callback fails two of the new tsd checks.
+- [x] README "Using TypeScript": install, ES module set-up (recommended; `isolatedModules`,
+      `tsc --noEmit` as a `typecheck` script, why), CommonJS set-up, `moduleNameMapper` for
+      `.js` imports, and a self-contained typed example (feature, `src/launch.ts`, steps).
+      Run from the README's own blocks: ES module and CommonJS, `npm test` 1 passed and
+      `typecheck` exit 0; also with the `//filename:` comment kept in tsconfig.json.
+- [x] Guard: `assert-packaged-consumer.js` installs ts-jest@29, typescript@6 and @types/jest@30
+      after the advisory check and runs an ES module and a CommonJS TypeScript consumer with
+      typed capture, docstring and table: tests 1 passed and `tsc --noEmit` exit 0 each. With
+      the old CallBack it fails: the ES module consumer passes `npm test` but `tsc` reports
+      TS2345 three times, the CommonJS consumer fails too.
+- [x] Suite 45 suites 1,096 passed; tsd; 6 of 6 baselines; lint; Prettier.
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of

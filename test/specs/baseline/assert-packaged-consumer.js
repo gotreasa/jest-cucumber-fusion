@@ -387,6 +387,124 @@ const writeTheDocumentedEsModuleProject = (
   ]);
 };
 
+// Two TypeScript consumers, set up as the README's "Using TypeScript" says: ts-jest's ES module
+// preset with "type": "module" (types checked by `tsc --noEmit`), and ts-jest compiling to
+// CommonJS (types checked during the run too). Each step declares the type it receives: a
+// capture and a docstring as string, a table as rows. Before 2026-10-10 the CallBack type
+// refused those declarations under strict (TS2345). They share the first consumer's
+// node_modules, into which the TypeScript tools are installed after the advisory check.
+const writeTheTypeScriptProject = (directory, installedFrom, style) => {
+  fs.symlinkSync(
+    path.join(installedFrom, "node_modules"),
+    path.join(directory, "node_modules"),
+    "dir",
+  );
+  const esModule = style === "esm";
+  fs.writeFileSync(
+    path.join(directory, "package.json"),
+    `${JSON.stringify(
+      {
+        name: `fusion-typescript-${style}-consumer`,
+        version: "1.0.0",
+        private: true,
+        ...(esModule ? { type: "module" } : {}),
+        scripts: {
+          test: esModule
+            ? "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+            : "jest",
+          typecheck: "tsc --noEmit",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  fs.writeFileSync(
+    path.join(directory, "tsconfig.json"),
+    `${JSON.stringify(
+      {
+        compilerOptions: {
+          target: "ES2022",
+          module: "NodeNext",
+          moduleResolution: "NodeNext",
+          ...(esModule ? { isolatedModules: true } : {}),
+          strict: true,
+          types: ["jest"],
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  const jestConfig = {
+    preset: esModule ? "ts-jest/presets/default-esm" : "ts-jest",
+    testMatch: ["**/*.steps.ts"],
+    moduleNameMapper: { "^(\\.{1,2}/.*)\\.js$": "$1" },
+  };
+  fs.writeFileSync(
+    path.join(directory, "jest.config.js"),
+    `${esModule ? "export default" : "module.exports ="} ${JSON.stringify(
+      jestConfig,
+      null,
+      2,
+    )};\n`,
+  );
+  const write = (name, lines) =>
+    fs.writeFileSync(path.join(directory, name), lines.join("\n"));
+
+  write("rocket.ts", [
+    "export class Rocket {",
+    "  launched = 0;",
+    "  count: number;",
+    "",
+    "  constructor(count: number) {",
+    "    this.count = count;",
+    "  }",
+    "",
+    "  countdown(word: string): void {",
+    '    if (word === "ignition") this.launched = this.count;',
+    "  }",
+    "}",
+    "",
+  ]);
+  write("launch.feature", [
+    "Feature: Typed steps",
+    "",
+    "  Scenario: Launching",
+    "    Given I am launching 3 rockets",
+    "    When the countdown says",
+    '      """',
+    "      ignition",
+    '      """',
+    "    Then the manifest has",
+    "      | name   |",
+    "      | Falcon |",
+    "",
+  ]);
+  write("launch.steps.ts", [
+    'import { Given, When, Then, Fusion } from "@g_package/jest-cucumber-fusion";',
+    'import { Rocket } from "./rocket.js";',
+    "",
+    "let rocket: Rocket;",
+    "",
+    "Given(/^I am launching (\\d+) rockets$/, (count: string) => {",
+    "  rocket = new Rocket(Number(count));",
+    "});",
+    "",
+    'When("the countdown says", (words: string) => {',
+    "  rocket.countdown(words.trim());",
+    "});",
+    "",
+    'Then("the manifest has", (rows: Array<Record<string, string>>) => {',
+    '  expect(rows).toStrictEqual([{ name: "Falcon" }]);',
+    "  expect(rocket.launched).toBe(3);",
+    "});",
+    "",
+    'Fusion("launch.feature");',
+    "",
+  ]);
+};
+
 const treeOf = (projectDirectory) => {
   const listing = run("npm ls", "npm", ["ls", "--all", "--json"], {
     cwd: projectDirectory,
@@ -546,6 +664,55 @@ try {
 
 const { routes, broken } = forbiddenRoutesIn(treeOf(projectDirectory));
 
+// Only now, with the advisory check's tree read, the TypeScript tools join the shared
+// node_modules, so that check stays about what Fusion itself brings.
+const typeScriptTools = run(
+  "npm install of the TypeScript tools",
+  "npm",
+  [
+    "install",
+    "--no-audit",
+    "--no-fund",
+    "ts-jest@29",
+    "typescript@6",
+    "@types/jest@30",
+  ],
+  { cwd: projectDirectory },
+);
+if (typeScriptTools.status !== 0) {
+  cannotObserve(
+    "npm install of the TypeScript tools",
+    `npm install exited ${typeScriptTools.status}`,
+    "without ts-jest and typescript the TypeScript consumers cannot be run at all",
+    `npm said:\n${(typeScriptTools.stderr || typeScriptTools.stdout || "").trim()}`,
+  );
+}
+const typeScriptRun = (style) => {
+  const directory = path.join(workspace, `typescript-${style}-project`);
+  fs.mkdirSync(directory);
+  writeTheTypeScriptProject(directory, projectDirectory, style);
+  const tests = run(
+    `the TypeScript ${style} consumer`,
+    "npm",
+    ["test", "--silent", "--", "--coverage=false", "--json"],
+    { cwd: directory, env: documentedEnvironment },
+  );
+  let passed = null;
+  try {
+    passed = JSON.parse(tests.stdout).numPassedTests;
+  } catch {
+    passed = null;
+  }
+  const types = run(
+    `tsc --noEmit in the TypeScript ${style} consumer`,
+    "npm",
+    ["run", "--silent", "typecheck"],
+    { cwd: directory },
+  );
+  return { style, tests, passed, types };
+};
+const typeScriptRuns = [typeScriptRun("esm"), typeScriptRun("cjs")];
+
 if (broken.length > 0) {
   cannotObserve(
     "npm ls in the consumer project",
@@ -643,6 +810,28 @@ if (
   );
 }
 
+typeScriptRuns
+  .filter(
+    ({ tests, passed, types }) =>
+      tests.status !== 0 || passed !== 1 || types.status !== 0,
+  )
+  .forEach(({ style, tests, passed, types }) =>
+    failures.push(
+      `WHAT: the TypeScript ${style} consumer set up as the README's "Using TypeScript" says\n` +
+        `          gave npm test exit ${tests.status} with ${passed} passed, and tsc --noEmit\n` +
+        `          exit ${types.status}; expected 0, 1 passed and 0.\n` +
+        "    WHY:  a TypeScript reader copies that set-up as written, with steps that declare the\n" +
+        "          argument types they receive. A refusal there (TS2345 on a typed capture) or a\n" +
+        "          run that finds no tests means the documentation or the types are wrong.\n" +
+        "    HOW:  keep src/index.d.ts's CallBack accepting declared string and table arguments\n" +
+        "          (test-d/index.test-d.ts), and keep the README section and this consumer in step.\n" +
+        "    npm test said:\n" +
+        `${(tests.stderr || "").trim().split("\n").slice(-15).join("\n")}\n` +
+        "    tsc said:\n" +
+        `${(types.stdout || types.stderr || "").trim()}`,
+    ),
+  );
+
 if (routes.length > 0) {
   failures.push(
     `WHAT: ${routes.length} path(s) to an advisory carrier in the installed consumer tree:\n` +
@@ -672,6 +861,7 @@ console.log(
     "  mixed:            exit 0, a require()ing setup script's global reaches importing steps\n" +
     "  shared library:   exit 0, a CommonJS step library's steps and hook serve an ES module file\n" +
     "  README ES module: exit 0, 1 passed and 1 skipped, set up as the README documents\n" +
+    "  TypeScript:       ES module and CommonJS consumers, typed steps: tests and tsc exit 0\n" +
     `  names refused:    ${FORBIDDEN.join(
       ", ",
     )}, absent from the whole installed tree\n` +

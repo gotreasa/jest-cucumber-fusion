@@ -201,7 +201,7 @@ npm test
 
 Jest reports one test for the scenario, named after it, and fails it at the first step that fails.
 
-TypeScript finds the matching type definitions with no configuration, for ES modules and CommonJS alike.
+Writing your steps in TypeScript? See [Using TypeScript](#using-typescript).
 
 ## Adding coverage
 Since we're using jest, it is very easy to generate the code coverage of your Cucumber test:
@@ -395,6 +395,138 @@ module.exports = [
 **Mixing the two styles** works. A CommonJS shared step library can serve ES module step files, and a CommonJS setup script can configure ES module steps: both styles share one set of step definitions and one global configuration. An ES module imports a CommonJS file by its full name, for example `import './shared-steps.cjs'`.
 
 The other pages in this documentation show ES modules. To use one of their examples in CommonJS, turn each `import { … } from '…'` into `const { … } = require( '…' )` and each `export` into `module.exports`.
+
+## Using TypeScript
+
+Fusion ships its type definitions, and TypeScript finds the right ones for ES modules and CommonJS with no configuration. To run step definition files written in TypeScript, Jest needs a transform. [ts-jest](https://kulshekhar.github.io/ts-jest/) is the usual one.
+
+```
+npm install --save-dev jest ts-jest typescript @types/jest @g_package/jest-cucumber-fusion
+```
+
+### ES modules (recommended)
+
+```json
+"type": "module",
+"scripts": {
+  "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+  "typecheck": "tsc --noEmit"
+}
+```
+
+```json
+//filename: tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "isolatedModules": true,
+    "strict": true,
+    "types": [ "jest" ]
+  }
+}
+```
+
+```javascript
+//filename: jest.config.js
+export default {
+  preset: 'ts-jest/presets/default-esm',
+  testMatch: [ '**/*.steps.ts' ],
+  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
+}
+```
+
+**Run `npm run typecheck` as well as `npm test`, for example in CI.** In ES module mode ts-jest only strips the types and does not check them, so a type error does not fail `npm test`; `tsc --noEmit` is what reports it. (`isolatedModules` tells ts-jest that this is expected. Without it, ts-jest warns `TS151002` and still does not check.)
+
+`moduleNameMapper` lets your imports keep the `.js` extension that ES modules need, while Jest loads the `.ts` file: `import { Rocket } from '../../src/rocket.js'` loads `src/rocket.ts`.
+
+### CommonJS
+
+Leave out `"type": "module"` and `isolatedModules`, and use ts-jest's default preset:
+
+```json
+"scripts": {
+  "test": "jest",
+  "typecheck": "tsc --noEmit"
+}
+```
+
+```javascript
+//filename: jest.config.js
+module.exports = {
+  preset: 'ts-jest',
+  testMatch: [ '**/*.steps.ts' ],
+  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
+}
+```
+
+Here ts-jest checks types while it runs the tests, so a type error fails `npm test` too.
+
+### Typed step definitions
+
+The [Getting Started](#getting-started) example works as TypeScript once its files end in `.ts`. A step may also declare the type of each argument it receives: a capture or a docstring arrives as a `string`, and a data table as an `Array<Record<string, string>>` of its rows. For example, with this feature:
+
+```gherkin
+###filename: test/features/launch.feature
+Feature: Launch
+
+Scenario: Launching a batch of rockets
+  Given I am launching 3 rockets
+  When the countdown says
+    """
+    ignition
+    """
+  Then the manifest has
+    | name   |
+    | Falcon |
+```
+
+and this code under test:
+
+```typescript
+//filename: src/launch.ts
+export class Launch {
+    launched = 0
+    count: number
+
+    constructor( count: number ) {
+        this.count = count
+    }
+
+    countdown( word: string ): void {
+        if ( word === 'ignition' ) this.launched = this.count
+    }
+}
+```
+
+the steps declare a `string` for the capture and the docstring, and the rows for the table:
+
+```typescript
+//filename: test/features/launch.steps.ts
+import { Given, When, Then, Fusion } from '@g_package/jest-cucumber-fusion'
+
+import { Launch } from '../../src/launch.js'
+
+let launch: Launch
+
+Given( /^I am launching (\d+) rockets$/, ( count: string ) => {
+    launch = new Launch( Number( count ) )
+} )
+
+When( 'the countdown says', ( words: string ) => {
+    launch.countdown( words.trim() )
+} )
+
+Then( 'the manifest has', ( rows: Array<Record<string, string>> ) => {
+    expect( rows ).toStrictEqual( [ { name: 'Falcon' } ] )
+    expect( launch.launched ).toBe( 3 )
+} )
+
+Fusion( 'launch.feature' )
+```
+
+An argument you leave undeclared has the type `StepArgument` (`string | Array<Record<string, string>>`), which you can import from the package.
 
 ## Additional Documentation 
 

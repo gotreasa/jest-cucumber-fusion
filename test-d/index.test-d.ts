@@ -1,5 +1,5 @@
 import { expectType, expectError } from "tsd";
-import { Given, When, Then, And, But, StepChain } from "..";
+import { Given, When, Then, And, But, StepChain, StepArgument } from "..";
 
 // Normal two-argument form still type-checks and returns a chain.
 expectType<StepChain>(Given("I am set up", () => {}));
@@ -33,9 +33,10 @@ expectType<StepChain>(
 expectType<StepChain>(Given("an async step", async (text: string) => {}));
 
 // An argument left undeclared is still either kind, so using it as a string
-// needs a check first.
+// needs a check first. The package exports that union as StepArgument.
 Given(/^(.*)$/, (value) => {
   expectType<string | Array<Record<string, string>>>(value);
+  expectType<StepArgument>(value);
 });
 
 // A type Fusion never passes is still refused.
