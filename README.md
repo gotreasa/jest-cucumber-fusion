@@ -32,18 +32,54 @@ With Jest-Cucumber-Fusion, it really takes only the minimal code possible:
 
 ## Getting Started
 
-### Install Jest Cucumber Fusion:
+These steps set up a project whose files are CommonJS (they use `require`), which needs no other set-up. For steps written as ES modules, see [Using ES modules](#using-es-modules).
+
+### Install Jest and Jest Cucumber Fusion:
 
 ```
-npm install @g_package/jest-cucumber-fusion --save-dev
+npm install --save-dev jest @g_package/jest-cucumber-fusion
 ```
 
 Coming from `jest-cucumber-fusion` 0.8.x or from version 2 of this package? Your feature and step definition files keep their shape; the import name changes, and several behaviours that used to pass silently now fail with a message saying what to fix. [Migrating to version 3](./docs/Migrating.md) lists each change, observed under both versions.
 
+### Lay out your project
+
+The examples below use this layout. Any layout works, as long as each `require` path and each `Fusion` path matches where your files are.
+
+```
+your-project/
+├── package.json
+├── src/
+│   └── rocket.js                      the code under test
+└── test/
+    └── features/
+        ├── rocket-launching.feature
+        └── rocket-launching.steps.js
+```
+
+The code under test in these examples is a small class of your own:
+
+```javascript
+//filename: src/rocket.js
+class Rocket {
+    constructor() {
+        this.isInSpace = false
+        this.boostersLanded = false
+    }
+
+    launch() {
+        this.isInSpace = true
+        this.boostersLanded = true
+    }
+}
+
+module.exports = { Rocket }
+```
+
 ### Add a Feature file:
 
 ```gherkin
-###filename: rocket-launching.feature
+###filename: test/features/rocket-launching.feature
 Feature: Rocket Launching
 
 Scenario: Launching a SpaceX rocket
@@ -57,24 +93,26 @@ Scenario: Launching a SpaceX rocket
 ### Add the following to your package.json configuration:
 
 ```javascript
+"scripts": { "test": "jest" },
 "jest": { "testMatch": [ "**/*.steps.js" ] }
 ```
 
+`testMatch` tells Jest that your step definition files are the test files. Run the tests with `npm test`.
 
-### Add a your Cucumber Step definition file and load Fusion
+### Add a Cucumber step definition file and load Fusion
 ```javascript
-//filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+//filename: test/features/rocket-launching.steps.js
+const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 ```
 
-The examples on this page are CommonJS, which needs no other set-up. To write your steps as ES modules instead, see [Using ES modules](#using-es-modules).
+Import only the keywords your steps use. `But` is also available.
 
 ### Load any dependency you need to do your test
 
 ```javascript
-//filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+//filename: test/features/rocket-launching.steps.js
+const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../src/rocket' )
 let rocket
@@ -84,8 +122,8 @@ let rocket
 ### Add steps definitions:
 
 ```javascript
-//filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+//filename: test/features/rocket-launching.steps.js
+const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../src/rocket' )
 let rocket
@@ -112,10 +150,10 @@ And( 'nobody should doubt me ever again', () => {
 ```
 
 ### Adding the Fusion() call at the end of the Step definition file
-You have to match it with your Cucumber Feature definition file:
+You have to match it with your Cucumber Feature definition file. The path is relative to the step definition file, so a feature file beside it is named on its own:
 ```javascript
-//filename: rocket-launching.steps.js
-const { Given, When, Then, And, But, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+//filename: test/features/rocket-launching.steps.js
+const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
 const { Rocket } = require( '../../src/rocket' )
 let rocket
@@ -143,6 +181,14 @@ And( 'nobody should doubt me ever again', () => {
 
 Fusion( 'rocket-launching.feature' )
 ```
+
+### Run the tests
+
+```
+npm test
+```
+
+Jest reports one test for the scenario, named after it, and fails it at the first step that fails.
 
 ## Adding coverage
 Since we're using jest, it is very easy to generate the code coverage of your Cucumber test:
@@ -182,6 +228,49 @@ A per-call option still wins for its own file. See [Configuration options](./doc
 
 If you are coming from version 2, global configuration used to go through `jest-cucumber`'s own `setJestCucumberConfiguration`. That package is no longer a dependency, so the import moves to `setFusionConfiguration` from this package; the options object is the same shape.
 
+## Linting with ESLint
+
+[eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) gives ESLint Jest's globals, such as `expect`, and its rules. One rule needs to be told about Fusion. `jest/no-standalone-expect` reports every `expect` that is not inside a `test` or `it` block, and in a step definition file every `expect` sits inside `Then`, `And` or another step function instead. Each step function and each `Before` and `After` hook runs inside the test that Fusion makes for its scenario, so tell the rule to treat them as test blocks.
+
+Install ESLint and the plugin:
+
+```
+npm install --save-dev eslint @eslint/js globals eslint-plugin-jest
+```
+
+Then add an `eslint.config.js` to your project:
+
+```javascript
+//filename: eslint.config.js
+const js = require( '@eslint/js' )
+const globals = require( 'globals' )
+const jest = require( 'eslint-plugin-jest' )
+
+module.exports = [
+  js.configs.recommended,
+  {
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+  },
+  {
+    files: [ '**/*.steps.js' ],
+    ...jest.configs[ 'flat/recommended' ],
+    rules: {
+      ...jest.configs[ 'flat/recommended' ].rules,
+      // Fusion runs each step and hook inside the test it makes for the scenario.
+      'jest/no-standalone-expect': [ 'error', {
+        additionalTestBlockFunctions: [ 'Given', 'When', 'Then', 'And', 'But', 'Before', 'After' ],
+      } ],
+    },
+  },
+]
+```
+
+Run it with `npx eslint .`. Without the `jest/no-standalone-expect` options, every `expect` in the steps file above is reported as `Expect must be inside of a test block`. With them, an `expect` that really is outside a step, a hook or a test is still reported.
+
+If your shared step files are not named `*.steps.js` (see [Re-using step definitions](./docs/ReusingStepDefinitions.md)), add their names to `files`.
+
+This configuration is for CommonJS files. If your project is `"type": "module"` (see [Using ES modules](#using-es-modules)), two things change. Name the file `eslint.config.cjs`, because in that project an `eslint.config.js` is read as an ES module, where `require` does not exist. And set `sourceType: 'module'`, so that ESLint can parse the `import` lines in your steps.
+
 ## Using ES modules
 
 The package ships both module styles: `require` gets a CommonJS build and `import` gets the ES module source. You do not have to choose one style for the whole project. A steps file, a shared step file and a `setupFiles` script may each use either style, and they share one set of step definitions and one global configuration.
@@ -210,8 +299,8 @@ Node prints an `ExperimentalWarning` about the flag on each run. That is expecte
 Then import the same names that the CommonJS examples require:
 
 ```javascript
-//filename: rocket-launching.steps.js (in a package with "type": "module")
-import { Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
+//filename: test/features/rocket-launching.steps.js (in a package with "type": "module")
+import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 import { Rocket } from '../../src/rocket.js'
 ```
 

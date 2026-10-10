@@ -727,6 +727,34 @@ them on PR #16". README and Migrating explained the split, but:
       were run by hand on the tarball: 3 of 3 suites pass.
 - [x] Suite 45 suites, 1,096 passed, 3 skipped, 100% lines; 6 of 6 baselines; lint, Prettier.
 
+## A new CommonJS user's walk through the docs, and ESLint (Gearoid, 2026-10-10)
+
+Asked: fix the "Add a your" typo, walk the docs as a new user with a CommonJS project, and
+document ESLint with `expect` inside `Then`/`And` (as this repo's `eslint.config.cjs` does).
+Walked the README literally in a fresh `npm init` project on the packed tarball:
+
+- [x] W1: the README never said how to run the tests (`npm init`'s `npm test` exits 1;
+      `npx jest` worked only because Jest is a dependency). Now: install `jest` too, a
+      `"test": "jest"` script, and a "Run the tests" step.
+- [x] W2: the steps required `'../../src/rocket'` with no layout and no `Rocket`, so a literal
+      follower got `Cannot find module '../../src/rocket'`. Now: a layout tree, a
+      `src/rocket.js`, every `//filename:` names its path, and the `Fusion` path is stated as
+      relative to the steps file.
+- [x] W3: the finished steps file imported `But` unused (`no-unused-vars` under ESLint's
+      recommended rules). Removed from the README examples, with a note that `But` exists.
+- [x] Typo: "Add a your Cucumber Step definition file" is "Add a Cucumber step definition
+      file".
+- [x] ESLint: a "Linting with ESLint" section. Measured on the README's own text (each
+      `filename:` block extracted into a fresh project): eslint-plugin-jest's
+      `flat/recommended` alone reports 3 `Expect must be inside of a test block` on the steps
+      file (6 with `Before`/`After` hooks); `additionalTestBlockFunctions` with the five step
+      keywords and the two hooks clears them; a real standalone `expect` is still reported;
+      `npm test` 1 passed, `npx eslint .` exit 0. For `"type": "module"`: `eslint.config.js`
+      fails (`require is not defined`), `eslint.config.cjs` loads, and ES module steps need
+      `sourceType: 'module'` (parsing error otherwise). The note says both.
+- [x] The rest of the CommonJS flow worked as written: coverage (100% of `rocket.js`) and the
+      `setupFiles` global (its `@smoke` filter skips the untagged scenario).
+
 ## Blockers
 
 None. PR #16 is open with CI green and its body current. Next is Gearoid's: take it out of
