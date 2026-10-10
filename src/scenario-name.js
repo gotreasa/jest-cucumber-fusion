@@ -73,6 +73,7 @@ const answerFromTemplate = (loadedFeature, scenario, scenarioNameTemplate) => {
   try {
     return scenarioNameTemplate(templateVariablesFor(loadedFeature, scenario));
   } catch (templateFailure) {
+    // A consumer's template can throw anything; describeThrown quotes anything.
     throw refuseUnusableName(
       scenario.title,
       `the scenarioNameTemplate threw: ${describeThrown(templateFailure)}`,

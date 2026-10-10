@@ -28,6 +28,9 @@ const result = await build({
   platform: "node",
   format: "cjs",
   target: "node18",
+  // esbuild would otherwise read jsconfig.json, which exists only for the type check, and its
+  // "strict" would add a "use strict" line to the bundle (PR #36 review).
+  tsconfigRaw: "{}",
   define: { "import.meta.url": "__fusionModuleUrl" },
   banner: {
     js: 'const __fusionModuleUrl = require("url").pathToFileURL(__filename).href;',
