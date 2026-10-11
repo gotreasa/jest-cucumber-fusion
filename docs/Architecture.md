@@ -1,10 +1,10 @@
 # Architecture
 
-This page is for contributors: how Fusion is built and why. To use the package, start with the [README](../README.md#getting-started). To work on it, clone the repository and follow [Running the examples](./RunningTheExamples.md) to get the suite running, then read on.
+This page is for contributors: how Fusion is built and why. To use the package, start with the [README](../README.md#getting-started). To work on it, clone the repository and follow [Running the test suite](./RunningTheExamples.md) to get the suite running, then read on.
 
 ## 1. Overview
 
-jest-cucumber-fusion lets you write Gherkin feature files and run them as part of an ordinary Jest run, with coverage, and with no separate Cucumber runner process.
+Jest Cucumber Fusion lets you write Gherkin feature files and run them as part of an ordinary Jest run, with coverage, and with no separate Cucumber runner process.
 
 You write step definitions in a `.steps.js` file using the verbs `Given`, `When`, `Then`, `And` and `But`, add `Before` and `After` hooks if you need them, and call `Fusion("your.feature")`. Fusion then owns the whole lifecycle itself: it resolves and reads the feature file, parses the Gherkin, compiles it into pickles (which expands each Scenario Outline into one scenario per Examples row and folds Backgrounds and Rules in), works out which of your definitions owns each step, and registers one Jest `describe` for the feature with one `test` for each scenario. All of that happens synchronously, while Jest is still collecting your test file, so a problem with your feature file or your step definitions is reported before any test runs.
 
@@ -28,7 +28,7 @@ All four publish ES modules only, and Jest cannot `require` an ES module. New pr
 
 A consumer who mixes the two, for example a `setupFiles` script that `require`s Fusion and steps that `import` it, or a shared step library written as CommonJS used by step files written as ES modules, loads two copies. So everything the copies must share, the step and hook registry and the global configuration, lives in `shared-state.js` on `globalThis`: steps or a global registered through one copy reach the other. The packaged-consumer baseline runs all four shapes against the real tarball. Everything else the package needs comes from Node itself (`fs`, `path`, `url` and `util`) and from Jest's own globals.
 
-Until 3.0.0 the package was CommonJS with no build step, pinned to the last cucumber releases a `require` could load (gherkin 39, messages 32, tag-expressions 9, callsites 3). A spike on 2026-10-09 measured the alternatives on packed builds: an ES module only package broke every CommonJS consumer, while the dual package ran them all unchanged.
+Up to 2.0.0 the package was CommonJS with no build step, and reached Gherkin through `jest-cucumber` 4.5 (`@cucumber/gherkin` 28). The first builds of 3.0.0, before release, stayed CommonJS by pinning the last cucumber releases a `require` could load (gherkin 39, messages 32, tag-expressions 9, callsites 3). A spike on 2026-10-09 measured the alternatives on packed builds: an ES module only package broke every CommonJS consumer, while the dual package ran them all unchanged.
 
 ## 2. Context
 
@@ -40,7 +40,7 @@ flowchart LR
   steps["Consumer steps file (*.steps.js), required or imported"]
   setup["Optional setupFiles script, calls setFusionConfiguration"]
   features["Feature files (Gherkin)"]
-  jest["Jest 30, on any Node the engines field allows"]
+  jest["Jest 27 or newer, the consumer's own"]
   fusion["jest-cucumber-fusion"]
   gherkin["@cucumber/gherkin 42.0.1"]
   messages["@cucumber/messages 34.2.1"]
@@ -166,7 +166,7 @@ sequenceDiagram
 
     Jest->>Steps: load the file
     Steps->>Fusion: Given, When, Then, And, But, Before, After
-    Note over Fusion: every call writes into the module-level registry,<br/>and a duplicate matcher in the same bucket is refused here
+    Note over Fusion: every call writes into the shared registry (shared-state, on globalThis),<br/>and a duplicate matcher in the same bucket is refused here
     Steps->>Fusion: Fusion with a feature path and options
     Fusion->>Source: resolveFeaturePath
     Source-->>Fusion: absolute path, resolved against the first calling file outside the package
@@ -192,7 +192,7 @@ sequenceDiagram
     Fusion->>Fusion: reset the registry in the finally block, on return and on throw alike
 ```
 
-Details worth knowing as a consumer:
+Collection keeps these rules. The guide pages ([Configuration options](./AdditionalConfiguration.md) and [Scenario outlines](./ScenarioOutlines.md)) say what each means for a user; these are the reasons behind them:
 
 - **The feature path is resolved against the file that called `Fusion`**, found as the first stack frame outside the package, so a wrapper inside the package cannot retarget it. With no such frame, the path resolves against the working directory.
 - **Registration order is plain scenarios first, then Examples rows**, each group in the order the feature file declares them, with Rule-nested scenarios flattened into the same two groups. This is what keeps generated test names stable for an existing CI history.

@@ -284,8 +284,8 @@ const writeTheConsumerProject = (projectDirectory) => {
 
 // A second consumer, set up exactly as the README's Getting Started (ES modules) says: "type":
 // "module", the README's testMatch, the documented `npm test` script, an ES module setupFiles
-// script, a shared step file that exports a function (docs/ReusingStepDefinitions.md), a
-// relative import with its extension, and `jest` imported from @jest/globals. The README's
+// script (docs/AdditionalConfiguration.md), a shared step file that exports a function
+// (docs/ReusingStepDefinitions.md), a relative import with its extension, and `jest` imported from @jest/globals. The README's
 // earlier ES module example named its file .steps.mjs beside a testMatch of **/*.steps.js, so
 // following it ran no tests at all (found 2026-10-10). It shares the first consumer's
 // node_modules through a link, so it needs no second install.
@@ -387,7 +387,7 @@ const writeTheDocumentedEsModuleProject = (
   ]);
 };
 
-// Two TypeScript consumers, set up as the README's "Using TypeScript" says: ts-jest's ES module
+// Two TypeScript consumers, set up as docs/TypeScript.md says: ts-jest's ES module
 // preset with "type": "module" (types checked by `tsc --noEmit`), and ts-jest compiling to
 // CommonJS (types checked during the run too). Each step declares the type it receives: a
 // capture and a docstring as string, a table as rows. Before 2026-10-10 the CallBack type
@@ -432,7 +432,7 @@ const writeTheTypeScriptProject = (directory, installedFrom, style) => {
               strict: true,
               types: ["jest"],
             }
-          : // CommonJS, as the README says: with NodeNext ts-jest warns TS151002.
+          : // CommonJS, as docs/TypeScript.md says: with NodeNext ts-jest warns TS151002.
             {
               target: "ES2022",
               module: "CommonJS",
@@ -825,14 +825,14 @@ typeScriptRuns
   )
   .forEach(({ style, tests, passed, types }) =>
     failures.push(
-      `WHAT: the TypeScript ${style} consumer set up as the README's "Using TypeScript" says\n` +
+      `WHAT: the TypeScript ${style} consumer set up as docs/TypeScript.md says\n` +
         `          gave npm test exit ${tests.status} with ${passed} passed, and tsc --noEmit\n` +
         `          exit ${types.status}; expected 0, 1 passed and 0.\n` +
         "    WHY:  a TypeScript reader copies that set-up as written, with steps that declare the\n" +
         "          argument types they receive. A refusal there (TS2345 on a typed capture) or a\n" +
         "          run that finds no tests means the documentation or the types are wrong.\n" +
         "    HOW:  keep src/index.d.ts's CallBack accepting declared string and table arguments\n" +
-        "          (test-d/index.test-d.ts), and keep the README section and this consumer in step.\n" +
+        "          (test-d/index.test-d.ts), and keep docs/TypeScript.md and this consumer in step.\n" +
         "    npm test said:\n" +
         `${(tests.stderr || "").trim().split("\n").slice(-15).join("\n")}\n` +
         "    tsc said:\n" +

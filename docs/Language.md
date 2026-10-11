@@ -1,8 +1,8 @@
 # Language
 
-The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
-You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into over 70 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
+This page is for writing feature files in a language other than English. Its example is the shop owner's side of the shop from Getting Started, as on [Scenario outlines](./ScenarioOutlines.md). You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into 80 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
 
 A feature file in Dutch:
 
@@ -11,22 +11,23 @@ A feature file in Dutch:
 # filename: test/features/online-verkopen.feature
 Functionaliteit: Online verkopen
 
-    Scenario: t-shirt verkopen
-        Gegeven ik heb een t-shirt
-        Als ik een t-shirt wil verkopen
-        Dan ontvang ik €22
-        En ben ik blij
-        Maar heb ik geen t-shirts over
+    Scenario: Een koffiemok verkopen
+        Gegeven ik heb een koffiemok te koop
+        Als ik de koffiemok verkoop
+        Dan ontvang ik €8
+        En is de verkoop geregistreerd
+        Maar heb ik geen koffiemokken meer te koop
 ```
 
 The code under test:
 
 ```javascript
-// filename: src/online-sales.js
-const PRICES = { 'Rick Astley t-shirt': 22 }
+// filename: src/shop.js
+const PRICES = { 'coffee mug': 8 }
 
-export class OnlineSales {
+export class Shop {
     listed = []
+    sold = []
 
     listItem( item ) {
         this.listed.push( item )
@@ -34,6 +35,7 @@ export class OnlineSales {
 
     sellItem( item ) {
         this.listed = this.listed.filter( ( listed ) => listed !== item )
+        this.sold.push( item )
         return PRICES[ item ]
     }
 }
@@ -45,33 +47,33 @@ The step definitions use the usual verbs. Each translated keyword binds through 
 // filename: test/features/online-verkopen.steps.js
 import { Before, Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
 
-import { OnlineSales } from '../../src/online-sales.js'
+import { Shop } from '../../src/shop.js'
 
-let onlineSales
+let shop
 let salesPrice
 
 Before( () => {
-    onlineSales = new OnlineSales()
+    shop = new Shop()
 } )
 
-Given( 'ik heb een t-shirt', () => {
-    onlineSales.listItem( 'Rick Astley t-shirt' )
+Given( 'ik heb een koffiemok te koop', () => {
+    shop.listItem( 'coffee mug' )
 } )
 
-When( 'ik een t-shirt wil verkopen', () => {
-    salesPrice = onlineSales.sellItem( 'Rick Astley t-shirt' )
+When( 'ik de koffiemok verkoop', () => {
+    salesPrice = shop.sellItem( 'coffee mug' )
 } )
 
 Then( /^ontvang ik €(\d+)$/, ( price ) => {
     expect( salesPrice ).toBe( Number( price ) )
 } )
 
-And( 'ben ik blij', () => {
-    expect( salesPrice ).toBeGreaterThan( 0 )
+And( 'is de verkoop geregistreerd', () => {
+    expect( shop.sold ).toEqual( [ 'coffee mug' ] )
 } )
 
-But( 'heb ik geen t-shirts over', () => {
-    expect( onlineSales.listed ).toHaveLength( 0 )
+But( 'heb ik geen koffiemokken meer te koop', () => {
+    expect( shop.listed ).toHaveLength( 0 )
 } )
 
 Fusion( 'online-verkopen.feature' )
@@ -80,47 +82,28 @@ Fusion( 'online-verkopen.feature' )
 You can also import the verbs under the Dutch keywords, so the step file reads like the feature. They are the same functions, so `Gegeven` registers a `Given` definition:
 
 ```javascript
-// filename: test/features/online-verkopen-vertaald.steps.js
-import {
-    Before,
-    Given as Gegeven,
-    When as Als,
-    Then as Dan,
-    And as En,
-    But as Maar,
-    Fusion,
-} from '@g_package/jest-cucumber-fusion'
+import { Given as Gegeven, When as Als } from '@g_package/jest-cucumber-fusion'
 
-import { OnlineSales } from '../../src/online-sales.js'
-
-let onlineSales
-let salesPrice
-
-Before( () => {
-    onlineSales = new OnlineSales()
+Gegeven( 'ik heb een koffiemok te koop', () => {
+    shop.listItem( 'coffee mug' )
 } )
 
-Gegeven( 'ik heb een t-shirt', () => {
-    onlineSales.listItem( 'Rick Astley t-shirt' )
+Als( 'ik de koffiemok verkoop', () => {
+    salesPrice = shop.sellItem( 'coffee mug' )
 } )
-
-Als( 'ik een t-shirt wil verkopen', () => {
-    salesPrice = onlineSales.sellItem( 'Rick Astley t-shirt' )
-} )
-
-Dan( /^ontvang ik €(\d+)$/, ( price ) => {
-    expect( salesPrice ).toBe( Number( price ) )
-} )
-
-En( 'ben ik blij', () => {
-    expect( salesPrice ).toBeGreaterThan( 0 )
-} )
-
-Maar( 'heb ik geen t-shirts over', () => {
-    expect( onlineSales.listed ).toHaveLength( 0 )
-} )
-
-Fusion( 'online-verkopen.feature' )
 ```
 
-Dutch has two words for `When`, `Als` and `Wanneer`, and both bind through `When`. In CommonJS the renaming is done while destructuring: `const { Given: Gegeven } = require( '@g_package/jest-cucumber-fusion' )`.
+Dutch has two words for `Given`, `Gegeven` and `Stel`, and two for `When`, `Als` and `Wanneer`: each pair binds through the same verb. In CommonJS the renaming is done while destructuring: `const { Given: Gegeven } = require( '@g_package/jest-cucumber-fusion' )`.
+
+## Other words for the keywords in English
+
+English has synonyms too, and a feature file can use any of them:
+
+| Keyword | Also written |
+|---|---|
+| `Feature` | `Business Need`, `Ability` |
+| `Scenario` | `Example` |
+| `Scenario Outline` | `Scenario Template` |
+| `Examples` | `Scenarios` |
+
+They change nothing else: an `Example` runs exactly as a `Scenario` does. Gherkin also lists `*` as a step keyword in English and nearly every other language, but Fusion refuses a `*` step, because it binds a step through its keyword: write it with `Given`, `When`, `Then`, `And` or `But`.
