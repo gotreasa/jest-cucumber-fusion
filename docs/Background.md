@@ -108,4 +108,4 @@ This runs two tests: `Paying by card`, and `Adding a gift message`. Each test ru
 
 `I pay by card` is defined twice because the two scenarios write it with different keywords: `When` in the first, `And` in the second. To register one definition under both, use the chained form, `When( And( 'I pay by card', fn ) )` (see [Configuration options](./AdditionalConfiguration.md#what-the-package-exports)).
 
-Next: [Gherkin tables](./GherkinTables.md), for steps that carry a table.
+Next: [Rule](./Rule.md), for grouping scenarios under the business rule they illustrate.

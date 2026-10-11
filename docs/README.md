@@ -2,7 +2,7 @@
 
 New here? Start with the [README](../README.md): it sets up a project from nothing and walks through a first feature file and its step definitions, then lists the differences from Cucumber. For a bug, a feature request or a question, [open an issue](https://github.com/gotreasa/jest-cucumber-fusion/issues/new/choose); [Getting help](../SUPPORT.md) says which form fits, and the [security policy](../SECURITY.md) covers vulnerabilities.
 
-**A reading order for the guides.** After the README, read [Step definition arguments](./StepDefinitionArguments.md), [Background](./Background.md), [Gherkin tables](./GherkinTables.md), [Scenario outlines](./ScenarioOutlines.md), [Re-using step definitions](./ReusingStepDefinitions.md) and [Configuration options](./AdditionalConfiguration.md), in that order. Each ends with a link to the next. The other pages are for when you need them.
+**A reading order for the guides.** After the README, read [Step definition arguments](./StepDefinitionArguments.md), [Background](./Background.md), [Rule](./Rule.md), [Gherkin tables](./GherkinTables.md), [Scenario outlines](./ScenarioOutlines.md), [Re-using step definitions](./ReusingStepDefinitions.md) and [Configuration options](./AdditionalConfiguration.md), in that order. Each ends with a link to the next. The other pages are for when you need them.
 
 ## Writing features and steps
 
@@ -11,6 +11,7 @@ New here? Start with the [README](../README.md): it sets up a project from nothi
 | [Hooks](../README.md#hooks) | run code before or after every scenario |
 | [Step definition arguments](./StepDefinitionArguments.md) | capture values from a step's text with a regular expression, or read a docstring |
 | [Background](./Background.md) | give every scenario of a feature, or of a `Rule`, the same first steps |
+| [Rule](./Rule.md) | group scenarios under the business rule they illustrate |
 | [Gherkin tables](./GherkinTables.md) | use a data table in a step |
 | [Scenario outlines](./ScenarioOutlines.md) | run one scenario for every row of an `Examples` table |
 | [Re-using step definitions](./ReusingStepDefinitions.md) | share steps between feature files |

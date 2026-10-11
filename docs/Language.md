@@ -94,3 +94,16 @@ Als( 'ik de koffiemok verkoop', () => {
 ```
 
 Dutch has two words for `Given`, `Gegeven` and `Stel`, and two for `When`, `Als` and `Wanneer`: each pair binds through the same verb. In CommonJS the renaming is done while destructuring: `const { Given: Gegeven } = require( '@g_package/jest-cucumber-fusion' )`.
+
+## Other words for the keywords in English
+
+English has synonyms too, and a feature file can use any of them:
+
+| Keyword | Also written |
+|---|---|
+| `Feature` | `Business Need`, `Ability` |
+| `Scenario` | `Example` |
+| `Scenario Outline` | `Scenario Template` |
+| `Examples` | `Scenarios` |
+
+They change nothing else: an `Example` runs exactly as a `Scenario` does. Gherkin also lists `*` as a step keyword in every language, but Fusion refuses a `*` step, because it binds a step through its keyword: write it with `Given`, `When`, `Then`, `And` or `But`.

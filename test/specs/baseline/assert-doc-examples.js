@@ -30,6 +30,7 @@ import { spawnSync } from "child_process";
 const PAGES = [
   "README.md",
   "docs/Background.md",
+  "docs/Rule.md",
   "docs/GherkinTables.md",
   "docs/ScenarioOutlines.md",
   "docs/StepDefinitionArguments.md",

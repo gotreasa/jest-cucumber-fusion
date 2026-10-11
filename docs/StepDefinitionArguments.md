@@ -66,7 +66,7 @@ Fusion( 'bank-account.feature' )
 A step function receives its arguments in this order:
 
 1. **Each capture**, as a **string**. Convert it yourself, as the steps above do with `Number( balance )`. A group that did not take part in the match, such as an optional `( in a box)?`, arrives as `undefined`.
-2. **The docstring**, if the step has one, as one more string.
+2. **The docstring**, if the step has one, as one more string: its text, without the `"""` lines or their indentation. A content type written after the opening `"""`, as in `"""json`, does not reach the step; parse the text yourself, for example with `JSON.parse( text )`.
 3. **The data table**, if the step has one, last, as an array of row objects (see [Gherkin tables](./GherkinTables.md)).
 
 In TypeScript you can declare these types on the step function's parameters (see [Typed step definitions](./TypeScript.md#typed-step-definitions)).

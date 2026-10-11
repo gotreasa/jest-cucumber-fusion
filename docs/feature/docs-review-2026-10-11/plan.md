@@ -147,3 +147,9 @@ follow-ups:
 - [x] The outline the original package left commented out as "not currently possible" runs
       from its own feature file (a separate `test:` pull request), because the 2.0.0 test-name
       baseline records the file it came from
+- [x] Five more Gherkin topics, each measured on a project before it was written: several and
+      tagged `Examples` tables (Scenario outlines), a `Rule` page with a `But` step (run by the
+      baseline), a docstring's content type not reaching the step (Step definition arguments),
+      the English keyword synonyms (Language), and `But` binding by keyword (README)
+- [x] `CLAUDE.md` and `AGENTS.md`, written by `nwave-ai project enable`, are ignored by Prettier
+      (on the CI pull request), since nWave re-renders their managed section

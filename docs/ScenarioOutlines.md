@@ -79,4 +79,65 @@ A row whose value does not fit a step's regular expression leaves that step unma
 
 In Jest's report, a feature's plain scenarios come first and its outline rows after them, each group in the order the file declares it, so the order can differ from the file when the two are interleaved.
 
+## Several Examples tables, and tags on them
+
+An outline can have more than one `Examples` table, and each table can carry its own tags. The rows of every table run, each as its own test, and a row is selected on its table's tags as well as the outline's:
+
+```gherkin
+# filename: test/features/delivery-charges.feature
+Feature: Delivery charges
+
+Scenario Outline: Delivering <Weight> kg to <Country>
+  Given my order weighs <Weight> kg
+  When I choose delivery to <Country>
+  Then the delivery charge is $<Charge>
+
+  @domestic
+  Examples: Within the country
+    | Weight | Country | Charge |
+    | 1      | Ireland | 5      |
+    | 10     | Ireland | 10     |
+
+  @international
+  Examples: Abroad
+    | Weight | Country | Charge |
+    | 1      | France  | 15     |
+```
+
+The code under test:
+
+```javascript
+// filename: src/delivery.js
+export const deliveryCharge = ( weight, country ) => {
+    const base = country === 'Ireland' ? 5 : 15
+    return weight > 5 ? base * 2 : base
+}
+```
+
+```javascript
+// filename: test/features/delivery-charges.steps.js
+import { Given, When, Then, Fusion } from '@g_package/jest-cucumber-fusion'
+
+import { deliveryCharge } from '../../src/delivery.js'
+
+let weight
+let charge
+
+Given( /^my order weighs (\d+) kg$/, ( kilograms ) => {
+    weight = Number( kilograms )
+} )
+
+When( /^I choose delivery to (.*)$/, ( country ) => {
+    charge = deliveryCharge( weight, country )
+} )
+
+Then( /^the delivery charge is \$(\d+)$/, ( expected ) => {
+    expect( charge ).toBe( Number( expected ) )
+} )
+
+Fusion( 'delivery-charges.feature' )
+```
+
+This runs three tests, one per row. With a [tag filter](./AdditionalConfiguration.md#tag-filtering) you can run one table and skip the other: `Fusion( 'delivery-charges.feature', { tagFilter: '@domestic' } )` runs the two rows within the country, and `'not @international'` does the same. A [scenario title template](./AdditionalConfiguration.md#scenario-title-templates) receives a row's table tags in `scenarioTags`.
+
 Next: [Re-using step definitions](./ReusingStepDefinitions.md), to share steps between feature files.

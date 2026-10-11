@@ -92,7 +92,7 @@ Scenario: Adding a product to an empty basket
 
 ### Write the step definitions
 
-Each step needs a definition registered with **the same keyword the step uses**. The last step of the feature starts with `And`, so its definition is `And(...)`: a `Then(...)` with the same text would not match it, and Fusion would report the step as having no definition.
+Each step needs a definition registered with **the same keyword the step uses**. The last step of the feature starts with `And`, so its definition is `And(...)`: a `Then(...)` with the same text would not match it, and Fusion would report the step as having no definition. A `But` step likewise needs a `But(...)` definition: [Rule](./docs/Rule.md) shows one.
 
 The step definition file registers a definition for each step, then calls `Fusion` with the feature file's path:
 
@@ -212,7 +212,7 @@ Register hooks, like step definitions, before the `Fusion` call. A hook may be `
 
 ## If you know Cucumber
 
-Most of Gherkin works as you expect: [`Background`](./docs/Background.md), `Rule`, `Scenario Outline` with `Examples`, data tables, docstrings, tags and [80 languages](./docs/Language.md). The differences:
+Most of Gherkin works as you expect: [`Background`](./docs/Background.md), [`Rule`](./docs/Rule.md), `Scenario Outline` with `Examples`, data tables, docstrings, tags and [80 languages](./docs/Language.md). The differences:
 
 - **Steps bind by keyword.** An `And` step needs an `And` definition, as above. When one definition should serve several keywords, chain it: `Then( And( 'text', fn ) )` registers it under both.
 - **No Cucumber Expressions.** A string is compared as plain text, so `'I add {int} products'` matches only that exact text. Use a regular expression to capture values: `/^I add (\d+) products$/`.
@@ -229,6 +229,7 @@ The [documentation index](./docs/README.md) suggests an order to read the guides
 |---|---|
 | capture values from a step, or read a docstring | [Step definition arguments](./docs/StepDefinitionArguments.md) |
 | give every scenario the same first steps | [Background](./docs/Background.md) |
+| group scenarios under a business rule | [Rule](./docs/Rule.md) |
 | use a data table | [Gherkin tables](./docs/GherkinTables.md) |
 | run one scenario for every row of an `Examples` table | [Scenario outlines](./docs/ScenarioOutlines.md) |
 | share steps between feature files | [Re-using step definitions](./docs/ReusingStepDefinitions.md) |
