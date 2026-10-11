@@ -1,8 +1,10 @@
 # Gherkin tables
 
-The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
 A step can carry a data table. Fusion passes it to the step function as its last argument: an array with one object per row, keyed by the table's header row, with every value a string.
+
+The first row is always the header, so a table of one row arrives as an empty array, and there is no form that reads a table as raw rows or as key-value pairs down its side. To use a two-column table as a lookup, build the object yourself from its rows.
 
 ```gherkin
 # filename: test/features/todo-list.feature

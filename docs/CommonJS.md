@@ -1,0 +1,77 @@
+# Using CommonJS
+
+Fusion ships a CommonJS build beside its ES modules: `require` gets the CommonJS build and `import` gets the ES modules. Use CommonJS if your project already is CommonJS (it uses `require`), if you need Node 18 (CommonJS runs on Node 18.14 and newer), or if you would rather not run Jest's experimental ES module mode. CommonJS needs no Jest set-up at all.
+
+Follow [Getting Started](../README.md#getting-started) with the changes on this page.
+
+## package.json
+
+Leave out `"type": "module"`, and run Jest directly:
+
+```json
+"scripts": { "test": "jest" },
+"jest": { "testMatch": [ "**/*.steps.js" ] }
+```
+
+## The code under test
+
+It exports with `module.exports`:
+
+```javascript
+// filename: src/rocket.js
+class Rocket {
+    constructor() {
+        this.isInSpace = false
+        this.boostersLanded = false
+    }
+
+    launch() {
+        this.isInSpace = true
+        this.boostersLanded = true
+    }
+}
+
+module.exports = { Rocket }
+```
+
+## Step definition files
+
+They `require` the same names. A relative `require` may leave the extension out, and the `jest` object is a global, as in any CommonJS Jest project:
+
+```javascript
+// filename: test/features/rocket-launching.steps.js
+const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
+
+const { Rocket } = require( '../../src/rocket' )
+
+let rocket
+
+Given( 'I am Elon Musk attempting to launch a rocket into space', () => {
+    rocket = new Rocket()
+} )
+
+When( 'I launch the rocket', () => {
+    rocket.launch()
+} )
+
+Then( 'the rocket should end up in space', () => {
+    expect( rocket.isInSpace ).toBe( true )
+} )
+
+And( 'the boosters should land back on the launch pad', () => {
+    expect( rocket.boostersLanded ).toBe( true )
+} )
+
+Fusion( 'rocket-launching.feature' )
+```
+
+## Everything else
+
+The other pages show ES modules. To use one of their examples in CommonJS, turn each `import { … } from '…'` into `const { … } = require( '…' )` and each `export` into `module.exports`. Two pages show their CommonJS form in full:
+
+- [Configuration options](./AdditionalConfiguration.md#global-configuration): a global configuration script that `require`s `setFusionConfiguration`.
+- [Linting with ESLint](./ESLint.md#commonjs): an `eslint.config.js` written as CommonJS.
+
+## Mixing the two styles
+
+Mixing works. A CommonJS shared step library can serve ES module step files, and a CommonJS setup script can configure ES module steps: both styles share one set of step definitions and one global configuration. An ES module imports a CommonJS file by its full name, for example `import './shared-steps.cjs'`, and in a `"type": "module"` project a CommonJS file must be named `.cjs`, because there a `.js` file is read as an ES module and `require` does not exist.

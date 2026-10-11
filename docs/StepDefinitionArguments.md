@@ -1,13 +1,21 @@
 # Step definition arguments
 
-The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
 A step definition is matched by a string or by a regular expression.
 
 - **A string** matches a step whose text is exactly that string, and the step function receives no captured values.
 - **A regular expression** matches a step whose text it matches, and the step function receives each capture group's value as an argument, in order.
 
-Every captured value arrives as a **string**, so convert it yourself, for example with `Number( balance )`. If the step also has a docstring, the docstring's text arrives as one more string after the captures; if it has a data table, the table arrives last as an array of row objects (see [Gherkin tables](./GherkinTables.md)). In TypeScript you can declare these types on the step function's parameters (see [Typed step definitions](../README.md#typed-step-definitions)).
+Fusion does not support Cucumber Expressions such as `{int}` or `{string}`: a string is compared as plain text, so `'I have {int} cukes'` matches only a step with exactly that text. Use a regular expression to capture values.
+
+A step function receives its arguments in this order:
+
+1. **Each capture**, as a **string**. Convert it yourself, for example with `Number( balance )`.
+2. **The docstring**, if the step has one, as one more string.
+3. **The data table**, if the step has one, last, as an array of row objects (see [Gherkin tables](./GherkinTables.md)).
+
+In TypeScript you can declare these types on the step function's parameters (see [Typed step definitions](./TypeScript.md#typed-step-definitions)).
 
 ```gherkin
 # filename: test/features/bank-account.feature
@@ -32,7 +40,7 @@ export class BankAccount {
 }
 ```
 
-Each regular expression captures the amount, which the step converts to a number:
+Each regular expression captures the amount, which the step converts to a number. The `Before` hook gives every scenario a fresh account (see [Hooks](../README.md#hooks)):
 
 ```javascript
 // filename: test/features/bank-account.steps.js
@@ -82,7 +90,7 @@ import { Given, Then, Fusion } from '@g_package/jest-cucumber-fusion'
 const notes = {}
 
 Given( /^version (\d+) is released with the note$/, ( version, note ) => {
-    notes[ version ] = note.trim()
+    notes[ version ] = note
 } )
 
 Then( /^the note for version (\d+) reads "(.*)"$/, ( version, expected ) => {

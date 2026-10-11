@@ -5,7 +5,7 @@ This package continues [b-yond-infinite-network/jest-cucumber-fusion](https://gi
 What changes depends on where you start:
 
 - **From `jest-cucumber-fusion` 0.8.x** (the b-yond package): follow the steps below, then read the behaviour changes, because several silent behaviours now fail loudly.
-- **From `@g_package/jest-cucumber-fusion` 2.x**: three things change. The global configuration import moves, Scenario Outline steps match their substituted text, and an outline step's docstring and data table always receive the Examples values. Then check the version 3 rows of the behaviour table. See [What else changes when coming from version 2?](#what-else-changes-when-coming-from-version-2)
+- **From `@g_package/jest-cucumber-fusion` 2.x**: step files written as CommonJS need no change. Three things may need an edit: the global configuration import moves, Scenario Outline steps match their substituted text, and an outline step's docstring and data table always receive the Examples values. See [What else changes when coming from version 2?](#what-else-changes-when-coming-from-version-2), which also lists the smaller differences: two of them, both about `tagFilter`, can change which tests run.
 
 ## How do I switch from the b-yond package?
 
@@ -44,13 +44,17 @@ What changes depends on where you start:
 
 Version 3 runs under the Jest your project already has. Steps files that `require` the package gave identical results under Jest 27.5, 29.7 and 30.5 on Node 22, and under Jest 30 on Node 18, 20, 22 and 24. The package declares Jest 30's own Node range (`^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0`).
 
-Your step files can stay CommonJS. Version 3 is written as ES modules on the latest Gherkin toolchain, and the package ships a CommonJS build beside them: `require` gets that build, so a steps file that `require`s the package works unchanged, with no Jest or Babel configuration. If you write your steps as ES modules, `import` gets the ES module source; run Jest in its ES module mode for that (the README's [Getting Started](../README.md#getting-started) gives the set-up, and recommends ES modules for new projects), on **Node 20.11 or newer**: `@cucumber/gherkin` 42 uses import attributes, which Node 18 and 20.9 cannot parse (`SyntaxError: Unexpected token 'with'`, measured). Mixing the two styles in one project, for example a shared step library written as CommonJS used by step files written as ES modules, works: both copies share one step registry and one global configuration.
+**CommonJS.** Your step files can stay CommonJS. Version 3 is written as ES modules, and the package ships a CommonJS build beside them: `require` gets that build, so a steps file that `require`s the package works unchanged, with no Jest or Babel configuration. Version 2 declared no Node range; version 3's CommonJS build runs on Node 18.14 and newer.
+
+**ES modules.** If you write your steps as ES modules, `import` gets the ES module source. Run Jest in its ES module mode for that, as the README's [Getting Started](../README.md#getting-started) shows (it recommends ES modules for new projects), on **Node 20.11 or newer**: `@cucumber/gherkin` 42 uses import attributes, which Node 18 and 20.9 cannot parse (`SyntaxError: Unexpected token 'with'`).
+
+**Mixing the two.** A shared step library written as CommonJS can serve step files written as ES modules: both copies share one step registry and one global configuration. See [Using CommonJS](./CommonJS.md#mixing-the-two-styles).
 
 `jest` is a peer dependency (`>=27`): the package runs on your project's own Jest and installs no copy of its own. Version 2 listed `jest` as a dependency, so a project on an older Jest also got a nested Jest it never ran. If your project has no `jest` yet, install it beside the package, as [Getting Started](../README.md#getting-started) does; npm 7 and newer would otherwise install the newest Jest for you.
 
 ## What behaves differently?
 
-Each row was observed by running the same steps file under `jest-cucumber-fusion` 0.8.1 with Jest 27 and under version 3.
+Each row comes from running the same steps file under `jest-cucumber-fusion` 0.8.1 with Jest 27 and under version 3.
 
 | Situation | 0.8.1 (b-yond) | Version 3 | Since |
 |---|---|---|---|
@@ -81,17 +85,17 @@ const { setFusionConfiguration } = require( '@g_package/jest-cucumber-fusion' )
 setFusionConfiguration( { tagFilter: '@ui and not @slow' } )
 ```
 
-The options object is the same shape. Two corrections to what earlier versions of the configuration page said: the `errors` keys are the three that [Configuration options](./AdditionalConfiguration.md#disabling-scenario--step-definition-validation) lists, not four, and `scenarioNameTemplate` now names Scenario Outline rows too, where in version 2 it was silently ignored on them.
+The options object is the same shape. One option behaves differently: `scenarioNameTemplate` now names Scenario Outline rows too, where in version 2 it was silently ignored on them.
 
 Versions 1 and 2 of this package matched a Scenario Outline step against its template text, so a row whose value did not fit the definition's regular expression still ran, with no captured values. Version 3 matches each row's substituted text, so that row now reports an unmatched step, and a step definition that relied on running with no captures needs a regular expression that accepts the row's value.
 
 The same change reaches a step's docstring and data table. Version 2 substituted a row's values into them, except when the step was bound by a regular expression and its own text held no placeholder: that step received the `<name>` text as written. Version 3 substitutes in every case, as Cucumber does, so a docstring or table cell that needs a literal `<name>` must use a placeholder name that is not an Examples column.
 
-The global configuration import above and the version 3 rows of the behaviour table complete the list.
+Those three are the changes most likely to need an edit. The table below lists the rest, and the version 3 rows of the behaviour table above apply too.
 
 ### Other differences from 2.0.0
 
-Measured by running the same feature and step files under 2.0.0 and 3.0.0. Each one fixes something 2.0.0 got wrong, refused, or reported unhelpfully, so none should need a change in a working project.
+Each row comes from running the same feature and step files under 2.0.0 and 3.0.0, and each fixes something 2.0.0 got wrong, refused, or reported unhelpfully. Most need no change in a working project. Two can change which tests run, so check them if you use `tagFilter`: a `Rule`'s tags now count, and a filter of only spaces now runs every scenario.
 
 | Situation | 2.0.0 | 3.0.0 |
 |---|---|---|
@@ -102,7 +106,6 @@ Measured by running the same feature and step files under 2.0.0 and 3.0.0. Each 
 | A feature in Slovenian, Persian, Malayalam or the `en-tx` dialect | could not run | runs, like the other 76 Gherkin languages |
 | A step that throws a string, `undefined` or a rejection with no value | the reporter crashed: `Cannot create property 'message' on string` | reported as the failing step, with what was thrown |
 | `Fusion` handed to `forEach`, or called from code built with `new Function` | the feature path resolved against the working directory | resolved against the calling file |
-| A failing step's error | rethrown with the step's details prefixed to its message | the same: the step's own error, its class and its stack frames in your steps file are kept |
 | A step definition with no function, `Given('the shop is open')` | accepted, then failed when the step ran: `stepFn is not a function` | refused at the call: `Missing step function: ...` |
 | `Fusion()` with no path, a number, or a directory | Node's raw `paths[1]` argument error, or `EISDIR` | refused, naming what it was given |
 | `errors: 0` (or another non-boolean) | read as "no change", leaving every check on | refused: `errors` must be `true`, `false` or an object |

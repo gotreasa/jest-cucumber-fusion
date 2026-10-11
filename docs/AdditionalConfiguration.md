@@ -1,6 +1,6 @@
 # Configuration Options
 
-This page is the reference for what the package exports and for every option `Fusion` accepts. It assumes the set-up from [Getting Started](../README.md#getting-started). The examples are ES modules; for CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+This page is the reference for what the package exports and for every option `Fusion` accepts. It assumes the set-up from [Getting Started](../README.md#getting-started). The examples are ES modules; for CommonJS, see [Using CommonJS](./CommonJS.md).
 
 ## What the package exports
 
@@ -8,13 +8,13 @@ This page is the reference for what the package exports and for every option `Fu
 |---|---|---|
 | `Given`, `When`, `Then`, `And`, `But` | `Given( stringOrRegExp, stepFunction )` | Registers a step definition for steps with that keyword. Returns a chain you can hand to another verb. |
 | | `Then( And( stringOrRegExp, stepFunction ) )` | The chained form: registers the same definition under a second keyword, so a step binds to it with either. |
-| `Before`, `After` | `Before( hookFunction )` | Runs the function before or after every scenario of the file. It receives no arguments and may be `async`. |
-| `Fusion` | `Fusion( featurePath, options? )` | Reads the feature file (relative to the calling file) and registers one Jest test per scenario and per outline row. Call it once, after the step definitions. |
+| `Before`, `After` | `Before( hookFunction )` | Runs the function before or after every scenario of the `Fusion` call that follows it. Register it before that call, like a step. Fusion passes it nothing, so declare no parameters: Jest treats a declared parameter as a `done` callback and waits for it. It may be `async`. |
+| `Fusion` | `Fusion( featurePath, options? )` | Reads the feature file (relative to the calling file) and registers one Jest test per scenario and per outline row. Call it after the step definitions and hooks. Each call uses what was registered before it and then empties the registry, so a second call in the same file needs its definitions registered again. |
 | `setFusionConfiguration` | `setFusionConfiguration( options )` | Sets options for every `Fusion` call of a test file, from a Jest `setupFiles` script. See [Global configuration](#global-configuration). |
 
 TypeScript types: `StepArgument` (what a step receives: a `string`, or a table's rows as `Array<Record<string, string>>`), `CallBack`, `StepChain`, `FusionOptions`, `FusionErrorOptions` and `ScenarioNameTemplateVars`.
 
-A step binds only to a definition registered with its own keyword: an `And` step needs an `And(...)` definition, and a `Then(...)` definition does not serve it. Use the chained form for a definition that several keywords share.
+A step binds only to a definition registered with its own keyword: an `And` step needs an `And(...)` definition, and a `Then(...)` definition does not serve it. Use the chained form for a definition that several keywords share. Because a step binds by its keyword, the Gherkin `*` keyword is not supported: Fusion refuses a `*` step and asks you to write it with `Given`, `When`, `Then`, `And` or `But`.
 
 ## Disabling scenario / step definition validation
 
@@ -32,10 +32,11 @@ Fusion( 'rocket-launching.feature', {
   errors: {
     stepsMustMatchFeatureFile: true, // Refuse at collection when a feature step has no registered definition
     scenariosMustMatchFeatureFile: true, // Refuse at collection when the file declares two scenarios of one title
-    allowScenariosNotInFeatureFile: true, // Accepted and ignored: Fusion generates the scenarios from the feature file, so there are none outside it
   }
 } )
 ```
+
+A third key, `allowScenariosNotInFeatureFile`, is accepted and ignored, so older configurations that set it keep working: Fusion generates the scenarios from the feature file, so there are none outside it.
 
 `errors` is also accepted as a boolean: `true` turns every key on, `false` turns every key off. Written as an object it merges key-wise over the defaults, so naming one key leaves the others exactly as they were.
 
@@ -65,7 +66,7 @@ HOW:  register a definition for each entry below. The starter code under each on
 
 The verb is the one for that step's own Gherkin keyword, so an `And` step suggests `And`. A step whose text carries a number or a double-quoted value gets an anchored regular expression with a capture group and a parameter for each, and a step carrying a data table or a docstring gets a `table` or `docString` parameter after them.
 
-Off, by `errors: false` or by `errors: { stepsMustMatchFeatureFile: false }`, the scenarios holding those steps are registered as **skipped** tests under their own names. Jest reports them as skipped, never as passed and never missing, and the scenarios of the same feature whose steps do bind still run normally.
+Off, by `errors: false` or by `errors: { stepsMustMatchFeatureFile: false }`, the scenarios holding those steps are registered as **skipped** tests under their own names. Jest lists them as skipped, and the scenarios of the same feature whose steps do bind still run normally.
 
 ### `scenariosMustMatchFeatureFile`
 
@@ -125,7 +126,7 @@ The expression language comes from `@cucumber/tag-expressions`: a tag is written
 
 A scenario is selected on the tags that reach it, which is the union of its own tags, its feature's tags and, for a Scenario Outline row, that Examples set's tags.
 
-An expression that cannot be parsed is refused when the file is collected, naming the expression you wrote. So is an expression with an operand that is not a tag, such as `smoke` written for `@smoke`, because no tag in a feature file could ever match it. Neither becomes a filter that quietly selects nothing.
+An expression that cannot be parsed is refused when the file is collected, naming the expression you wrote. So is an expression with an operand that is not a tag, such as `smoke` written for `@smoke`, because no tag in a feature file could ever match it. Neither becomes a filter that selects nothing without telling you.
 
 ## Scenario title templates
 
@@ -170,22 +171,6 @@ The following info is available in the `vars` argument:
 
 The template is called once per test while Fusion registers, never again while the tests run, and it names every test whatever its status: a scenario skipped by a tag filter, or because its steps do not bind, carries the same name it would have carried had it run. It must return a non-empty string. A template that throws, or that returns anything else, is refused when the file is collected rather than naming a test something Jest cannot report.
 
-## Relative feature file paths
-
-A feature path is always resolved relative to the file that calls `Fusion`, which is what most people expect, so there is nothing to switch on:
-
-```javascript
-Fusion( 'rocket-launching.feature' )
-```
-
-The `loadRelativePath` flag is still **accepted and ignored**, so a call that passes it keeps working:
-
-```javascript
-Fusion( 'rocket-launching.feature', { loadRelativePath: true } ) // same as leaving it out
-```
-
-Please note that the path is relative to the file that calls `Fusion`, so if you use helper files which call `Fusion` for you this might lead to unexpected results. Fusion resolves against the first stack frame outside this package, so a thin wrapper of your own in another file resolves against that wrapper.
-
 ## Global configuration
 
 To avoid repeating the same configuration settings in every step definition file, you can set them once with `setFusionConfiguration`. Settings passed to a `Fusion` call take precedence over the global ones for that call.
@@ -214,7 +199,7 @@ setFusionConfiguration({
 });
 ```
 
-In a CommonJS project (see [Using CommonJS instead](../README.md#using-commonjs-instead)), the setup file requires the same function:
+In a CommonJS project (see [Using CommonJS](./CommonJS.md)), the setup file requires the same function:
 
 ```javascript
 //jest-fusion-config.js (CommonJS)
@@ -226,10 +211,30 @@ setFusionConfiguration({ tagFilter: '@ui and not @slow' });
 
 Either style of setup file works with either style of steps, because both share one global configuration. To keep a CommonJS setup file in a `"type": "module"` project, name it `jest-fusion-config.cjs`, since there a `.js` file is read as an ES module and `require` does not exist.
 
+### Merge order
+
 Options are merged lowest to highest: the defaults, then whatever `setFusionConfiguration` holds, then the options passed to one `Fusion` call. `errors` merges key-wise at every layer, so naming one validation in your setup file never switches off another. An option set to `undefined`, such as an unset environment variable forwarded as `{ tagFilter: process.env.TAGS }`, counts as not set and leaves the layer below in place. `null` is a value, so `{ tagFilter: null }` clears a global filter for that call.
+
+### Clearing and scope
 
 A second `setFusionConfiguration` call **replaces** what the first set rather than merging into it, which is how you clear or redefine a global: `setFusionConfiguration({})` clears it. Jest gives each test file its own global object and runs `setupFiles` inside it, so what you set there applies to that file and cannot reach another one. The configuration lives on that global, not in a module, so `jest.resetModules()` does not clear it.
 
 An argument that is not an options object is refused in the setup file itself, before any step definition file loads. An unknown key is accepted and ignored, exactly as it is per call.
 
 Coming from version 2, where global configuration went through `jest-cucumber`'s own setter? [Migrating to version 3](./Migrating.md) shows the change.
+
+## Relative feature file paths
+
+A feature path is always resolved relative to the file that calls `Fusion`, which is what most people expect, so there is nothing to switch on:
+
+```javascript
+Fusion( 'rocket-launching.feature' )
+```
+
+The `loadRelativePath` flag is still **accepted and ignored**, so a call that passes it keeps working:
+
+```javascript
+Fusion( 'rocket-launching.feature', { loadRelativePath: true } ) // same as leaving it out
+```
+
+Please note that the path is relative to the file that calls `Fusion`, so if you use helper files which call `Fusion` for you this might lead to unexpected results. Fusion resolves against the first stack frame outside this package, so a thin wrapper of your own in another file resolves against that wrapper.

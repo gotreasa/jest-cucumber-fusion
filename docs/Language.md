@@ -1,8 +1,8 @@
 # Language
 
-The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
-You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into over 70 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
+You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into 80 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
 
 A feature file in Dutch:
 
@@ -80,25 +80,7 @@ Fusion( 'online-verkopen.feature' )
 You can also import the verbs under the Dutch keywords, so the step file reads like the feature. They are the same functions, so `Gegeven` registers a `Given` definition:
 
 ```javascript
-// filename: test/features/online-verkopen-vertaald.steps.js
-import {
-    Before,
-    Given as Gegeven,
-    When as Als,
-    Then as Dan,
-    And as En,
-    But as Maar,
-    Fusion,
-} from '@g_package/jest-cucumber-fusion'
-
-import { OnlineSales } from '../../src/online-sales.js'
-
-let onlineSales
-let salesPrice
-
-Before( () => {
-    onlineSales = new OnlineSales()
-} )
+import { Given as Gegeven, When as Als } from '@g_package/jest-cucumber-fusion'
 
 Gegeven( 'ik heb een t-shirt', () => {
     onlineSales.listItem( 'Rick Astley t-shirt' )
@@ -107,20 +89,6 @@ Gegeven( 'ik heb een t-shirt', () => {
 Als( 'ik een t-shirt wil verkopen', () => {
     salesPrice = onlineSales.sellItem( 'Rick Astley t-shirt' )
 } )
-
-Dan( /^ontvang ik €(\d+)$/, ( price ) => {
-    expect( salesPrice ).toBe( Number( price ) )
-} )
-
-En( 'ben ik blij', () => {
-    expect( salesPrice ).toBeGreaterThan( 0 )
-} )
-
-Maar( 'heb ik geen t-shirts over', () => {
-    expect( onlineSales.listed ).toHaveLength( 0 )
-} )
-
-Fusion( 'online-verkopen.feature' )
 ```
 
-Dutch has two words for `When`, `Als` and `Wanneer`, and both bind through `When`. In CommonJS the renaming is done while destructuring: `const { Given: Gegeven } = require( '@g_package/jest-cucumber-fusion' )`.
+Dutch has two words for `Given`, `Gegeven` and `Stel`, and two for `When`, `Als` and `Wanneer`: each pair binds through the same verb. In CommonJS the renaming is done while destructuring: `const { Given: Gegeven } = require( '@g_package/jest-cucumber-fusion' )`.

@@ -1,14 +1,14 @@
 # Scenario outlines
 
-The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
-A Scenario Outline runs its steps once for each row of its `Examples` table. Before a row runs, every `<placeholder>` in the outline, its title included, is replaced with that row's value, so each row becomes its own test, named after its own title. The steps then match the substituted text, so a step definition captures the row's value as it would any other value.
+A Scenario Outline runs its steps once for each row of its `Examples` table:
 
 ```gherkin
 # filename: test/features/online-sales.feature
 Feature: Online sales
 
-Scenario Outline: Selling an <Item>
+Scenario Outline: Selling <Item>
   Given I have a(n) <Item>
   When I sell the <Item>
   Then I should get $<Amount>
@@ -20,7 +20,9 @@ Scenario Outline: Selling an <Item>
     | An idea to replace EVERYTHING with blockchains | 0      |
 ```
 
-This runs three tests: `Selling an Autographed Neil deGrasse Tyson book`, `Selling an Rick Astley t-shirt` and `Selling an An idea to replace EVERYTHING with blockchains`.
+Before a row runs, every `<placeholder>` in the outline, its title included, is replaced with that row's value, so each row becomes its own test, named after its own title. This one runs three tests: `Selling Autographed Neil deGrasse Tyson book`, `Selling Rick Astley t-shirt` and `Selling An idea to replace EVERYTHING with blockchains`. The steps then match the substituted text, so a step definition captures the row's value as it would any other value.
+
+In Jest's report, a feature's plain scenarios come first and its outline rows after them, each group in the order the file declares it, so the order can differ from the file when the two are interleaved.
 
 The code under test:
 

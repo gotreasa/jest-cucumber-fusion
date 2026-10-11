@@ -28,7 +28,7 @@ Given( 'I am Elon Musk and I launched a rocket in space already', () => {
 Fusion( 'reuse-rocket.feature' )
 ```
 
-Place your shared step definitions in a shared step definition file, and Fusion takes care of the rest. Name it so that Jest's `testMatch` does not pick it up as a test file of its own (`happy-steps.js`, not `happy.steps.js`):
+Name the shared file so that Jest's `testMatch` does not pick it up as a test file of its own (`happy-steps.js`, not `happy.steps.js`):
 
 ```javascript
 // filename: test/features/happy-steps.js
@@ -41,8 +41,11 @@ Then( 'I\'m happy', () => {
 ```
 
 
-### Managing dependencies
-Though it is not best practice, you sometimes need to pass a value to the shared step definitions file, like in this example:
+### Sharing a value with the shared steps
+
+A shared step sometimes needs a value that the steps file creates, such as the rocket a `Given` step builds. The shared file cannot import that variable, and reading it once when the file loads would give `undefined`, because the `Given` step has not run yet. So the steps file passes in a function that returns the current value, and each shared step calls it when it runs. Keep this rare: steps that share a lot of state are usually easier to follow in one file.
+
+For example, with this feature:
 
 ```gherkin
 # filename: test/features/reuse-definition.feature
@@ -72,7 +75,7 @@ export class Rocket {
 }
 ```
 
-You will now need to encapsulate the variables in an accessor function. The shared file exports a function that takes the accessor, and the steps file imports it and calls it:
+The steps file keeps the rocket in its own variable and passes a function that returns it. The shared file exports a function that takes that accessor and registers its steps:
 
 ```javascript
 // filename: test/features/reuse-definition.steps.js
@@ -82,11 +85,11 @@ import registerRelaunchSteps from './relaunch-steps.js'
 
 let rocket
 function getCurrentRocket() {
-	return rocket
+    return rocket
 }
 
 Given( 'I am Elon Musk and I launched a rocket in space already', () => {
-	rocket = new Rocket()
+    rocket = new Rocket()
 } )
 
 registerRelaunchSteps( getCurrentRocket )
@@ -106,89 +109,21 @@ And( 'I drop my mic', () => {
 } )
 
 export default function registerRelaunchSteps( fnRocket ) {
-	When( 'I relaunch the rocket', () => {
-            const rocketUsed = fnRocket()
-            rocketUsed.launch()
-	} )
+    When( 'I relaunch the rocket', () => {
+        const rocketUsed = fnRocket()
+        rocketUsed.launch()
+    } )
 
-	Then( 'the rocket end up in space again', () => {
-            const rocketUsed = fnRocket()
-            expect( rocketUsed.isInSpace ).toBe(true)
-	} )
+    Then( 'the rocket end up in space again', () => {
+        const rocketUsed = fnRocket()
+        expect( rocketUsed.isInSpace ).toBe(true)
+    } )
 }
 ```
 
 
 ## Written as CommonJS
 
-The same two examples in CommonJS (see [Using CommonJS instead](../README.md#using-commonjs-instead) for the set-up). A shared file is required, and its extension may be left out.
-
-```javascript
-// reuse-rocket.steps.js
-const { Given, Fusion } = require( '@g_package/jest-cucumber-fusion' )
-
-Given( 'I am Elon Musk and I launched a rocket in space already', () => {
-    const hasLaunchedARocket = true
-    expect( hasLaunchedARocket ).toBe( true )
-} )
-
-require( './happy-steps' ) // our shared test code
-
-Fusion( 'reuse-rocket.feature' )
-```
-
-```javascript
-// happy-steps.js
-const { Then } = require( '@g_package/jest-cucumber-fusion' )
-
-Then( 'I\'m happy', () => {
-    const localHappy = true
-    expect( localHappy ).toBe( true )
-} )
-```
-
-To pass a value to the shared steps, the shared file exports the function with `module.exports`, and the steps file requires it and calls it:
-
-```javascript
-// reuse-definition.steps.js
-const { Given, Fusion } = require( '@g_package/jest-cucumber-fusion' )
-
-const { Rocket } = require( '../../src/rocket' )
-
-let rocket
-function getCurrentRocket() {
-	return rocket
-}
-
-Given( 'I am Elon Musk and I launched a rocket in space already', () => {
-	rocket = new Rocket()
-} )
-
-require( './relaunch-steps' )( getCurrentRocket )
-
-Fusion( 'reuse-definition.feature' )
-```
-
-```javascript
-// relaunch-steps.js
-const { When, Then, And } = require( '@g_package/jest-cucumber-fusion' )
-
-And( 'I drop my mic', () => {
-    const micDropped = true
-    expect( micDropped ).toBe( true )
-} )
-
-module.exports = function( fnRocket ) {
-	When( 'I relaunch the rocket', () => {
-            const rocketUsed = fnRocket()
-            rocketUsed.launch()
-	} )
-
-	Then( 'the rocket end up in space again', () => {
-            const rocketUsed = fnRocket()
-            expect( rocketUsed.isInSpace ).toBe(true)
-	} )
-}
-```
+The same examples work in CommonJS (see [Using CommonJS](./CommonJS.md) for the set-up): turn each `import` into a `require`, and each `export default function` into `module.exports = function`. A shared file is required by name, and its extension may be left out: `require( './happy-steps' )`.
 
 A shared file written as CommonJS can also serve steps written as ES modules: import it by its full file name, for example `import './happy-steps.cjs'`.

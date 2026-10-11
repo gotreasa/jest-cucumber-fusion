@@ -4,7 +4,7 @@ This page is for contributors: how Fusion is built and why. To use the package, 
 
 ## 1. Overview
 
-jest-cucumber-fusion lets you write Gherkin feature files and run them as part of an ordinary Jest run, with coverage, and with no separate Cucumber runner process.
+Jest Cucumber Fusion lets you write Gherkin feature files and run them as part of an ordinary Jest run, with coverage, and with no separate Cucumber runner process.
 
 You write step definitions in a `.steps.js` file using the verbs `Given`, `When`, `Then`, `And` and `But`, add `Before` and `After` hooks if you need them, and call `Fusion("your.feature")`. Fusion then owns the whole lifecycle itself: it resolves and reads the feature file, parses the Gherkin, compiles it into pickles (which expands each Scenario Outline into one scenario per Examples row and folds Backgrounds and Rules in), works out which of your definitions owns each step, and registers one Jest `describe` for the feature with one `test` for each scenario. All of that happens synchronously, while Jest is still collecting your test file, so a problem with your feature file or your step definitions is reported before any test runs.
 
@@ -40,7 +40,7 @@ flowchart LR
   steps["Consumer steps file (*.steps.js), required or imported"]
   setup["Optional setupFiles script, calls setFusionConfiguration"]
   features["Feature files (Gherkin)"]
-  jest["Jest 30, on any Node the engines field allows"]
+  jest["Jest 27 or newer, the consumer's own"]
   fusion["jest-cucumber-fusion"]
   gherkin["@cucumber/gherkin 42.0.1"]
   messages["@cucumber/messages 34.2.1"]
@@ -166,7 +166,7 @@ sequenceDiagram
 
     Jest->>Steps: load the file
     Steps->>Fusion: Given, When, Then, And, But, Before, After
-    Note over Fusion: every call writes into the module-level registry,<br/>and a duplicate matcher in the same bucket is refused here
+    Note over Fusion: every call writes into the shared registry (shared-state, on globalThis),<br/>and a duplicate matcher in the same bucket is refused here
     Steps->>Fusion: Fusion with a feature path and options
     Fusion->>Source: resolveFeaturePath
     Source-->>Fusion: absolute path, resolved against the first calling file outside the package
@@ -192,7 +192,7 @@ sequenceDiagram
     Fusion->>Fusion: reset the registry in the finally block, on return and on throw alike
 ```
 
-Details worth knowing as a consumer:
+Rules collection keeps. The user-facing side of each is documented on the guide pages ([Configuration options](./AdditionalConfiguration.md) and [Scenario outlines](./ScenarioOutlines.md)); these are the reasons behind them:
 
 - **The feature path is resolved against the file that called `Fusion`**, found as the first stack frame outside the package, so a wrapper inside the package cannot retarget it. With no such frame, the path resolves against the working directory.
 - **Registration order is plain scenarios first, then Examples rows**, each group in the order the feature file declares them, with Rule-nested scenarios flattened into the same two groups. This is what keeps generated test names stable for an existing CI history.
