@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/gotreasa/jest-cucumber-fusion/security/advisories/new
+    about: Report it privately, not as an issue. See the security policy.
   - name: Documentation
     url: https://github.com/gotreasa/jest-cucumber-fusion/blob/main/docs/README.md
     about: Guides for setting up, writing steps, options and upgrading.

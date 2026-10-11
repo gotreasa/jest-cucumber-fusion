@@ -2,6 +2,8 @@
 
 Thank you for helping. This page covers how a change gets from your machine to a release. To use the package rather than change it, start with the [README](./README.md).
 
+Everyone taking part follows the [code of conduct](./CODE_OF_CONDUCT.md). To report a security vulnerability, follow the [security policy](./SECURITY.md) rather than opening an issue.
+
 ## Set up
 
 You need Node 20.11 or newer: the test suite loads the ES module source.
