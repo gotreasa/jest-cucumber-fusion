@@ -14,3 +14,9 @@ LICENSE
 package.json
 package-lock.json
 README.md
+
+# Written by nWave (nwave-ai project enable). Its managed section, a table in CLAUDE.md, is not
+# Prettier-formatted and is rewritten on every render, so checking it fails the prettier check and
+# formatting it would be undone. Anchored to the root, so a nested CLAUDE.md is still checked.
+/AGENTS.md
+/CLAUDE.md
