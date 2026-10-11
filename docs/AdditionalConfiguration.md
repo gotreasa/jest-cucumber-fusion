@@ -233,13 +233,23 @@ Coming from version 2, where global configuration went through `jest-cucumber`'s
 
 ## Feature file paths
 
-A feature path is always resolved relative to the file that calls `Fusion`:
+A relative feature path is resolved against the file that calls `Fusion`:
 
 ```javascript
 Fusion( 'shopping-basket.feature' )
 ```
 
-Fusion finds that file as the first stack frame outside this package. So if a helper of your own calls `Fusion` for you, from another file, the path resolves against the helper's file, not the step definition file that called the helper.
+An absolute path is used as it is, so you can also build the path yourself, for example to keep feature files in a folder of their own:
+
+```javascript
+import path from 'path'
+
+Fusion( path.join( import.meta.dirname, '..', 'features', 'shopping-basket.feature' ) )
+```
+
+In CommonJS, use `__dirname` in place of `import.meta.dirname`.
+
+Fusion finds the calling file as the first stack frame outside this package. So if a helper of your own calls `Fusion` for you, from another file, the path resolves against the helper's file, not the step definition file that called the helper.
 
 ## Legacy options
 

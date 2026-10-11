@@ -141,6 +141,54 @@ export default function registerCheckoutSteps( currentBasket ) {
 }
 ```
 
+### One steps file for several features
+
+A steps file can run more than one feature. Each `Fusion` call uses the steps registered before it and then empties the registry, so register the steps again before each call: put them in a function and call it before each `Fusion`. With these two features:
+
+```gherkin
+# filename: test/features/account-details.feature
+Feature: Account details
+
+Scenario: Viewing my details
+  Given I am logged in
+  Then my account shows my email address
+```
+
+```gherkin
+# filename: test/features/account-settings.feature
+Feature: Account settings
+
+Scenario: Opening my settings
+  Given I am logged in
+  Then my account shows my email address
+```
+
+one steps file runs both, using the `session` module from above:
+
+```javascript
+// filename: test/features/account.steps.js
+import { Given, Then, Fusion } from '@g_package/jest-cucumber-fusion'
+
+import { session } from '../../src/session.js'
+
+const registerAccountSteps = () => {
+    Given( 'I am logged in', () => {
+        session.logIn( 'sam@example.com' )
+    } )
+
+    Then( 'my account shows my email address', () => {
+        expect( session.user ).toBe( 'sam@example.com' )
+    } )
+}
+
+for ( const feature of [ 'account-details.feature', 'account-settings.feature' ] ) {
+    registerAccountSteps()
+    Fusion( feature )
+}
+```
+
+Jest reports each feature as its own group of tests. To run every feature in a folder rather than a fixed list, build the list with Node's `fs.readdirSync`, keeping the names that end in `.feature`; each path is still relative to the steps file.
+
 ## Written as CommonJS
 
 The same examples work in CommonJS (see [Using CommonJS](./CommonJS.md) for the set-up): turn each `import` into a `require`, and each `export default function` into `module.exports = function`. A shared file is required by name, and its extension may be left out: `require( './login-steps' )`.

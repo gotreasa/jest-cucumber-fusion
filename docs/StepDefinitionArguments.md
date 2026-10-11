@@ -104,4 +104,4 @@ Then( /^the note for version (\d+) reads "(.*)"$/, ( version, expected ) => {
 Fusion( 'release-notes.feature' )
 ```
 
-Next: [Gherkin tables](./GherkinTables.md), for steps that carry a table.
+Next: [Background](./Background.md), for steps every scenario of a feature starts with.

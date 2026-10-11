@@ -158,6 +158,22 @@ A test fails at the first step that fails, and names that step. If a step has no
          And("the product in my basket is a coffee mug", () => {});
 ```
 
+### Run one scenario
+
+While you work on one scenario, you can run it alone. Each scenario is a Jest test named after it, so Jest's `-t` option selects it by name; the other tests are reported as skipped:
+
+```
+npm test -- -t "Adding a product"
+```
+
+To pick scenarios by tag instead, pass the tag filter from an environment variable:
+
+```javascript
+Fusion( 'shopping-basket.feature', { tagFilter: process.env.TAGS } )
+```
+
+Then tag the scenario, for example `@wip`, and run `TAGS=@wip npm test`. With `TAGS` unset the filter is off and every scenario runs. [Tag filtering](./docs/AdditionalConfiguration.md#tag-filtering) covers the expressions you can use, such as `@wip and not @slow`.
+
 ## Hooks
 
 `Before` and `After` run a function before or after every scenario of the `Fusion` call that follows them, which is the place to give each scenario a fresh start. With a `Before` hook, the steps above no longer need to create the basket:
@@ -196,7 +212,7 @@ Register hooks, like step definitions, before the `Fusion` call. A hook may be `
 
 ## If you know Cucumber
 
-Most of Gherkin works as you expect: `Background`, `Rule`, `Scenario Outline` with `Examples`, data tables, docstrings, tags and [80 languages](./docs/Language.md). The differences:
+Most of Gherkin works as you expect: [`Background`](./docs/Background.md), `Rule`, `Scenario Outline` with `Examples`, data tables, docstrings, tags and [80 languages](./docs/Language.md). The differences:
 
 - **Steps bind by keyword.** An `And` step needs an `And` definition, as above. When one definition should serve several keywords, chain it: `Then( And( 'text', fn ) )` registers it under both.
 - **No Cucumber Expressions.** A string is compared as plain text, so `'I add {int} products'` matches only that exact text. Use a regular expression to capture values: `/^I add (\d+) products$/`.
@@ -212,6 +228,7 @@ The [documentation index](./docs/README.md) suggests an order to read the guides
 | To | Read |
 |---|---|
 | capture values from a step, or read a docstring | [Step definition arguments](./docs/StepDefinitionArguments.md) |
+| give every scenario the same first steps | [Background](./docs/Background.md) |
 | use a data table | [Gherkin tables](./docs/GherkinTables.md) |
 | run one scenario for every row of an `Examples` table | [Scenario outlines](./docs/ScenarioOutlines.md) |
 | share steps between feature files | [Re-using step definitions](./docs/ReusingStepDefinitions.md) |

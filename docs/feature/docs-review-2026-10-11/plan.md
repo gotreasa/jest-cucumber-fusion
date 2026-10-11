@@ -132,3 +132,18 @@ released version had it), so it was reworded rather than removed.
       links to the documentation and the contributor guide), and the README, the index and the
       contributor guide now point to them. GitHub has no `ISSUES.md` convention; issue forms are
       its equivalent
+
+## Follow-on: the original repository's issues (2026-10-11)
+
+An audit of all 17 issues on b-yond-infinite-network/jest-cucumber-fusion found every reported
+behaviour working here, each reproduced on a packed build. Gearoid asked for the optional
+follow-ups:
+
+- [x] A Background page (`docs/Background.md`, run by the doc-example baseline): a feature
+      Background, and a `Rule` with its own
+- [x] Absolute feature paths documented (Configuration options), and a worked example of one
+      steps file running several features (Re-using step definitions); both verified
+- [x] "Run one scenario": `-t` and a `TAGS` environment variable, verified on a project
+- [x] The outline the original package left commented out as "not currently possible" runs
+      from its own feature file (a separate `test:` pull request), because the 2.0.0 test-name
+      baseline records the file it came from

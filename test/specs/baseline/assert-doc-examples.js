@@ -29,6 +29,7 @@ import { spawnSync } from "child_process";
 // are set-up commands and fragments without a filename.
 const PAGES = [
   "README.md",
+  "docs/Background.md",
   "docs/GherkinTables.md",
   "docs/ScenarioOutlines.md",
   "docs/StepDefinitionArguments.md",
