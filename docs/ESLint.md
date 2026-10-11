@@ -34,7 +34,8 @@ export default [
     ...jest.configs[ 'flat/recommended' ],
     rules: {
       ...jest.configs[ 'flat/recommended' ].rules,
-      // Fusion runs each step and hook inside the test it makes for the scenario.
+      // Fusion runs each step inside the test it makes for the scenario, and each hook in
+      // that test's beforeEach or afterEach.
       'jest/no-standalone-expect': [ 'error', {
         additionalTestBlockFunctions: [ 'Given', 'When', 'Then', 'And', 'But', 'Before', 'After' ],
       } ],
@@ -67,7 +68,8 @@ module.exports = [
     ...jest.configs[ 'flat/recommended' ],
     rules: {
       ...jest.configs[ 'flat/recommended' ].rules,
-      // Fusion runs each step and hook inside the test it makes for the scenario.
+      // Fusion runs each step inside the test it makes for the scenario, and each hook in
+      // that test's beforeEach or afterEach.
       'jest/no-standalone-expect': [ 'error', {
         additionalTestBlockFunctions: [ 'Given', 'When', 'Then', 'And', 'But', 'Before', 'After' ],
       } ],
