@@ -5,8 +5,10 @@
 
 Each folder holds the plan for one larger piece of work on the package and, where the work needed
 them, its brief, design notes and root-cause analysis. They were written while the work was under
-way, using the nWave delivery method, and are kept as they stood when the work closed, with any
-later note marked as one: dated history, not a description of the package today. Test files cite them where a
+way, using the nWave delivery method (an agent-assisted way of planning and reviewing work). A
+closed record is kept as it stood when the work closed, with any later note marked as one; a
+record whose work is still open is a living plan. Either way they are dated history, not a
+description of the package today. Test files cite them where a
 test pins something the work found.
 
 | Folder | The work |

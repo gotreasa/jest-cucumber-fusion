@@ -4,8 +4,6 @@ The examples on this page are ES modules, laid out as in [Getting Started](../RE
 
 A step can carry a data table. Fusion passes it to the step function as its last argument: an array with one object per row, keyed by the table's header row, with every value a string.
 
-The first row is always the header, so a table of one row arrives as an empty array, and there is no form that reads a table as raw rows or as key-value pairs down its side. To use a two-column table as a lookup, build the object yourself from its rows.
-
 ```gherkin
 # filename: test/features/todo-list.feature
 Feature: Todo List
@@ -71,4 +69,8 @@ Then( 'I should see the following todo list:', ( table ) => {
 Fusion( 'todo-list.feature' )
 ```
 
+The first row is always the header, so a table of one row arrives as an empty array, and there is no form that reads a table as raw rows or as key-value pairs down its side. To use a two-column table as a lookup, build the object yourself from its rows.
+
 A step with a table and captures receives the captures first, in order, and the table last. See [Step definition arguments](./StepDefinitionArguments.md).
+
+Next: [Scenario outlines](./ScenarioOutlines.md), to run one scenario for every row of an `Examples` table.

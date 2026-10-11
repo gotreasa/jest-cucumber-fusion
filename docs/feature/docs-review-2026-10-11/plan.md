@@ -94,3 +94,35 @@ names their tests the same; renaming them would destroy what it proves.
       keep old wording
 - [x] Doc-example baseline 7 of 7; CommonJS, TypeScript, ESLint and coverage examples run by
       hand; 83 links, 0 broken; suite, baselines, lint, typecheck, Prettier
+
+## Follow-on: fresh reviews (PR stacked on #41)
+
+Gearoid asked on 2026-10-11 for a second adversarial review and gSmith pedagogy review, run
+with no context from earlier rounds, and then for all of it to be acted on, a contributor guide
+included. Adversarial: no blockers, 8 should-fix, about 12 nits. Sage: NEEDS_REVISION, for
+structure only.
+
+Verdicts: every should-fix confirmed, except that Architecture's "pinned to gherkin 39" was
+partly right (the pin existed in PR #16's pre-squash commits `9b2bca9` and `e2b1445`, but no
+released version had it), so it was reworded rather than removed.
+
+- [x] Should-fix: the Language page's code is `src/shop.js`, so building every page into one
+      project no longer breaks the outline page (checked: 12 passed, 1 skipped); the `.cjs`
+      mixing caveat; `Rule` tags in tag selection (page and `tagFilter` JSDoc); Migrating's
+      0.8.1 rows; async steps and the whole-scenario timeout; two ES module troubleshooting
+      entries; the Architecture pin wording
+- [x] Nits: `npm pkg set` replaces the duplicate-key warning; the coverage reason; optional
+      captures arrive as `undefined`; a side-effect shared import registers once; title case;
+      setup-script style and the untagged-skip warning; ESLint's hook wording; no `BeforeAll`;
+      the records note
+- [x] Sage: set-up as commands with `node --version`; keyword binding explained by its failure
+      before the rules; a complete Hooks file; a reading order and "Next" links; Hooks first;
+      Migrating leads with version 2; an option table and Legacy options; TypeScript gains
+      "Converting Getting Started" (run in both set-ups, `tsc` clean); "who this is for" lines
+- [x] Not taken: Architecture's design-rationale narrative stays (it is the reason for the dual
+      package); the README's one-line "Upgrading" pointer stays; the CommonJS ESLint config is
+      still shown in full, now introduced by its three differences
+- [x] Checks: doc-example baseline 7 of 7; all pages in one project; CommonJS, TypeScript,
+      ESLint and coverage by hand; 102 links, 0 broken; suite, tsd, baselines, lint,
+      typecheck, Prettier
+- [ ] Contributor guide: its own PR, stacked on this one

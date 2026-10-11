@@ -7,15 +7,7 @@ A step definition is matched by a string or by a regular expression.
 - **A string** matches a step whose text is exactly that string, and the step function receives no captured values.
 - **A regular expression** matches a step whose text it matches, and the step function receives each capture group's value as an argument, in order.
 
-Fusion does not support Cucumber Expressions such as `{int}` or `{string}`: a string is compared as plain text, so `'I add {int} products'` matches only a step with exactly that text. Use a regular expression to capture values.
-
-A step function receives its arguments in this order:
-
-1. **Each capture**, as a **string**. Convert it yourself, for example with `Number( balance )`.
-2. **The docstring**, if the step has one, as one more string.
-3. **The data table**, if the step has one, last, as an array of row objects (see [Gherkin tables](./GherkinTables.md)).
-
-In TypeScript you can declare these types on the step function's parameters (see [Typed step definitions](./TypeScript.md#typed-step-definitions)).
+For example, with this feature:
 
 ```gherkin
 # filename: test/features/bank-account.feature
@@ -69,6 +61,18 @@ Then( /^my account balance should be \$(\d+)$/, ( expectedBalance ) => {
 Fusion( 'bank-account.feature' )
 ```
 
+## What a step function receives
+
+A step function receives its arguments in this order:
+
+1. **Each capture**, as a **string**. Convert it yourself, as the steps above do with `Number( balance )`. A group that did not take part in the match, such as an optional `( in a box)?`, arrives as `undefined`.
+2. **The docstring**, if the step has one, as one more string.
+3. **The data table**, if the step has one, last, as an array of row objects (see [Gherkin tables](./GherkinTables.md)).
+
+In TypeScript you can declare these types on the step function's parameters (see [Typed step definitions](./TypeScript.md#typed-step-definitions)).
+
+Fusion does not support Cucumber Expressions such as `{int}` or `{string}`: a string is compared as plain text, so `'I add {int} products'` matches only a step with exactly that text. Use a regular expression to capture values.
+
 A step that receives a docstring, after its captures:
 
 ```gherkin
@@ -99,3 +103,5 @@ Then( /^the note for version (\d+) reads "(.*)"$/, ( version, expected ) => {
 
 Fusion( 'release-notes.feature' )
 ```
+
+Next: [Gherkin tables](./GherkinTables.md), for steps that carry a table.

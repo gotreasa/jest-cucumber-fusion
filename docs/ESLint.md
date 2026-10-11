@@ -1,6 +1,6 @@
 # Linting with ESLint
 
-[eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) gives ESLint Jest's globals, such as `expect`, and its rules. One rule needs to be told about Fusion. `jest/no-standalone-expect` reports every `expect` that is not inside a `test` or `it` block, and in a step definition file every `expect` sits inside `Then`, `And` or another step function instead. Each step function and each `Before` and `After` hook runs inside the test that Fusion makes for its scenario, so tell the rule to treat them as test blocks.
+This page is for linting step definition files. [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) gives ESLint Jest's globals, such as `expect`, and its rules. One rule needs to be told about Fusion. `jest/no-standalone-expect` reports every `expect` that is not inside a `test` or `it` block, and in a step definition file every `expect` sits inside `Then`, `And` or another step function instead. Each step function runs inside the test that Fusion makes for its scenario, and each `Before` and `After` hook in that test's `beforeEach` or `afterEach`, so tell the rule to treat them as test blocks.
 
 Install ESLint and the plugin:
 
@@ -49,7 +49,7 @@ If your shared step files are not named `*.steps.js` (see [Re-using step definit
 
 ## CommonJS
 
-In a CommonJS project the configuration file is CommonJS too, with `sourceType: 'commonjs'`:
+In a CommonJS project the configuration file is CommonJS too. It differs from the one above in three places: the three `import` lines become `require` calls, `export default` becomes `module.exports =`, and `sourceType` is `'commonjs'`:
 
 ```javascript
 // filename: eslint.config.js

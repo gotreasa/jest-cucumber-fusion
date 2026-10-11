@@ -1,6 +1,6 @@
 # Using TypeScript
 
-Fusion ships its type definitions, and TypeScript finds the right ones for ES modules and CommonJS with no configuration. To run step definition files written in TypeScript, Jest needs a transform. [ts-jest](https://kulshekhar.github.io/ts-jest/) is the usual one.
+This page is for writing step definition files in TypeScript. Fusion ships its type definitions, and TypeScript finds the right ones for ES modules and CommonJS with no configuration. To run step definition files written in TypeScript, Jest needs a transform. [ts-jest](https://kulshekhar.github.io/ts-jest/) is the usual one.
 
 ```
 npm install --save-dev jest ts-jest typescript @types/jest @g_package/jest-cucumber-fusion
@@ -81,9 +81,53 @@ module.exports = {
 
 Here ts-jest checks types while it runs the tests, so a type error fails `npm test` too.
 
+## Converting Getting Started
+
+Renaming the [Getting Started](../README.md#getting-started) files to `.ts` is not enough under `strict`: `tsc --noEmit` then reports the `Basket` class's field as undeclared (`TS2339`), the `add` method's parameter as an implicit `any` (`TS7006`), and `let basket` as an implicit `any` (`TS7034`). Declare the field and the parameter's type:
+
+```typescript
+// filename: src/basket.ts
+export class Basket {
+    products: string[] = []
+
+    add( product: string ): void {
+        this.products.push( product )
+    }
+}
+```
+
+and give the variable its type in the step definition file, keeping the `.js` extension in the import:
+
+```typescript
+// filename: test/features/shopping-basket.steps.ts
+import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
+
+import { Basket } from '../../src/basket.js'
+
+let basket: Basket
+
+Given( 'my basket is empty', () => {
+    basket = new Basket()
+} )
+
+When( 'I add a coffee mug to my basket', () => {
+    basket.add( 'coffee mug' )
+} )
+
+Then( 'my basket holds 1 product', () => {
+    expect( basket.products ).toHaveLength( 1 )
+} )
+
+And( 'the product in my basket is a coffee mug', () => {
+    expect( basket.products[ 0 ] ).toBe( 'coffee mug' )
+} )
+
+Fusion( 'shopping-basket.feature' )
+```
+
 ## Typed step definitions
 
-Renaming the [Getting Started](../README.md#getting-started) files to `.ts` is not enough under `strict`: `tsc --noEmit` then reports the `Basket` class's field as undeclared (`TS2339`), the `add` method's parameter as an implicit `any` (`TS7006`), and `let basket` as an implicit `any` (`TS7034`). Declare the field and the parameter's type in the class, and give the variable its type: `let basket: Basket`. The example below shows the same pattern with an `Order` class.
+The example below shows the same pattern with an `Order` class, and gives each step argument a type.
 
 A step may also declare the type of each argument it receives: a capture or a docstring arrives as a `string`, and a data table as an `Array<Record<string, string>>` of its rows. For example, with this feature:
 

@@ -2,7 +2,7 @@
 
 The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
-You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into 80 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
+This page is for writing feature files in a language other than English. You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into 80 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
 
 A feature file in Dutch:
 
@@ -22,10 +22,10 @@ Functionaliteit: Online verkopen
 The code under test:
 
 ```javascript
-// filename: src/online-sales.js
+// filename: src/shop.js
 const PRICES = { 'coffee mug': 8 }
 
-export class OnlineSales {
+export class Shop {
     listed = []
     sold = []
 
@@ -47,21 +47,21 @@ The step definitions use the usual verbs. Each translated keyword binds through 
 // filename: test/features/online-verkopen.steps.js
 import { Before, Given, When, Then, And, But, Fusion } from '@g_package/jest-cucumber-fusion'
 
-import { OnlineSales } from '../../src/online-sales.js'
+import { Shop } from '../../src/shop.js'
 
-let onlineSales
+let shop
 let salesPrice
 
 Before( () => {
-    onlineSales = new OnlineSales()
+    shop = new Shop()
 } )
 
 Given( 'ik heb een koffiemok te koop', () => {
-    onlineSales.listItem( 'coffee mug' )
+    shop.listItem( 'coffee mug' )
 } )
 
 When( 'ik de koffiemok verkoop', () => {
-    salesPrice = onlineSales.sellItem( 'coffee mug' )
+    salesPrice = shop.sellItem( 'coffee mug' )
 } )
 
 Then( /^ontvang ik €(\d+)$/, ( price ) => {
@@ -69,11 +69,11 @@ Then( /^ontvang ik €(\d+)$/, ( price ) => {
 } )
 
 And( 'is de verkoop geregistreerd', () => {
-    expect( onlineSales.sold ).toEqual( [ 'coffee mug' ] )
+    expect( shop.sold ).toEqual( [ 'coffee mug' ] )
 } )
 
 But( 'heb ik geen koffiemokken meer te koop', () => {
-    expect( onlineSales.listed ).toHaveLength( 0 )
+    expect( shop.listed ).toHaveLength( 0 )
 } )
 
 Fusion( 'online-verkopen.feature' )
@@ -85,11 +85,11 @@ You can also import the verbs under the Dutch keywords, so the step file reads l
 import { Given as Gegeven, When as Als } from '@g_package/jest-cucumber-fusion'
 
 Gegeven( 'ik heb een koffiemok te koop', () => {
-    onlineSales.listItem( 'coffee mug' )
+    shop.listItem( 'coffee mug' )
 } )
 
 Als( 'ik de koffiemok verkoop', () => {
-    salesPrice = onlineSales.sellItem( 'coffee mug' )
+    salesPrice = shop.sellItem( 'coffee mug' )
 } )
 ```
 

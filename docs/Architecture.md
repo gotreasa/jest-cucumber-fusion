@@ -28,7 +28,7 @@ All four publish ES modules only, and Jest cannot `require` an ES module. New pr
 
 A consumer who mixes the two, for example a `setupFiles` script that `require`s Fusion and steps that `import` it, or a shared step library written as CommonJS used by step files written as ES modules, loads two copies. So everything the copies must share, the step and hook registry and the global configuration, lives in `shared-state.js` on `globalThis`: steps or a global registered through one copy reach the other. The packaged-consumer baseline runs all four shapes against the real tarball. Everything else the package needs comes from Node itself (`fs`, `path`, `url` and `util`) and from Jest's own globals.
 
-Until 3.0.0 the package was CommonJS with no build step, pinned to the last cucumber releases a `require` could load (gherkin 39, messages 32, tag-expressions 9, callsites 3). A spike on 2026-10-09 measured the alternatives on packed builds: an ES module only package broke every CommonJS consumer, while the dual package ran them all unchanged.
+Up to 2.0.0 the package was CommonJS with no build step, and reached Gherkin through `jest-cucumber` 4.5 (`@cucumber/gherkin` 28). The first builds of 3.0.0, before release, stayed CommonJS by pinning the last cucumber releases a `require` could load (gherkin 39, messages 32, tag-expressions 9, callsites 3). A spike on 2026-10-09 measured the alternatives on packed builds: an ES module only package broke every CommonJS consumer, while the dual package ran them all unchanged.
 
 ## 2. Context
 
@@ -192,7 +192,7 @@ sequenceDiagram
     Fusion->>Fusion: reset the registry in the finally block, on return and on throw alike
 ```
 
-Rules collection keeps. The user-facing side of each is documented on the guide pages ([Configuration options](./AdditionalConfiguration.md) and [Scenario outlines](./ScenarioOutlines.md)); these are the reasons behind them:
+Collection keeps these rules. The guide pages ([Configuration options](./AdditionalConfiguration.md) and [Scenario outlines](./ScenarioOutlines.md)) say what each means for a user; these are the reasons behind them:
 
 - **The feature path is resolved against the file that called `Fusion`**, found as the first stack frame outside the package, so a wrapper inside the package cannot retarget it. With no such frame, the path resolves against the working directory.
 - **Registration order is plain scenarios first, then Examples rows**, each group in the order the feature file declares them, with Rule-nested scenarios flattened into the same two groups. This is what keeps generated test names stable for an existing CI history.

@@ -38,4 +38,4 @@ The pre-push hook and CI run more than `npm test`. Run these too:
 | `npm run typecheck` | TypeScript checking `src/` as JavaScript (`jsconfig.json`) |
 | `npm run lint:secrets` | secretlint, for anything that looks like a credential |
 
-The pre-push hook runs the first two with `npm test`; CI runs all of them.
+The pre-push hook runs `npm test`, `npm run test-d` and `npm run test:baseline`; CI runs every command in this table.

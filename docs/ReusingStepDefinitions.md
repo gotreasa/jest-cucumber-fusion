@@ -55,9 +55,13 @@ Given( 'I am logged in', () => {
 } )
 ```
 
+A shared step still binds by its keyword, so every feature that uses it must write it as `Given I am logged in`. If some write `And I am logged in`, register it under both keywords with the chained form: `Given( And( 'I am logged in', fn ) )`.
+
+An imported file runs once per steps file, so its steps are registered once. Each `Fusion` call empties the registry, so a steps file with two `Fusion` calls needs the shared steps registered again before the second: use the exported-function form below and call it before each call.
+
 ### Sharing a value with the shared steps
 
-A shared step sometimes needs a value that the steps file creates, such as the basket a `Given` step builds. The shared file cannot import that variable, and reading it once when the file loads would give `undefined`, because the `Given` step has not run yet. So the steps file passes in a function that returns the current value, and each shared step calls it when it runs. Keep this rare: steps that share a lot of state are usually easier to follow in one file.
+The login steps above share their state through a module, `session`, that both files import. A shared step sometimes needs a value that only the steps file creates, such as the basket a `Given` step builds. The shared file cannot import that variable, and reading it once when the file loads would give `undefined`, because the `Given` step has not run yet. So the steps file passes in a function that returns the current value, and each shared step calls it when it runs. Keep this rare: steps that share a lot of state are usually easier to follow in one file.
 
 For example, with this feature:
 
@@ -141,4 +145,6 @@ export default function registerCheckoutSteps( currentBasket ) {
 
 The same examples work in CommonJS (see [Using CommonJS](./CommonJS.md) for the set-up): turn each `import` into a `require`, and each `export default function` into `module.exports = function`. A shared file is required by name, and its extension may be left out: `require( './login-steps' )`.
 
-A shared file written as CommonJS can also serve steps written as ES modules: import it by its full file name, for example `import './login-steps.cjs'`.
+A shared file written as CommonJS can also serve steps written as ES modules: import it by its full file name, for example `import './login-steps.cjs'`. Everything a `.cjs` file `require`s must be CommonJS as well: it cannot `require` your ES module code under test, so either keep that code in `.cjs` files too, or write the shared steps as ES modules.
+
+Next: [Configuration options](./AdditionalConfiguration.md), to filter by tag, name your tests, or set options once for every file.

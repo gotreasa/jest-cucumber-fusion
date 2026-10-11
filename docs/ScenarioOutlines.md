@@ -22,8 +22,6 @@ Scenario Outline: Selling a <Item>
 
 Before a row runs, every `<placeholder>` in the outline, its title included, is replaced with that row's value, so each row becomes its own test, named after its own title. This one runs three tests: `Selling a coffee mug`, `Selling a notebook` and `Selling a desk lamp`. The steps then match the substituted text, so a step definition captures the row's value as it would any other value.
 
-In Jest's report, a feature's plain scenarios come first and its outline rows after them, each group in the order the file declares it, so the order can differ from the file when the two are interleaved.
-
 The code under test:
 
 ```javascript
@@ -78,3 +76,7 @@ Fusion( 'online-sales.feature' )
 ```
 
 A row whose value does not fit a step's regular expression leaves that step unmatched, and Fusion names it when the file loads.
+
+In Jest's report, a feature's plain scenarios come first and its outline rows after them, each group in the order the file declares it, so the order can differ from the file when the two are interleaved.
+
+Next: [Re-using step definitions](./ReusingStepDefinitions.md), to share steps between feature files.
