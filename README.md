@@ -13,17 +13,19 @@ Write Cucumber feature files and run them as Jest tests, without the scaffolding
 
 Jest Cucumber Fusion runs your Cucumber feature files as Jest tests. You write the feature file in Gherkin, and a step definition file with a `Given`, `When`, `Then`, `And` or `But` definition for each step. A `Fusion` call at the end of the step definition file links the two: Fusion reads the feature and creates one Jest test per scenario, so you write no `describe` or `it` blocks yourself. Everything else is plain Jest: `expect`, mocks, coverage and reporting.
 
-**New to Gherkin?** A feature file describes behaviour in plain sentences. It holds one `Feature`, and each `Scenario` in it is one example of that behaviour. Each line of a scenario starting with `Given`, `When`, `Then`, `And` or `But` is a step, and a step definition is the code that runs for one step. The [Gherkin reference](https://cucumber.io/docs/gherkin/reference/) covers the full syntax.
+**New to Gherkin?** A feature file describes behaviour in plain sentences. Each feature file holds one `Feature`, and each `Scenario` in it is one example of that behaviour. Each line of a scenario starting with `Given`, `When`, `Then`, `And` or `But` is a step, and a step definition is the code that runs for one step. The [Gherkin reference](https://cucumber.io/docs/gherkin/reference/) covers the full syntax.
 
-**Upgrading** from version 2, or from `jest-cucumber-fusion` 0.8.x? Your feature and step definition files keep their shape. [Migrating to version 3](./docs/Migrating.md) lists what changes.
+**Upgrading** from version 2, or from `jest-cucumber-fusion` 0.8.x? Your feature and step definition files keep their shape, and step files written as CommonJS keep their `require`. [Migrating to version 3](./docs/Migrating.md) lists what changes.
+
+**Know Cucumber already?** [If you know Cucumber](#if-you-know-cucumber) lists what differs.
 
 ## Getting Started
 
-These steps set up a project whose files are ES modules (they use `import` and `export`), which is the recommended way to use Fusion. If your project is CommonJS (it uses `require`), or you need Node 18, follow these steps with the changes in [Using CommonJS](./docs/CommonJS.md). For step files written in TypeScript, see [Using TypeScript](./docs/TypeScript.md).
+These steps set up a project whose files are ES modules (they use `import` and `export`), which is the recommended way to use Fusion: ES modules are the module format Node and Jest are moving to, and Fusion's own source is written in them. If your project is CommonJS (it uses `require`), or you need Node 18 (CommonJS runs from Node 18.14), follow these steps with the changes in [Using CommonJS](./docs/CommonJS.md). For step files written in TypeScript, see [Using TypeScript](./docs/TypeScript.md).
 
 ### Start a project
 
-Check that `node --version` prints 20.11 or newer, then:
+Check that `node --version` prints 20.11 or newer (for CommonJS, 18.14: see [Using CommonJS](./docs/CommonJS.md)), then:
 
 ```
 mkdir my-project
@@ -43,7 +45,7 @@ The last three commands set these keys in your `package.json`, replacing any tha
 "jest": { "testMatch": [ "**/*.steps.js" ] }
 ```
 
-- `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, name your step files and the code they import `.mjs` instead (and import them by that name, for example `'../../src/basket.mjs'`), and change `testMatch` to `[ "**/*.steps.mjs" ]`.
+- `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, skip `npm pkg set type=module` and name your step files and the code they import `.mjs` instead (and import them by that name, for example `'../../src/basket.mjs'`), and change `testMatch` to `[ "**/*.steps.mjs" ]`.
 - Jest runs ES modules only in its ES module mode, which Node's `--experimental-vm-modules` flag turns on, so always run the tests with `npm test`, not `npx jest`. Node prints an `ExperimentalWarning` about the flag on each run. That is expected.
 - `testMatch` tells Jest that your step definition files are the test files.
 
@@ -127,7 +129,8 @@ Fusion( 'shopping-basket.feature' )
 - **`Fusion` comes last**, after every definition, and its path is relative to the step definition file, so a feature file beside it is named on its own.
 - **A relative `import` names the file in full**, extension included: `'../../src/basket.js'`, not `'../../src/basket'`.
 - **A step may be `async`.** Fusion waits for each step before running the next. A scenario is one Jest test, so Jest's timeout, 5 seconds by default, covers all of its steps together: raise it with `"testTimeout"` in the `jest` key if your steps are slow.
-- **`expect` and Jest's other test functions work as usual.** Import only the keywords your steps use; `But` is also available.
+- **`expect` and Jest's other test functions work as usual.** The `jest` object is the exception in ES module mode: see [Troubleshooting](#troubleshooting).
+- **Import only the keywords your steps use.** `But` is also available.
 
 ### Run the tests
 
@@ -146,7 +149,7 @@ Test Suites: 1 passed, 1 total
 Tests:       1 passed, 1 total
 ```
 
-A test fails at the first step that fails, and names that step. If a step has no definition at all, Fusion refuses the whole file before any test runs, and gives you the code to add. Without the `And` definition above, for example:
+If Jest prints only the summary, without the list of tests, see [Troubleshooting](#troubleshooting). A test fails at the first step that fails, and names that step. If a step has no definition at all, Fusion refuses the whole file before any test runs, and gives you the code to add. Without the `And` definition above, for example:
 
 ```text
  FAIL  test/features/shopping-basket.steps.js
@@ -199,7 +202,7 @@ Register hooks, like step definitions, before the `Fusion` call. A hook may be `
 Most of Gherkin works as you expect: `Background`, `Rule`, `Scenario Outline` with `Examples`, data tables, docstrings, tags and [80 languages](./docs/Language.md). The differences:
 
 - **Steps bind by keyword.** An `And` step needs an `And` definition, as above. When one definition should serve several keywords, chain it: `Then( And( 'text', fn ) )` registers it under both.
-- **No Cucumber Expressions.** A string is compared as plain text, so `'I add {int} products'` matches only that exact text. Use a regular expression to capture values: `/^I add (\d+) products$/`.
+- **No Cucumber Expressions.** A string is compared as plain text, so `'I add {int} coffee mugs to my basket'` matches only that exact text. Use a regular expression to capture values: `/^I add (\d+) coffee mugs to my basket$/`.
 - **No `*` steps.** Because a step binds by its keyword, Fusion refuses a `*` step and asks you to write it with `Given`, `When`, `Then`, `And` or `But`.
 - **No World.** Steps are plain functions with no shared `this`. Share state through variables in the step definition file, and reset it in a `Before` hook.
 - **Hooks take no tags, and there is no `BeforeAll` or `AfterAll`.** `Before` and `After` run around every scenario of their `Fusion` call. For once-per-file set-up, use Jest's own `beforeAll` and `afterAll` at the top of the step definition file.
@@ -222,18 +225,22 @@ The [documentation index](./docs/README.md) suggests an order to read the guides
 | write feature files in another language | [Language](./docs/Language.md) |
 | upgrade from version 2 or 0.8.x | [Migrating to version 3](./docs/Migrating.md) |
 
-**Coverage** works as in any Jest project, because Fusion's tests are Jest tests: run `npm test -- --coverage`. Jest already leaves the `*.steps.js` files out of the report; to leave out shared step files under `test/` as well, add `"coveragePathIgnorePatterns": [ "/node_modules/", "/test/" ]` to the `jest` key.
+## Coverage
+
+Coverage works as in any Jest project, because Fusion's tests are Jest tests: run `npm test -- --coverage`. Jest already leaves the `*.steps.js` files out of the report; to leave out shared step files under `test/` as well, add `"coveragePathIgnorePatterns": [ "/node_modules/", "/test/" ]` to the `jest` key.
 
 ## Troubleshooting
 
-- **`Must use import to load ES Module`**: Jest ran without `--experimental-vm-modules`. Run the tests with `npm test`, not `npx jest`.
-- **`SyntaxError: Cannot use import statement outside a module`**: `package.json` has no `"type": "module"`. Set it (see [Start a project](#start-a-project)), or name your files `.mjs`.
-- **`SyntaxError: Unexpected token 'with'`** when Jest loads your ES module steps: your Node is older than 20.11, which ES module steps need. Upgrade Node, or [use CommonJS](./docs/CommonJS.md), which runs from Node 18.14.
-- **`ReferenceError: jest is not defined`**: in Jest's ES module mode the `jest` object (for `jest.fn()` and friends) is not a global. Add `@jest/globals` to your `devDependencies` and write `import { jest } from '@jest/globals'`.
+- **`Must use import to load ES Module`**: Jest ran without `--experimental-vm-modules`, so run the tests with `npm test`, not `npx jest`. If you did use `npm test`, a `.cjs` file `require`s an ES module, which Node before 24.9 cannot do (see [Mixing the two styles](./docs/CommonJS.md#mixing-the-two-styles)).
+- **`Cannot use import statement outside a module`**: `package.json` has no `"type": "module"`. Set it (see [Start a project](#start-a-project)), or name your files `.mjs`. On Jest 29 and older, Jest run without `--experimental-vm-modules` gives this message too: run the tests with `npm test`.
+- **`SyntaxError: Unexpected token 'with'`** when Jest loads your ES module steps: your Node cannot parse the import attributes in Fusion's ES modules (Node 18.19 and 20.9 fail; 20.11 is the oldest measured to work). Upgrade Node, or [use CommonJS](./docs/CommonJS.md), which runs from Node 18.14.
+- **`jest is not defined`**: in Jest's ES module mode the `jest` object (for `jest.fn()` and friends) is not a global. Add `@jest/globals` to your `devDependencies` and write `import { jest } from '@jest/globals'`.
 - **`No step definition matches`** for a step you did define: the step's keyword decides which definitions it can bind to. An `And` step needs an `And(...)` definition (see [Write the step definitions](#write-the-step-definitions)).
-- **`Your test suite must contain at least one test`**: the feature file is empty, or has no scenarios. Check that it has a `Feature:` line and at least one `Scenario`.
+- **`Your test suite must contain at least one test`**: the feature file is empty, or has a `Feature:` but no scenarios. Add a `Scenario`.
+- **`Error parsing feature Gherkin`**, with `expected: ... #FeatureLine`: the file has scenarios but no `Feature:` line. Add one before the first scenario.
+- **`Feature file not found`**: the path passed to `Fusion` is wrong. It is relative to the step definition file.
 - **`Exceeded timeout of 5000 ms for a test`**: the scenario's steps together took longer than Jest's timeout. Raise `"testTimeout"` in the `jest` key.
-- **A `Before` hook times out waiting for `done()`**: the hook declares a parameter. Remove it (see [Hooks](#hooks)).
+- **A `Before` or `After` hook times out waiting for `done()`**: the hook declares a parameter. Remove it (see [Hooks](#hooks)).
 - **`Multiple configurations found`**: Jest found both a `jest` key in `package.json` and a `jest.config.js`. Keep one: see [Using TypeScript](./docs/TypeScript.md).
 - **`npm WARN EBADENGINE` on Node 18**, naming `brace-expansion` or `lru-cache`: these come from Jest 30's own dependencies, not from Fusion. CommonJS steps still run on Node 18.14 and newer.
 - **Jest prints only the summary, without the list of tests:** Jest shortens its output when it detects an AI agent's environment variables, such as `AI_AGENT` or `CLAUDECODE`. Run it from a terminal that does not have them.

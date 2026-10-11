@@ -2,7 +2,7 @@
 
 The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
-This page is for writing feature files in a language other than English. You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into 80 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
+This page is for writing feature files in a language other than English. Its example is the shop owner's side of the shop from Getting Started, as on [Scenario outlines](./ScenarioOutlines.md). You can write a feature file in another language by putting a `# language:` header on its first line, for example `# language: nl` for Dutch. Without a header the language is English (`en`). Gherkin is translated into 80 [languages](https://cucumber.io/docs/gherkin/languages/), and most editors with a Gherkin plugin complete the translated keywords for you.
 
 A feature file in Dutch:
 
