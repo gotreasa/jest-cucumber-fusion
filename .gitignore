@@ -91,3 +91,6 @@ dist
 
 # Release tarball semantic-release leaves for the staging step (CI only)
 release/
+# nWave config (keep .nwave/config.json trackable)
+.nwave/*
+!.nwave/config.json
