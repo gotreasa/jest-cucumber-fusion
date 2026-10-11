@@ -2,6 +2,9 @@ name: Continuous Integration
 
 on:
   pull_request:
+  # A push to main runs the release job below, which stages the npm release, so this trigger is
+  # what ships one: it must name the default branch. package.json's release.branches names main
+  # alone, so a branch called master that comes back cannot take over the release channel.
   push:
     branches:
       - main
@@ -28,7 +31,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Its own check, so a lint failure is named as one. A required check on main, beside
-  # prettier and integration.
+  # prettier, integration and the three compat checks.
   lint:
     runs-on: ubuntu-latest
 
