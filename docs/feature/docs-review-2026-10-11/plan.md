@@ -125,8 +125,12 @@ released version had it), so it was reworded rather than removed.
 - [x] Checks: doc-example baseline 7 of 7; all pages in one project; CommonJS, TypeScript,
       ESLint and coverage by hand; 102 links, 0 broken; suite, tsd, baselines, lint,
       typecheck, Prettier
-- [x] Contributor guide: `CONTRIBUTING.md`, its own PR stacked on #42. Issues are turned off on
-      the repository, so it asks for a failing-test pull request as the way to report a problem
+- [x] Contributor guide: `CONTRIBUTING.md`, its own PR (#43) stacked on #42. Written while issues
+      were turned off, it first asked for a failing-test pull request as the way to report a
+      problem; the next entry superseded that. The same PR added `SECURITY.md`, `SUPPORT.md` and
+      `CODE_OF_CONDUCT.md` (Contributor Covenant 3.0), with private vulnerability reporting
+      turned on; conduct reports go through that private form, because GitHub's content
+      reporting is for organisations only
 - [x] Later on 2026-10-11 Gearoid had issues turned on. Issue forms added under
       `.github/ISSUE_TEMPLATE` (bug report, feature request, question; blank issues off, with
       links to the documentation and the contributor guide), and the README, the index and the

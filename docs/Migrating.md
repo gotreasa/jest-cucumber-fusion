@@ -9,9 +9,9 @@ Start from the section for the version you have:
 
 ## From version 2
 
-Step definition files written as CommonJS need no change: the package ships a CommonJS build, which `require` gets. Version 2 declared no Node range; version 3 runs on Node 18.14 and newer for CommonJS, and Node 20.11 and newer for ES modules (see [Which Jest and Node versions work?](#which-jest-and-node-versions-work)).
+Step definition files written as CommonJS keep working as CommonJS, with no change of module format: the package ships a CommonJS build, which `require` gets. Version 2 declared no Node range; version 3 runs on Node 18.14 and newer for CommonJS, and Node 20.11 and newer for ES modules (see [Which Jest and Node versions work?](#which-jest-and-node-versions-work)).
 
-Three changes may need an edit.
+Three changes may need an edit. Two of the [smaller differences](#smaller-differences-from-200) can also change which tests run, so read those too if you use `tagFilter`.
 
 **1. The global configuration import moves.** Version 2 relied on `jest-cucumber`, and global configuration went through that package's own setter. In your `setupFiles` script:
 
@@ -78,7 +78,7 @@ Each row comes from running the same feature and step files under 2.0.0 and 3.0.
 
 4. Run your tests. Problems that 0.8.1 passed silently now fail on this first run, each with a message naming the step involved and how to fix it.
 
-Read [From version 2](#from-version-2) as well: most of it applies to you, because 0.8.1 behaved as version 2 did there. A `tagFilter` of only spaces, for one, skipped every scenario under 0.8.1 too. In addition, these changed in version 2:
+Read [From version 2](#from-version-2) as well. Change 1 applies to you, because 0.8.1 also configured through `jest-cucumber`. Change 2 and the row for a `tagFilter` of only spaces (every scenario was skipped) were run under 0.8.1 and behaved as under version 2, so they apply too. Change 3 differs: under 0.8.1 an outline step bound by a regular expression received no docstring at all, and version 3 passes it with the row's values. The other rows of the smaller differences were run against 2.0.0 only. In addition, these changed in version 2:
 
 | Situation | 0.8.1 | Version 2 and 3 |
 |---|---|---|
@@ -88,18 +88,18 @@ Read [From version 2](#from-version-2) as well: most of it applies to you, becau
 | A step that more than one definition matches | accepted, and the first registered definition ran | refused: `Ambiguous step definition: ... matches 2 step definitions` |
 | `Fusion()` called twice in one file, sharing steps | the second call reused the steps registered for the first | each call starts empty, so register the shared steps again before the second call |
 
-0.8.1 could not read a `Rule:` at all. Data tables, docstrings (an empty one included), Background, `# language:` headers and chaining a step definition with `And(chain)` (see [What the package exports](./AdditionalConfiguration.md#what-the-package-exports)) behave as they did in 0.8.1.
+0.8.1 could not read a `Rule:` with tags (its Gherkin, version 17, refused a tag line above `Rule:`); an untagged `Rule:` ran. Data tables, docstrings outside Scenario Outlines (an empty one included), Background, `# language:` headers and chaining a step definition with `And(chain)` (see [What the package exports](./AdditionalConfiguration.md#what-the-package-exports)) behave as they did in 0.8.1.
 
 ## Which Jest and Node versions work?
 
-Version 3 runs under the Jest your project already has: it is tested under Jest 27 to 30. `jest` is a peer dependency (`>=27`), so the package installs no copy of its own. Version 2 listed `jest` as a dependency, so a project on an older Jest also got a nested Jest it never ran. If your project has no `jest` yet, install it beside the package, as [Getting Started](../README.md#getting-started) does.
+Version 3 runs under the Jest your project already has, from Jest 27 on. CI runs Jest 30; Jest 27.5, 29.7 and 30.5 were each run by hand when version 3 was released. `jest` is a peer dependency (`>=27`), so the package installs no copy of its own. Version 2 listed `jest` as a dependency, so a project on an older Jest also got a nested Jest it never ran. If your project has no `jest` yet, install it beside the package, as [Getting Started](../README.md#getting-started) does.
 
 - **CommonJS** step files run on Node 18.14 and newer. The package declares Jest 30's own Node range (`^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0`).
-- **ES modules** need Node 20.11 or newer, because `@cucumber/gherkin` 42 uses import attributes, which Node 18 and 20.9 cannot parse (`SyntaxError: Unexpected token 'with'`). Run Jest in its ES module mode, as [Getting Started](../README.md#getting-started) shows.
+- **ES modules** need Node 20.11 or newer, because `@cucumber/gherkin` 42 uses import attributes, which Node 18.19 and 20.9 could not parse when measured (`SyntaxError: Unexpected token 'with'`); 20.11 is the oldest version measured to work. Run Jest in its ES module mode, as [Getting Started](../README.md#getting-started) shows.
 - **Mixing the two** works: a shared step library written as CommonJS can serve step files written as ES modules. See [Using CommonJS](./CommonJS.md#mixing-the-two-styles).
 
 ## What does the migration cost?
 
-Expect the first run to fail wherever a steps file depended on one of the old silent behaviours. Where a file relied on a second `Before` replacing the first, both hooks now run, so the two may need to merge into one; where a file registered the same step twice, keep one definition. The message for each case lists the step and the definitions involved, so fixing it takes a reading of the message rather than a search through the file.
+Expect the first run to fail wherever a steps file depended on one of the old silent behaviours. From 0.8.x, the likeliest are these: where a file relied on a second `Before` replacing the first, both hooks now run, so the two may need to merge into one; where a file registered the same step twice, keep one definition. The message for each case lists the step and the definitions involved, so fixing it takes a reading of the message rather than a search through the file.
 
 A missing step stops the whole steps file, including scenarios that already passed, because Fusion checks every step before it registers any test. While you write the new definitions, `errors: { stepsMustMatchFeatureFile: false }` keeps the rest of the file running and reports the unfinished scenario as skipped. Every option is in [Configuration options](./AdditionalConfiguration.md).

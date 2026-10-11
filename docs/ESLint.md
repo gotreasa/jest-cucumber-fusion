@@ -1,6 +1,6 @@
 # Linting with ESLint
 
-This page is for linting step definition files. [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) gives ESLint Jest's globals, such as `expect`, and its rules. One rule needs to be told about Fusion. `jest/no-standalone-expect` reports every `expect` that is not inside a `test` or `it` block, and in a step definition file every `expect` sits inside `Then`, `And` or another step function instead. Each step function runs inside the test that Fusion makes for its scenario, and each `Before` and `After` hook in that test's `beforeEach` or `afterEach`, so tell the rule to treat them as test blocks.
+This page is for linting step definition files written in JavaScript; linting TypeScript needs [typescript-eslint](https://typescript-eslint.io/), which this page does not cover. [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) gives ESLint Jest's globals, such as `expect`, and its rules. One rule needs to be told about Fusion. `jest/no-standalone-expect` reports every `expect` that is not inside a `test` or `it` block, and in a step definition file every `expect` sits inside `Then`, `And` or another step function instead. Each step function runs inside the test that Fusion makes for its scenario, and each `Before` and `After` hook in that test's `beforeEach` or `afterEach`, so tell the rule to treat them as test blocks.
 
 Install ESLint and the plugin:
 
@@ -34,7 +34,8 @@ export default [
     ...jest.configs[ 'flat/recommended' ],
     rules: {
       ...jest.configs[ 'flat/recommended' ].rules,
-      // Fusion runs each step and hook inside the test it makes for the scenario.
+      // Fusion runs each step inside the test it makes for the scenario, and each hook in
+      // that test's beforeEach or afterEach.
       'jest/no-standalone-expect': [ 'error', {
         additionalTestBlockFunctions: [ 'Given', 'When', 'Then', 'And', 'But', 'Before', 'After' ],
       } ],
@@ -67,7 +68,8 @@ module.exports = [
     ...jest.configs[ 'flat/recommended' ],
     rules: {
       ...jest.configs[ 'flat/recommended' ].rules,
-      // Fusion runs each step and hook inside the test it makes for the scenario.
+      // Fusion runs each step inside the test it makes for the scenario, and each hook in
+      // that test's beforeEach or afterEach.
       'jest/no-standalone-expect': [ 'error', {
         additionalTestBlockFunctions: [ 'Given', 'When', 'Then', 'And', 'But', 'Before', 'After' ],
       } ],

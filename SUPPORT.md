@@ -18,7 +18,7 @@ Search the [existing issues](https://github.com/gotreasa/jest-cucumber-fusion/is
 ## Not here
 
 - **A security vulnerability**: do not open an issue. Follow the [security policy](./SECURITY.md) to report it privately.
-- **Behaviour that breaks the [code of conduct](./CODE_OF_CONDUCT.md)**: report it as that page describes.
+- **Behaviour that breaks the [code of conduct](./CODE_OF_CONDUCT.md)**: report it privately through the [private report form](https://github.com/gotreasa/jest-cucumber-fusion/security/advisories/new), starting the title with "Code of conduct". [Reporting an Issue](./CODE_OF_CONDUCT.md#reporting-an-issue) says more.
 
 ## What to expect
 

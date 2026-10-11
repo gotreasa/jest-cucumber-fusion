@@ -2,7 +2,7 @@
 
 The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
-A Scenario Outline runs its steps once for each row of its `Examples` table:
+The examples here are the shop owner's side of the shop from Getting Started: listing products for sale and selling them. A Scenario Outline runs its steps once for each row of its `Examples` table:
 
 ```gherkin
 # filename: test/features/online-sales.feature
@@ -45,7 +45,7 @@ export class OnlineSales {
 }
 ```
 
-Each step captures the substituted value with `(.*)`, which takes the text between the fixed words, spaces included:
+Each step captures the substituted value with `(.*)`, which takes whatever text stands in its place, spaces included:
 
 ```javascript
 // filename: test/features/online-sales.steps.js

@@ -71,7 +71,7 @@ A step function receives its arguments in this order:
 
 In TypeScript you can declare these types on the step function's parameters (see [Typed step definitions](./TypeScript.md#typed-step-definitions)).
 
-Fusion does not support Cucumber Expressions such as `{int}` or `{string}`: a string is compared as plain text, so `'I add {int} products'` matches only a step with exactly that text. Use a regular expression to capture values.
+Fusion does not support Cucumber Expressions such as `{int}` or `{string}`: a string is compared as plain text, so `'I add {int} coffee mugs to my basket'` matches only a step with exactly that text. Use a regular expression to capture values.
 
 A step that receives a docstring, after its captures:
 

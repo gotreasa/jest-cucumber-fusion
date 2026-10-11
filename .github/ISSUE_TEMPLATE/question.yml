@@ -5,7 +5,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        The [documentation index](https://github.com/gotreasa/jest-cucumber-fusion/blob/main/docs/README.md) may already answer it.
+        The [documentation index](https://github.com/gotreasa/jest-cucumber-fusion/blob/main/docs/README.md) may already answer it, and the README's [Troubleshooting](https://github.com/gotreasa/jest-cucumber-fusion#troubleshooting) list covers the errors people hit most often.
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: The `@g_package/jest-cucumber-fusion` version, from `npm ls @g_package/jest-cucumber-fusion`, and whether your step files use `import` or `require`.
+      placeholder: "3.0.4, ES modules"
   - type: textarea
     id: question
     attributes:

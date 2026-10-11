@@ -13,8 +13,7 @@ body:
     id: example
     attributes:
       label: An example
-      description: A feature file and step definitions showing how you would like to write it.
-      render: javascript
+      description: A feature file and step definitions showing how you would like to write it, each in its own code block.
   - type: textarea
     id: today
     attributes:
