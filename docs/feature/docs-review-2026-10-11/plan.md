@@ -125,4 +125,5 @@ released version had it), so it was reworded rather than removed.
 - [x] Checks: doc-example baseline 7 of 7; all pages in one project; CommonJS, TypeScript,
       ESLint and coverage by hand; 102 links, 0 broken; suite, tsd, baselines, lint,
       typecheck, Prettier
-- [ ] Contributor guide: its own PR, stacked on this one
+- [x] Contributor guide: `CONTRIBUTING.md`, its own PR stacked on #42. Issues are turned off on
+      the repository, so it asks for a failing-test pull request as the way to report a problem

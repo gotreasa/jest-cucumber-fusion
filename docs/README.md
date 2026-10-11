@@ -42,6 +42,7 @@ New here? Start with the [README](../README.md): it sets up a project from nothi
 
 | Page | What it covers |
 |---|---|
+| [Contributing](../CONTRIBUTING.md) | how a change gets from your machine to a release: commits, hooks, documentation and releases |
 | [Running the test suite](./RunningTheExamples.md) | running this repository's test suite, and the checks to run before you push |
 | [Architecture](./Architecture.md) | how the source is organised, and the rules the architecture test enforces |
 
