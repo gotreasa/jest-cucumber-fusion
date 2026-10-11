@@ -74,5 +74,4 @@ Feature: Online sales
             | Item                                           | RebatePrice      | Amount    |
             | Autographed Neil deGrasse Tyson book           | 20               | 20        |
             | Rick Astley t-shirt                            | 50               | 50        |
-# The outline that mixes placeholders with a dollar amount and a currency in one step, once
-# commented out here as "not currently possible", now runs: see outline-mixed-values.feature.
+# The mixed placeholder, dollar and currency outline now runs in outline-mixed-values.feature.

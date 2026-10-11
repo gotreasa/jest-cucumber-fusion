@@ -1,10 +1,14 @@
 Feature: Scenario outline mixing values
 
+    # Proves that one step combining several placeholders with literal text, including a $ sign
+    # and a currency code, is matched after each row's values are substituted. Version 2.0.0
+    # matched the template text instead and refused this step as ambiguous.
+    #
     # Carried over from scenario-outlines.feature, where the original package left it commented
-    # out as "not currently possible": one step mixes outline placeholders with fixed text, a
-    # dollar amount and a currency between them. Fusion matches each row's substituted text, so
-    # it runs. It lives in its own file because scenario-outlines.feature is recorded in the
-    # 2.0.0 test-name baseline, whose list of names must not change.
+    # out as "not currently possible". The title, the deliberately awkward step wording and the
+    # rows are kept exactly as written there, so rows 2 and 3 share a test name. It lives in its
+    # own file because scenario-outlines.feature is recorded in the 2.0.0 test-name baseline,
+    # whose list of names must not change.
     Scenario Outline: Additional mix regexp and non-regexp in outline line with non-string variables and static one in the middle for <Item>
         Given I want to sell all my <Item>
         When I sell all my <Item> with a starting price <Description> price of <RebatePrice>$ <Currency> which is nice
