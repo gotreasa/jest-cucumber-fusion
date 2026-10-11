@@ -84,10 +84,10 @@ dist
 # Claude Code worktree / scratch
 .claude
 
-# nWave runtime noise; keep the checked-in config trackable
+# nWave runtime noise; keep the checked-in config trackable. Its "enabled": true is what turns
+# nWave on for this repository, commit attribution included.
 .nwave/*
-!.nwave/des-config.json
-!.nwave/local-config.json
+!.nwave/config.json
 
 # Release tarball semantic-release leaves for the staging step (CI only)
 release/
