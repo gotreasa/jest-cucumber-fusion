@@ -1,6 +1,6 @@
 # Gherkin tables
 
-The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS instead](../README.md#using-commonjs-instead).
+The examples on this page are ES modules, laid out as in [Getting Started](../README.md#getting-started). For CommonJS, see [Using CommonJS](./CommonJS.md).
 
 A step can carry a data table. Fusion passes it to the step function as its last argument: an array with one object per row, keyed by the table's header row, with every value a string.
 
@@ -14,13 +14,13 @@ Scenario: Adding an item to my todo list
     | Fix bugs in my code | medium   |
     | Document my hours   | medium   |
   When I add the following task:
-    | TaskName                            | Priority |
-    | Watch cat videos on YouTube all day | high     |
+    | TaskName           | Priority |
+    | Review the release | high     |
   Then I should see the following todo list:
-    | TaskName                            | Priority |
-    | Fix bugs in my code                 | medium   |
-    | Document my hours                   | medium   |
-    | Watch cat videos on YouTube all day | high     |
+    | TaskName            | Priority |
+    | Fix bugs in my code | medium   |
+    | Document my hours   | medium   |
+    | Review the release  | high     |
 ```
 
 The code under test:
@@ -69,4 +69,8 @@ Then( 'I should see the following todo list:', ( table ) => {
 Fusion( 'todo-list.feature' )
 ```
 
+The first row is always the header, so a table of one row arrives as an empty array, and there is no form that reads a table as raw rows or as key-value pairs down its side. To use a two-column table as a lookup, build the object yourself from its rows.
+
 A step with a table and captures receives the captures first, in order, and the table last. See [Step definition arguments](./StepDefinitionArguments.md).
+
+Next: [Scenario outlines](./ScenarioOutlines.md), to run one scenario for every row of an `Examples` table.

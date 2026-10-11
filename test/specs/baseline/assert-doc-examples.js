@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Every guide page's example runs as written, on the real tarball.
+ * The README's and every guide page's named examples run as written, on the real tarball.
  *
  * A documentation review on 2026-10-10 (gSmith's pedagogy reviewer, nWave's documentarist and
  * an adversarial pass that ran the code) found guide examples that failed when a reader copied
@@ -25,7 +25,12 @@ import os from "os";
 import path from "path";
 import { spawnSync } from "child_process";
 
+// The README's Getting Started first: it is the example most readers copy. Its other blocks
+// are set-up commands and fragments without a filename.
 const PAGES = [
+  "README.md",
+  "docs/Background.md",
+  "docs/Rule.md",
   "docs/GherkinTables.md",
   "docs/ScenarioOutlines.md",
   "docs/StepDefinitionArguments.md",
