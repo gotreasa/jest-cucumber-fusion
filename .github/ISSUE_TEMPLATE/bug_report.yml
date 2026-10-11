@@ -1,0 +1,73 @@
+name: Bug report
+description: Fusion does something wrong, or refuses something it should accept.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. The quickest reports to fix are the ones we can run: a feature file, its step definitions, and what Jest printed. Check the [Troubleshooting](https://github.com/gotreasa/jest-cucumber-fusion#troubleshooting) list first, in case it covers your error.
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: The `@g_package/jest-cucumber-fusion` version, from `npm ls @g_package/jest-cucumber-fusion`.
+      placeholder: "3.0.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: module-system
+    attributes:
+      label: How your step definition files load the package
+      options:
+        - ES modules (import)
+        - CommonJS (require)
+        - TypeScript, ES modules
+        - TypeScript, CommonJS
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      description: From `node --version`.
+      placeholder: "v22.11.0"
+    validations:
+      required: true
+  - type: input
+    id: jest
+    attributes:
+      label: Jest version
+      description: From `npx jest --version`.
+      placeholder: "30.5.2"
+    validations:
+      required: true
+  - type: textarea
+    id: feature
+    attributes:
+      label: Feature file
+      description: The smallest feature file that shows the problem.
+      render: gherkin
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Step definitions
+      description: The step definition file, including its `Fusion` call.
+      render: javascript
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: What Jest printed. Paste the output, not a screenshot.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true

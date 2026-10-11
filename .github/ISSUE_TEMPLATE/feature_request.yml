@@ -1,0 +1,22 @@
+name: Feature request
+description: Something Fusion does not do yet.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you are trying to do
+      description: The problem, in your own project's terms, rather than the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: An example
+      description: A feature file and step definitions showing how you would like to write it.
+      render: javascript
+  - type: textarea
+    id: today
+    attributes:
+      label: What you do today
+      description: Any workaround you use now.

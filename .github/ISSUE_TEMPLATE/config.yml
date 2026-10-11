@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/gotreasa/jest-cucumber-fusion/blob/main/docs/README.md
+    about: Guides for setting up, writing steps, options and upgrading.
+  - name: Contributing
+    url: https://github.com/gotreasa/jest-cucumber-fusion/blob/main/CONTRIBUTING.md
+    about: How to propose a change, and how a change gets released.

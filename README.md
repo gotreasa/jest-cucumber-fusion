@@ -237,3 +237,5 @@ The [documentation index](./docs/README.md) suggests an order to read the guides
 - **`Multiple configurations found`**: Jest found both a `jest` key in `package.json` and a `jest.config.js`. Keep one: see [Using TypeScript](./docs/TypeScript.md).
 - **`npm WARN EBADENGINE` on Node 18**, naming `brace-expansion` or `lru-cache`: these come from Jest 30's own dependencies, not from Fusion. CommonJS steps still run on Node 18.14 and newer.
 - **Jest prints only the summary, without the list of tests:** Jest shortens its output when it detects an AI agent's environment variables, such as `AI_AGENT` or `CLAUDECODE`. Run it from a terminal that does not have them.
+
+Still stuck, or found a bug? [Open an issue](https://github.com/gotreasa/jest-cucumber-fusion/issues/new/choose).

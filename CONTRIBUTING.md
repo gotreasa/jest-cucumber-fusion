@@ -70,6 +70,8 @@ Write prose in British English, and do not use em dashes.
 
 A push to `main` runs semantic-release in CI after the checks pass. It reads the commit types since the last release, and when one calls for a release it tags the version, writes the GitHub release, and stages the package on npm with provenance. A maintainer then approves the staged package with two-factor authentication, which publishes it. Nothing is published from a contributor's machine.
 
-## Reporting problems
+## Reporting problems and asking questions
 
-Issues are turned off on this repository, so report a problem as a pull request: the best report is a failing test that shows it, a feature file and step definitions under `test/specs/features` with the output they give. A fix can follow in the same pull request or a later one.
+[Open an issue](https://github.com/gotreasa/jest-cucumber-fusion/issues/new/choose) and pick the form that fits: a bug report, a feature request or a question. The bug report asks for the package, Node and Jest versions, how your step files load the package, and the smallest feature file and step definitions that show the problem, with what Jest printed. That is what it takes to reproduce a problem, so please fill it in.
+
+If you can, follow up with a pull request that adds a failing test for the problem under `test/specs/features`. A fix can come in the same pull request or a later one.

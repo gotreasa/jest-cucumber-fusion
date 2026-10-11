@@ -127,3 +127,8 @@ released version had it), so it was reworded rather than removed.
       typecheck, Prettier
 - [x] Contributor guide: `CONTRIBUTING.md`, its own PR stacked on #42. Issues are turned off on
       the repository, so it asks for a failing-test pull request as the way to report a problem
+- [x] Later on 2026-10-11 Gearoid had issues turned on. Issue forms added under
+      `.github/ISSUE_TEMPLATE` (bug report, feature request, question; blank issues off, with
+      links to the documentation and the contributor guide), and the README, the index and the
+      contributor guide now point to them. GitHub has no `ISSUES.md` convention; issue forms are
+      its equivalent
