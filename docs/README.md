@@ -45,7 +45,7 @@ New here? Start with the [README](../README.md): it sets up a project from nothi
 | [Running the test suite](./RunningTheExamples.md) | running this repository's test suite, and the checks to run before you push |
 | [Architecture](./Architecture.md) | how the source is organised, and the rules the architecture test enforces |
 
-**How the examples are checked.** Every example on the README and on the pages under "Writing features and steps" and "Options" that names its file is run by the project's tests, so you can copy it as written: each page's named blocks are written into a fresh ES module project of their own, with the packed package installed, and run (`npm run test:baseline`). The TypeScript page is checked by an equivalent TypeScript project that the same baseline builds. The other set-up pages show configuration, and Migrating shows before-and-after fragments.
+**How the examples are checked.** Every example on the README and on the pages under "Writing features and steps" and "Options" that names its file is run by the project's tests, so you can copy it as written: each page's named blocks are written into a fresh ES module project of their own, with the packed package installed, and run (`npm run test:baseline`). The TypeScript page's set-up is checked by a TypeScript project that the same baseline builds, with code of its own; the page's examples were run by hand. The other set-up pages show configuration, and Migrating shows before-and-after fragments.
 
 ## How this package was built
 

@@ -44,7 +44,19 @@ merging each branch into the next cannot conflict. Each branch is then merged in
       examples use a step from Getting Started; the sample refusal names its feature's steps;
       the outline page says it is the shop owner's side, and how `(.*)` captures. Doc-example
       baseline 7 of 7
-- [ ] #42
+- [x] #42: Migrating says CommonJS keeps its module format, that 0.8.1 refused only a tagged
+      `Rule:`, which version 2 rows were run under 0.8.1 (change 2, the spaces-only filter) and
+      how change 3 differed there, which Jest versions were run (CI runs 30 only), the measured
+      Node versions, and scopes the cost section to 0.8.x, with the tag-filter warning in the
+      lead; the `.cjs` caveat holds before Node 24.9 only; Troubleshooting gives both causes of
+      `Must use import` and `Cannot use import statement`, quotes `jest is not defined` without
+      its prefix, and splits the empty-file, no-`Feature:` and wrong-path cases; the README
+      says why ES modules are recommended and gives the CommonJS Node floor, points from
+      `expect` to the `jest` exception, gives the keyword import its own bullet and Coverage its
+      own heading; the index says the TypeScript page's examples were run by hand; ESLint is
+      scoped to JavaScript; Language and the TypeScript `Order` example say why they are what
+      they are; `session` reset noted; the long JSDoc line reflowed. 103 links, 0 broken;
+      doc-example baseline 7 of 7
 - [ ] #43
 - [ ] #46
 - [ ] #47

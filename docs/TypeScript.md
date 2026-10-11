@@ -127,7 +127,7 @@ Fusion( 'shopping-basket.feature' )
 
 ## Typed step definitions
 
-The example below shows the same pattern with an `Order` class, and gives each step argument a type.
+The example below shows the same pattern with an `Order` class, because it needs a capture, a docstring and a table in one scenario, and gives each step argument a type.
 
 A step may also declare the type of each argument it receives: a capture or a docstring arrives as a `string`, and a data table as an `Array<Record<string, string>>` of its rows. For example, with this feature:
 

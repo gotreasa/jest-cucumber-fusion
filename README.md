@@ -21,11 +21,11 @@ Jest Cucumber Fusion runs your Cucumber feature files as Jest tests. You write t
 
 ## Getting Started
 
-These steps set up a project whose files are ES modules (they use `import` and `export`), which is the recommended way to use Fusion. If your project is CommonJS (it uses `require`), or you need Node 18, follow these steps with the changes in [Using CommonJS](./docs/CommonJS.md). For step files written in TypeScript, see [Using TypeScript](./docs/TypeScript.md).
+These steps set up a project whose files are ES modules (they use `import` and `export`), which is the recommended way to use Fusion: ES modules are the module format Node and Jest are moving to, and Fusion's own source is written in them. If your project is CommonJS (it uses `require`), or you need Node 18 (CommonJS runs from Node 18.14), follow these steps with the changes in [Using CommonJS](./docs/CommonJS.md). For step files written in TypeScript, see [Using TypeScript](./docs/TypeScript.md).
 
 ### Start a project
 
-Check that `node --version` prints 20.11 or newer, then:
+Check that `node --version` prints 20.11 or newer (for CommonJS, 18.14: see [Using CommonJS](./docs/CommonJS.md)), then:
 
 ```
 mkdir my-project
@@ -45,7 +45,7 @@ The last three commands set these keys in your `package.json`, replacing any tha
 "jest": { "testMatch": [ "**/*.steps.js" ] }
 ```
 
-- `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, name your step files and the code they import `.mjs` instead (and import them by that name, for example `'../../src/basket.mjs'`), and change `testMatch` to `[ "**/*.steps.mjs" ]`.
+- `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, skip `npm pkg set type=module` and name your step files and the code they import `.mjs` instead (and import them by that name, for example `'../../src/basket.mjs'`), and change `testMatch` to `[ "**/*.steps.mjs" ]`.
 - Jest runs ES modules only in its ES module mode, which Node's `--experimental-vm-modules` flag turns on, so always run the tests with `npm test`, not `npx jest`. Node prints an `ExperimentalWarning` about the flag on each run. That is expected.
 - `testMatch` tells Jest that your step definition files are the test files.
 
@@ -129,7 +129,8 @@ Fusion( 'shopping-basket.feature' )
 - **`Fusion` comes last**, after every definition, and its path is relative to the step definition file, so a feature file beside it is named on its own.
 - **A relative `import` names the file in full**, extension included: `'../../src/basket.js'`, not `'../../src/basket'`.
 - **A step may be `async`.** Fusion waits for each step before running the next. A scenario is one Jest test, so Jest's timeout, 5 seconds by default, covers all of its steps together: raise it with `"testTimeout"` in the `jest` key if your steps are slow.
-- **`expect` and Jest's other test functions work as usual.** Import only the keywords your steps use; `But` is also available.
+- **`expect` and Jest's other test functions work as usual.** The `jest` object is the exception in ES module mode: see [Troubleshooting](#troubleshooting).
+- **Import only the keywords your steps use.** `But` is also available.
 
 ### Run the tests
 
@@ -224,16 +225,20 @@ The [documentation index](./docs/README.md) suggests an order to read the guides
 | write feature files in another language | [Language](./docs/Language.md) |
 | upgrade from version 2 or 0.8.x | [Migrating to version 3](./docs/Migrating.md) |
 
-**Coverage** works as in any Jest project, because Fusion's tests are Jest tests: run `npm test -- --coverage`. Jest already leaves the `*.steps.js` files out of the report; to leave out shared step files under `test/` as well, add `"coveragePathIgnorePatterns": [ "/node_modules/", "/test/" ]` to the `jest` key.
+## Coverage
+
+Coverage works as in any Jest project, because Fusion's tests are Jest tests: run `npm test -- --coverage`. Jest already leaves the `*.steps.js` files out of the report; to leave out shared step files under `test/` as well, add `"coveragePathIgnorePatterns": [ "/node_modules/", "/test/" ]` to the `jest` key.
 
 ## Troubleshooting
 
-- **`Must use import to load ES Module`**: Jest ran without `--experimental-vm-modules`. Run the tests with `npm test`, not `npx jest`.
-- **`SyntaxError: Cannot use import statement outside a module`**: `package.json` has no `"type": "module"`. Set it (see [Start a project](#start-a-project)), or name your files `.mjs`.
+- **`Must use import to load ES Module`**: Jest ran without `--experimental-vm-modules`, so run the tests with `npm test`, not `npx jest`. If you did use `npm test`, a `.cjs` file `require`s an ES module, which Node before 24.9 cannot do (see [Mixing the two styles](./docs/CommonJS.md#mixing-the-two-styles)).
+- **`Cannot use import statement outside a module`**: `package.json` has no `"type": "module"`. Set it (see [Start a project](#start-a-project)), or name your files `.mjs`. On Jest 29 and older, Jest run without `--experimental-vm-modules` gives this message too: run the tests with `npm test`.
 - **`SyntaxError: Unexpected token 'with'`** when Jest loads your ES module steps: your Node cannot parse the import attributes in Fusion's ES modules (Node 18.19 and 20.9 fail; 20.11 is the oldest measured to work). Upgrade Node, or [use CommonJS](./docs/CommonJS.md), which runs from Node 18.14.
-- **`ReferenceError: jest is not defined`**: in Jest's ES module mode the `jest` object (for `jest.fn()` and friends) is not a global. Add `@jest/globals` to your `devDependencies` and write `import { jest } from '@jest/globals'`.
+- **`jest is not defined`**: in Jest's ES module mode the `jest` object (for `jest.fn()` and friends) is not a global. Add `@jest/globals` to your `devDependencies` and write `import { jest } from '@jest/globals'`.
 - **`No step definition matches`** for a step you did define: the step's keyword decides which definitions it can bind to. An `And` step needs an `And(...)` definition (see [Write the step definitions](#write-the-step-definitions)).
-- **`Your test suite must contain at least one test`**: the feature file is empty, or has no scenarios. Check that it has a `Feature:` line and at least one `Scenario`.
+- **`Your test suite must contain at least one test`**: the feature file is empty, or has a `Feature:` but no scenarios. Add a `Scenario`.
+- **`Error parsing feature Gherkin`**, with `expected: ... #FeatureLine`: the file has scenarios but no `Feature:` line. Add one before the first scenario.
+- **`Feature file not found`**: the path passed to `Fusion` is wrong. It is relative to the step definition file.
 - **`Exceeded timeout of 5000 ms for a test`**: the scenario's steps together took longer than Jest's timeout. Raise `"testTimeout"` in the `jest` key.
 - **A `Before` or `After` hook times out waiting for `done()`**: the hook declares a parameter. Remove it (see [Hooks](#hooks)).
 - **`Multiple configurations found`**: Jest found both a `jest` key in `package.json` and a `jest.config.js`. Keep one: see [Using TypeScript](./docs/TypeScript.md).
