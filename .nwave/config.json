@@ -1,0 +1,21 @@
+{
+  "audit_log_dir": ".nwave/des/logs",
+  "audit_logging_enabled": true,
+  "deliverable_type": "application",
+  "enabled": true,
+  "rigor": {
+    "agent_model": "opus",
+    "double_review": true,
+    "examine_swarm_n": 3,
+    "profile": "thorough",
+    "refactor_pass": true,
+    "review_enabled": true,
+    "reviewer_model": "sonnet",
+    "tdd_phases": [
+      "RED",
+      "GREEN",
+      "COMMIT"
+    ]
+  },
+  "schema-version": 1
+}
