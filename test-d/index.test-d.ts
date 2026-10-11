@@ -1,5 +1,15 @@
 import { expectType, expectError } from "tsd";
-import { Given, When, Then, And, But, StepChain, StepArgument } from "..";
+import {
+  Given,
+  When,
+  Then,
+  And,
+  But,
+  Fusion,
+  setFusionConfiguration,
+  StepChain,
+  StepArgument,
+} from "..";
 
 // Normal two-argument form still type-checks and returns a chain.
 expectType<StepChain>(Given("I am set up", () => {}));
@@ -41,3 +51,9 @@ Given(/^(.*)$/, (value) => {
 
 // A type Fusion never passes is still refused.
 expectError(Given(/^(\d+)$/, (count: number) => {}));
+
+// null is a value, not "unset": it clears a global tagFilter for one call, as the
+// configuration page documents, so strict TypeScript accepts it in both places.
+expectType<void>(Fusion("launch.feature", { tagFilter: null }));
+expectType<void>(setFusionConfiguration({ tagFilter: null }));
+expectError(Fusion("launch.feature", { tagFilter: 42 }));
