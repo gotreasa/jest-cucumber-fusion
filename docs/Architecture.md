@@ -1,6 +1,6 @@
 # Architecture
 
-This page is for contributors: how Fusion is built and why. To use the package, start with the [README](../README.md#getting-started). To work on it, clone the repository and follow [Running the examples](./RunningTheExamples.md) to get the suite running, then read on.
+This page is for contributors: how Fusion is built and why. To use the package, start with the [README](../README.md#getting-started). To work on it, clone the repository and follow [Running the test suite](./RunningTheExamples.md) to get the suite running, then read on.
 
 ## 1. Overview
 

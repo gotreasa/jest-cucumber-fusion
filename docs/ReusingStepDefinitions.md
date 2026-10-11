@@ -5,125 +5,140 @@ The examples on this page are ES modules, laid out as in [Getting Started](../RE
 Fusion registers a step definition wherever it is called, so a step used by several feature files can live in one shared file that each steps file imports. Keep step code light, with common set-up in modules of its own (test data creation, for example), and there is little left to duplicate. When some remains, share it like this:
 
 ```gherkin
-# filename: test/features/reuse-rocket.feature
-Feature: Rocket reuse
+# filename: test/features/order-history.feature
+Feature: Order history
 
-Scenario: Reusing a SpaceX rocket
-  Given I am Elon Musk and I launched a rocket in space already
-  Then I'm happy
+Scenario: Viewing my orders
+  Given I am logged in
+  Then my account shows my email address
+```
+
+Most features of a web shop start with someone logged in, so `Given I am logged in` belongs in a shared file. The code under test keeps who is logged in:
+
+```javascript
+// filename: src/session.js
+export const session = {
+    user: null,
+
+    logIn( email ) {
+        this.user = email
+    },
+}
 ```
 
 Write your step definitions as usual, and import your shared step definition file by its full name, extension included. An `import` always runs before the rest of the file, wherever it is written, so the shared steps are registered first. That is safe, because Fusion binds every step only when `Fusion(...)` runs.
 
 ```javascript
-// filename: test/features/reuse-rocket.steps.js
-import { Given, Fusion } from '@g_package/jest-cucumber-fusion'
-import './happy-steps.js' // our shared test code
+// filename: test/features/order-history.steps.js
+import { Then, Fusion } from '@g_package/jest-cucumber-fusion'
+import './login-steps.js' // the shared steps
 
-Given( 'I am Elon Musk and I launched a rocket in space already', () => {
-    const hasLaunchedARocket = true
-    expect( hasLaunchedARocket ).toBe( true )
+import { session } from '../../src/session.js'
+
+Then( 'my account shows my email address', () => {
+    expect( session.user ).toBe( 'sam@example.com' )
 } )
 
-Fusion( 'reuse-rocket.feature' )
+Fusion( 'order-history.feature' )
 ```
 
-Name the shared file so that Jest's `testMatch` does not pick it up as a test file of its own (`happy-steps.js`, not `happy.steps.js`):
+Name the shared file so that Jest's `testMatch` does not pick it up as a test file of its own (`login-steps.js`, not `login.steps.js`):
 
 ```javascript
-// filename: test/features/happy-steps.js
-import { Then } from '@g_package/jest-cucumber-fusion'
+// filename: test/features/login-steps.js
+import { Given } from '@g_package/jest-cucumber-fusion'
 
-Then( 'I\'m happy', () => {
-    const localHappy = true
-    expect( localHappy ).toBe( true )
+import { session } from '../../src/session.js'
+
+Given( 'I am logged in', () => {
+    session.logIn( 'sam@example.com' )
 } )
 ```
-
 
 ### Sharing a value with the shared steps
 
-A shared step sometimes needs a value that the steps file creates, such as the rocket a `Given` step builds. The shared file cannot import that variable, and reading it once when the file loads would give `undefined`, because the `Given` step has not run yet. So the steps file passes in a function that returns the current value, and each shared step calls it when it runs. Keep this rare: steps that share a lot of state are usually easier to follow in one file.
+A shared step sometimes needs a value that the steps file creates, such as the basket a `Given` step builds. The shared file cannot import that variable, and reading it once when the file loads would give `undefined`, because the `Given` step has not run yet. So the steps file passes in a function that returns the current value, and each shared step calls it when it runs. Keep this rare: steps that share a lot of state are usually easier to follow in one file.
 
 For example, with this feature:
 
 ```gherkin
-# filename: test/features/reuse-definition.feature
-Feature: Rocket relaunch
+# filename: test/features/checkout.feature
+Feature: Checkout
 
-Scenario: Relaunching a SpaceX rocket
-  Given I am Elon Musk and I launched a rocket in space already
-  When I relaunch the rocket
-  Then the rocket end up in space again
-  And I drop my mic
+Scenario: Checking out a basket
+  Given my basket holds a coffee mug
+  When I check out
+  Then an order is placed for a coffee mug
+  And my basket is empty
 ```
 
-The code under test is the `Rocket` from [Getting Started](../README.md#getting-started):
+The code under test is the `Basket` from [Getting Started](../README.md#getting-started), with a `checkOut` method:
 
 ```javascript
-// filename: src/rocket.js
-export class Rocket {
+// filename: src/basket.js
+export class Basket {
     constructor() {
-        this.isInSpace = false
-        this.boostersLanded = false
+        this.products = []
+        this.orders = []
     }
 
-    launch() {
-        this.isInSpace = true
-        this.boostersLanded = true
+    add( product ) {
+        this.products.push( product )
+    }
+
+    checkOut() {
+        this.orders.push( [ ...this.products ] )
+        this.products = []
     }
 }
 ```
 
-The steps file keeps the rocket in its own variable and passes a function that returns it. The shared file exports a function that takes that accessor and registers its steps:
+The steps file keeps the basket in its own variable and passes a function that returns it. The shared file exports a function that takes that accessor and registers its steps:
 
 ```javascript
-// filename: test/features/reuse-definition.steps.js
+// filename: test/features/checkout.steps.js
 import { Given, Fusion } from '@g_package/jest-cucumber-fusion'
-import { Rocket } from '../../src/rocket.js'
-import registerRelaunchSteps from './relaunch-steps.js'
+import { Basket } from '../../src/basket.js'
+import registerCheckoutSteps from './checkout-steps.js'
 
-let rocket
-function getCurrentRocket() {
-    return rocket
+let basket
+function getCurrentBasket() {
+    return basket
 }
 
-Given( 'I am Elon Musk and I launched a rocket in space already', () => {
-    rocket = new Rocket()
+Given( 'my basket holds a coffee mug', () => {
+    basket = new Basket()
+    basket.add( 'coffee mug' )
 } )
 
-registerRelaunchSteps( getCurrentRocket )
+registerCheckoutSteps( getCurrentBasket )
 
-Fusion( 'reuse-definition.feature' )
+Fusion( 'checkout.feature' )
 ```
 
-Inside your shared step file, be careful to call the accessor inside your test step function, not outside:
+Inside your shared step file, call the accessor inside each step function, when the step runs, not outside it:
 
 ```javascript
-// filename: test/features/relaunch-steps.js
+// filename: test/features/checkout-steps.js
 import { When, Then, And } from '@g_package/jest-cucumber-fusion'
 
-And( 'I drop my mic', () => {
-    const micDropped = true
-    expect( micDropped ).toBe( true )
-} )
-
-export default function registerRelaunchSteps( fnRocket ) {
-    When( 'I relaunch the rocket', () => {
-        const rocketUsed = fnRocket()
-        rocketUsed.launch()
+export default function registerCheckoutSteps( currentBasket ) {
+    When( 'I check out', () => {
+        currentBasket().checkOut()
     } )
 
-    Then( 'the rocket end up in space again', () => {
-        const rocketUsed = fnRocket()
-        expect( rocketUsed.isInSpace ).toBe(true)
+    Then( 'an order is placed for a coffee mug', () => {
+        expect( currentBasket().orders ).toEqual( [ [ 'coffee mug' ] ] )
+    } )
+
+    And( 'my basket is empty', () => {
+        expect( currentBasket().products ).toHaveLength( 0 )
     } )
 }
 ```
-
 
 ## Written as CommonJS
 
-The same examples work in CommonJS (see [Using CommonJS](./CommonJS.md) for the set-up): turn each `import` into a `require`, and each `export default function` into `module.exports = function`. A shared file is required by name, and its extension may be left out: `require( './happy-steps' )`.
+The same examples work in CommonJS (see [Using CommonJS](./CommonJS.md) for the set-up): turn each `import` into a `require`, and each `export default function` into `module.exports = function`. A shared file is required by name, and its extension may be left out: `require( './login-steps' )`.
 
-A shared file written as CommonJS can also serve steps written as ES modules: import it by its full file name, for example `import './happy-steps.cjs'`.
+A shared file written as CommonJS can also serve steps written as ES modules: import it by its full file name, for example `import './login-steps.cjs'`.

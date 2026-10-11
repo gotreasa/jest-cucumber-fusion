@@ -28,7 +28,7 @@ import { Fusion } from '@g_package/jest-cucumber-fusion'
 // your step definitions
 // Given( ...
 
-Fusion( 'rocket-launching.feature', {
+Fusion( 'shopping-basket.feature', {
   errors: {
     stepsMustMatchFeatureFile: true, // Refuse at collection when a feature step has no registered definition
     scenariosMustMatchFeatureFile: true, // Refuse at collection when the file declares two scenarios of one title
@@ -45,7 +45,7 @@ A third key, `allowScenariosNotInFeatureFile`, is accepted and ignored, so older
 On, a step with no registered definition is refused when the step definition file is collected, before any test is registered. One refusal names every unbound step of the feature, with starter code in Fusion's own verb idiom that you can paste and fill in. Steps that differ only in their values, such as the rows of a Scenario Outline, share one numbered entry and one definition, so you can paste every snippet at once:
 
 ```text
-Fusion found 3 steps in the feature "Rocket launching" that no registered step definition matches.
+Fusion found 3 steps in the feature "Stock" that no registered step definition matches.
 
 WHY:  Fusion runs each step through the definition registered for that step's own
       Gherkin keyword, so a step with no definition has nothing to run and the
@@ -56,12 +56,12 @@ HOW:  register a definition for each entry below. The starter code under each on
       errors: { stepsMustMatchFeatureFile: false } to have the scenarios holding them
       reported as skipped tests instead.
 
-  1. No step definition matches: "the launch pad is clear"
-     Given("the launch pad is clear", () => {});
+  1. No step definition matches: "the shop is open"
+     Given("the shop is open", () => {});
 
-  2. No step definition matches: "3 boosters are fuelled"
-     nor: "2 boosters are fuelled"
-     And(/^(\d+) boosters are fuelled$/, (arg0) => {});
+  2. No step definition matches: "3 coffee mugs are in stock"
+     nor: "2 coffee mugs are in stock"
+     And(/^(\d+) coffee mugs are in stock$/, (arg0) => {});
 ```
 
 The verb is the one for that step's own Gherkin keyword, so an `And` step suggests `And`. A step whose text carries a number or a double-quoted value gets an anchored regular expression with a capture group and a parameter for each, and a step carrying a data table or a docstring gets a `table` or `docString` parameter after them.
@@ -228,13 +228,13 @@ Coming from version 2, where global configuration went through `jest-cucumber`'s
 A feature path is always resolved relative to the file that calls `Fusion`, which is what most people expect, so there is nothing to switch on:
 
 ```javascript
-Fusion( 'rocket-launching.feature' )
+Fusion( 'shopping-basket.feature' )
 ```
 
 The `loadRelativePath` flag is still **accepted and ignored**, so a call that passes it keeps working:
 
 ```javascript
-Fusion( 'rocket-launching.feature', { loadRelativePath: true } ) // same as leaving it out
+Fusion( 'shopping-basket.feature', { loadRelativePath: true } ) // same as leaving it out
 ```
 
 Please note that the path is relative to the file that calls `Fusion`, so if you use helper files which call `Fusion` for you this might lead to unexpected results. Fusion resolves against the first stack frame outside this package, so a thin wrapper of your own in another file resolves against that wrapper.

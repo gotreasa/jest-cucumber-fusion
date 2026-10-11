@@ -1,6 +1,6 @@
-# Running the examples
+# Running the test suite
 
-The examples are the feature files and step definition files under `test/specs/features`, written in JavaScript as ES modules. `npm test` builds the CommonJS bundle first and runs Jest in its ES module mode (`node --experimental-vm-modules`), so run the examples through it rather than through a bare `jest`. Working on the repository needs Node 20.11 or newer: the suite loads the ES module source, and the build and baseline scripts use `import.meta.dirname`.
+This repository's test suite is the feature files and step definition files under `test/specs/features`, written in JavaScript as ES modules. They are regression fixtures rather than examples to copy: some keep wording from the package's earliest versions, because a recorded baseline checks that version 3 still gives their tests the names version 2 gave them. For examples to copy, use the [documentation](./README.md). `npm test` builds the CommonJS bundle first and runs Jest in its ES module mode (`node --experimental-vm-modules`), so run the suite through it rather than through a bare `jest`. Working on the repository needs Node 20.11 or newer: the suite loads the ES module source, and the build and baseline scripts use `import.meta.dirname`.
 
 First, clone the repository and install the dependencies:
 
@@ -12,9 +12,9 @@ npm install
 
 To see how the code is organised before you change it, read [Architecture](./Architecture.md).
 
-## Running the examples from the command line
+## Running the suite from the command line
 
-`npm test` runs the whole suite, which is the examples:
+`npm test` runs the whole suite:
 
 ```
 npm test

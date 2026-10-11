@@ -18,20 +18,18 @@ Leave out `"type": "module"`, and run Jest directly:
 It exports with `module.exports`:
 
 ```javascript
-// filename: src/rocket.js
-class Rocket {
+// filename: src/basket.js
+class Basket {
     constructor() {
-        this.isInSpace = false
-        this.boostersLanded = false
+        this.products = []
     }
 
-    launch() {
-        this.isInSpace = true
-        this.boostersLanded = true
+    add( product ) {
+        this.products.push( product )
     }
 }
 
-module.exports = { Rocket }
+module.exports = { Basket }
 ```
 
 ## Step definition files
@@ -39,30 +37,30 @@ module.exports = { Rocket }
 They `require` the same names. A relative `require` may leave the extension out, and the `jest` object is a global, as in any CommonJS Jest project:
 
 ```javascript
-// filename: test/features/rocket-launching.steps.js
+// filename: test/features/shopping-basket.steps.js
 const { Given, When, Then, And, Fusion } = require( '@g_package/jest-cucumber-fusion' )
 
-const { Rocket } = require( '../../src/rocket' )
+const { Basket } = require( '../../src/basket' )
 
-let rocket
+let basket
 
-Given( 'I am Elon Musk attempting to launch a rocket into space', () => {
-    rocket = new Rocket()
+Given( 'my basket is empty', () => {
+    basket = new Basket()
 } )
 
-When( 'I launch the rocket', () => {
-    rocket.launch()
+When( 'I add a coffee mug to my basket', () => {
+    basket.add( 'coffee mug' )
 } )
 
-Then( 'the rocket should end up in space', () => {
-    expect( rocket.isInSpace ).toBe( true )
+Then( 'my basket holds 1 product', () => {
+    expect( basket.products ).toHaveLength( 1 )
 } )
 
-And( 'the boosters should land back on the launch pad', () => {
-    expect( rocket.boostersLanded ).toBe( true )
+And( 'the product in my basket is a coffee mug', () => {
+    expect( basket.products[ 0 ] ).toBe( 'coffee mug' )
 } )
 
-Fusion( 'rocket-launching.feature' )
+Fusion( 'shopping-basket.feature' )
 ```
 
 ## Everything else

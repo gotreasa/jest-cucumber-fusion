@@ -37,7 +37,7 @@ The examples on the README and on the guide pages under "Writing features and st
 
 | Page | What it covers |
 |---|---|
-| [Running the examples](./RunningTheExamples.md) | running this repository's own example features, and the checks to run before you push |
+| [Running the test suite](./RunningTheExamples.md) | running this repository's test suite, and the checks to run before you push |
 | [Architecture](./Architecture.md) | how the source is organised, and the rules the architecture test enforces |
 
 ## How this package was built

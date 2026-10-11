@@ -11,22 +11,23 @@ A feature file in Dutch:
 # filename: test/features/online-verkopen.feature
 Functionaliteit: Online verkopen
 
-    Scenario: t-shirt verkopen
-        Gegeven ik heb een t-shirt
-        Als ik een t-shirt wil verkopen
-        Dan ontvang ik €22
-        En ben ik blij
-        Maar heb ik geen t-shirts over
+    Scenario: Een koffiemok verkopen
+        Gegeven ik heb een koffiemok te koop
+        Als ik de koffiemok verkoop
+        Dan ontvang ik €8
+        En is de verkoop geregistreerd
+        Maar heb ik geen koffiemokken meer te koop
 ```
 
 The code under test:
 
 ```javascript
 // filename: src/online-sales.js
-const PRICES = { 'Rick Astley t-shirt': 22 }
+const PRICES = { 'coffee mug': 8 }
 
 export class OnlineSales {
     listed = []
+    sold = []
 
     listItem( item ) {
         this.listed.push( item )
@@ -34,6 +35,7 @@ export class OnlineSales {
 
     sellItem( item ) {
         this.listed = this.listed.filter( ( listed ) => listed !== item )
+        this.sold.push( item )
         return PRICES[ item ]
     }
 }
@@ -54,23 +56,23 @@ Before( () => {
     onlineSales = new OnlineSales()
 } )
 
-Given( 'ik heb een t-shirt', () => {
-    onlineSales.listItem( 'Rick Astley t-shirt' )
+Given( 'ik heb een koffiemok te koop', () => {
+    onlineSales.listItem( 'coffee mug' )
 } )
 
-When( 'ik een t-shirt wil verkopen', () => {
-    salesPrice = onlineSales.sellItem( 'Rick Astley t-shirt' )
+When( 'ik de koffiemok verkoop', () => {
+    salesPrice = onlineSales.sellItem( 'coffee mug' )
 } )
 
 Then( /^ontvang ik €(\d+)$/, ( price ) => {
     expect( salesPrice ).toBe( Number( price ) )
 } )
 
-And( 'ben ik blij', () => {
-    expect( salesPrice ).toBeGreaterThan( 0 )
+And( 'is de verkoop geregistreerd', () => {
+    expect( onlineSales.sold ).toEqual( [ 'coffee mug' ] )
 } )
 
-But( 'heb ik geen t-shirts over', () => {
+But( 'heb ik geen koffiemokken meer te koop', () => {
     expect( onlineSales.listed ).toHaveLength( 0 )
 } )
 
@@ -82,12 +84,12 @@ You can also import the verbs under the Dutch keywords, so the step file reads l
 ```javascript
 import { Given as Gegeven, When as Als } from '@g_package/jest-cucumber-fusion'
 
-Gegeven( 'ik heb een t-shirt', () => {
-    onlineSales.listItem( 'Rick Astley t-shirt' )
+Gegeven( 'ik heb een koffiemok te koop', () => {
+    onlineSales.listItem( 'coffee mug' )
 } )
 
-Als( 'ik een t-shirt wil verkopen', () => {
-    salesPrice = onlineSales.sellItem( 'Rick Astley t-shirt' )
+Als( 'ik de koffiemok verkoop', () => {
+    salesPrice = onlineSales.sellItem( 'coffee mug' )
 } )
 ```
 

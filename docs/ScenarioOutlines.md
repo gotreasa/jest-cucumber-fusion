@@ -8,19 +8,19 @@ A Scenario Outline runs its steps once for each row of its `Examples` table:
 # filename: test/features/online-sales.feature
 Feature: Online sales
 
-Scenario Outline: Selling <Item>
-  Given I have a(n) <Item>
+Scenario Outline: Selling a <Item>
+  Given I have listed a <Item> for sale
   When I sell the <Item>
-  Then I should get $<Amount>
+  Then I should receive $<Amount>
 
   Examples:
-    | Item                                           | Amount |
-    | Autographed Neil deGrasse Tyson book           | 100    |
-    | Rick Astley t-shirt                            | 22     |
-    | An idea to replace EVERYTHING with blockchains | 0      |
+    | Item       | Amount |
+    | coffee mug | 8      |
+    | notebook   | 4      |
+    | desk lamp  | 25     |
 ```
 
-Before a row runs, every `<placeholder>` in the outline, its title included, is replaced with that row's value, so each row becomes its own test, named after its own title. This one runs three tests: `Selling Autographed Neil deGrasse Tyson book`, `Selling Rick Astley t-shirt` and `Selling An idea to replace EVERYTHING with blockchains`. The steps then match the substituted text, so a step definition captures the row's value as it would any other value.
+Before a row runs, every `<placeholder>` in the outline, its title included, is replaced with that row's value, so each row becomes its own test, named after its own title. This one runs three tests: `Selling a coffee mug`, `Selling a notebook` and `Selling a desk lamp`. The steps then match the substituted text, so a step definition captures the row's value as it would any other value.
 
 In Jest's report, a feature's plain scenarios come first and its outline rows after them, each group in the order the file declares it, so the order can differ from the file when the two are interleaved.
 
@@ -29,9 +29,9 @@ The code under test:
 ```javascript
 // filename: src/online-sales.js
 const PRICES = {
-    'Autographed Neil deGrasse Tyson book': 100,
-    'Rick Astley t-shirt': 22,
-    'An idea to replace EVERYTHING with blockchains': 0,
+    'coffee mug': 8,
+    'notebook': 4,
+    'desk lamp': 25,
 }
 
 export class OnlineSales {
@@ -47,7 +47,7 @@ export class OnlineSales {
 }
 ```
 
-Each step captures the substituted value with `(.*)`, which takes everything after the fixed words, spaces included:
+Each step captures the substituted value with `(.*)`, which takes the text between the fixed words, spaces included:
 
 ```javascript
 // filename: test/features/online-sales.steps.js
@@ -62,7 +62,7 @@ Before( () => {
     onlineSales = new OnlineSales()
 } )
 
-Given( /^I have a\(n\) (.*)$/, ( item ) => {
+Given( /^I have listed a (.*) for sale$/, ( item ) => {
     onlineSales.listItem( item )
 } )
 
@@ -70,7 +70,7 @@ When( /^I sell the (.*)$/, ( item ) => {
     salesPrice = onlineSales.sellItem( item )
 } )
 
-Then( /^I should get \$(\d+)$/, ( expectedSalesPrice ) => {
+Then( /^I should receive \$(\d+)$/, ( expectedSalesPrice ) => {
     expect( salesPrice ).toBe( Number( expectedSalesPrice ) )
 } )
 

@@ -43,7 +43,7 @@ export default {
 
 **Run `npm run typecheck` as well as `npm test`, for example in CI.** In ES module mode ts-jest only strips the types and does not check them, so a type error does not fail `npm test`; `tsc --noEmit` is what reports it. (`isolatedModules` tells ts-jest that this is expected. Without it, ts-jest warns `TS151002` and still does not check.)
 
-`moduleNameMapper` lets your imports keep the `.js` extension that ES modules need, while Jest loads the `.ts` file: `import { Rocket } from '../../src/rocket.js'` loads `src/rocket.ts`.
+`moduleNameMapper` lets your imports keep the `.js` extension that ES modules need, while Jest loads the `.ts` file: `import { Basket } from '../../src/basket.js'` loads `src/basket.ts`.
 
 ## CommonJS
 
@@ -83,40 +83,42 @@ Here ts-jest checks types while it runs the tests, so a type error fails `npm te
 
 ## Typed step definitions
 
-Renaming the [Getting Started](../README.md#getting-started) files to `.ts` is not enough under `strict`: `tsc --noEmit` then reports the `Rocket` class's fields as undeclared (`TS2339`) and `let rocket` as an implicit `any` (`TS7034`). Declare the fields in the class, and give the variable its type: `let rocket: Rocket`. The example below shows the same pattern with a `Launch` class.
+Renaming the [Getting Started](../README.md#getting-started) files to `.ts` is not enough under `strict`: `tsc --noEmit` then reports the `Basket` class's field as undeclared (`TS2339`), the `add` method's parameter as an implicit `any` (`TS7006`), and `let basket` as an implicit `any` (`TS7034`). Declare the field and the parameter's type in the class, and give the variable its type: `let basket: Basket`. The example below shows the same pattern with an `Order` class.
 
 A step may also declare the type of each argument it receives: a capture or a docstring arrives as a `string`, and a data table as an `Array<Record<string, string>>` of its rows. For example, with this feature:
 
 ```gherkin
-# filename: test/features/launch.feature
-Feature: Launch
+# filename: test/features/gift-order.feature
+Feature: Gift orders
 
-Scenario: Launching a batch of rockets
-  Given I am launching 3 rockets
-  When the countdown says
+Scenario: Ordering a gift with a message
+  Given I order 3 coffee mugs
+  When I add the gift message
     """
-    ignition
+    Happy birthday
     """
-  Then the manifest has
-    | name   |
-    | Falcon |
-  And all 3 rockets are launched
+  Then the order lines are
+    | product    | quantity |
+    | coffee mug | 3        |
+  And the gift message is "Happy birthday"
 ```
 
 and this code under test:
 
 ```typescript
-// filename: src/launch.ts
-export class Launch {
-    launched = 0
-    count: number
+// filename: src/order.ts
+export class Order {
+    product: string
+    quantity: number
+    giftMessage = ''
 
-    constructor( count: number ) {
-        this.count = count
+    constructor( product: string, quantity: number ) {
+        this.product = product
+        this.quantity = quantity
     }
 
-    countdown( word: string ): void {
-        if ( word === 'ignition' ) this.launched = this.count
+    lines(): Array<Record<string, string>> {
+        return [ { product: this.product, quantity: String( this.quantity ) } ]
     }
 }
 ```
@@ -124,30 +126,30 @@ export class Launch {
 the steps declare a `string` for the capture and the docstring, and the rows for the table:
 
 ```typescript
-// filename: test/features/launch.steps.ts
+// filename: test/features/gift-order.steps.ts
 import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 
-import { Launch } from '../../src/launch.js'
+import { Order } from '../../src/order.js'
 
-let launch: Launch
+let order: Order
 
-Given( /^I am launching (\d+) rockets$/, ( count: string ) => {
-    launch = new Launch( Number( count ) )
+Given( /^I order (\d+) coffee mugs$/, ( quantity: string ) => {
+    order = new Order( 'coffee mug', Number( quantity ) )
 } )
 
-When( 'the countdown says', ( words: string ) => {
-    launch.countdown( words )
+When( 'I add the gift message', ( message: string ) => {
+    order.giftMessage = message
 } )
 
-Then( 'the manifest has', ( rows: Array<Record<string, string>> ) => {
-    expect( rows ).toStrictEqual( [ { name: 'Falcon' } ] )
+Then( 'the order lines are', ( rows: Array<Record<string, string>> ) => {
+    expect( rows ).toStrictEqual( order.lines() )
 } )
 
-And( /^all (\d+) rockets are launched$/, ( count: string ) => {
-    expect( launch.launched ).toBe( Number( count ) )
+And( /^the gift message is "(.*)"$/, ( expected: string ) => {
+    expect( order.giftMessage ).toBe( expected )
 } )
 
-Fusion( 'launch.feature' )
+Fusion( 'gift-order.feature' )
 ```
 
 An argument you leave undeclared has the type `StepArgument` (`string | Array<Record<string, string>>`), which you can import from the package.

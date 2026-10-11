@@ -69,3 +69,28 @@ than explained.
 - [x] Commit and push. #38 had been squash-merged while this work ran, so it went up as a new
       PR, #40, after merging `master` (its three conflicting files were unchanged on `master`
       since this branch's own earlier commit)
+
+## Follow-on: concrete examples (PR stacked on #40)
+
+Asked by Gearoid on 2026-10-11 ("follow the guidance from jest-cucumber's own CONTRIBUTING.md").
+That guidance asks for examples that are concrete and easily understood, without humour or
+cuteness, built on widely understood workflows such as a shopping basket, logging in or a bank
+deposit. The real people in the examples (Elon Musk, Neil deGrasse Tyson, Rick Astley) came from
+jest-cucumber's own examples, through the b-yond repository (`4c8ddfa`, 2019-12-23).
+
+Scope, chosen by Gearoid: the user-facing pages only. The test fixtures keep their wording,
+because `test/specs/baseline/test-names-2.0.0.txt` is a recorded run of 2.0.0 that proves 3.x
+names their tests the same; renaming them would destroy what it proves.
+
+- [x] README, CommonJS: a shopping basket; TypeScript: a gift order (a capture, a docstring and
+      a table); Step definition arguments: a plain deposit; Gherkin tables: no joke task;
+      Scenario outlines: a shop's catalogue; Language: a coffee mug sold in Dutch; Re-using step
+      definitions: a shared login step, and checkout steps behind an accessor
+- [x] Configuration options' sample refusal and the README's output samples re-captured from
+      real runs of the new examples, not edited by hand
+- [x] TypeScript's strict-mode claim re-measured on the basket: it adds `TS7006` (the `add`
+      parameter), now stated
+- [x] RunningTheExamples calls the suite a test suite of regression fixtures, and says why some
+      keep old wording
+- [x] Doc-example baseline 7 of 7; CommonJS, TypeScript, ESLint and coverage examples run by
+      hand; 83 links, 0 broken; suite, baselines, lint, typecheck, Prettier

@@ -40,7 +40,7 @@ npm install --save-dev jest @g_package/jest-cucumber-fusion
 
 `npm init -y` already wrote `"type": "commonjs"` and a placeholder `test` script, so replace those two rather than adding a second copy: when a key appears twice in `package.json`, the last one silently wins.
 
-- `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, name your step files and the code they import `.mjs` instead (and import them by that name, for example `'../../src/rocket.mjs'`), and change `testMatch` to `[ "**/*.steps.mjs" ]`.
+- `"type": "module"` makes Node read your `.js` files as ES modules. If you would rather not set it, name your step files and the code they import `.mjs` instead (and import them by that name, for example `'../../src/basket.mjs'`), and change `testMatch` to `[ "**/*.steps.mjs" ]`.
 - Jest runs ES modules only in its ES module mode, which Node's `--experimental-vm-modules` flag turns on. This form of the `test` script is the one Jest's own documentation gives, and it does not depend on your shell's syntax. Node prints an `ExperimentalWarning` about the flag on each run. That is expected.
 - `testMatch` tells Jest that your step definition files are the test files.
 
@@ -52,26 +52,24 @@ The examples below use this layout. Any layout works, as long as each `import` p
 my-project/
 ├── package.json
 ├── src/
-│   └── rocket.js                      the code under test
+│   └── basket.js                      the code under test
 └── test/
     └── features/
-        ├── rocket-launching.feature
-        └── rocket-launching.steps.js
+        ├── shopping-basket.feature
+        └── shopping-basket.steps.js
 ```
 
 The code under test in these examples is a small class of your own:
 
 ```javascript
-// filename: src/rocket.js
-export class Rocket {
+// filename: src/basket.js
+export class Basket {
     constructor() {
-        this.isInSpace = false
-        this.boostersLanded = false
+        this.products = []
     }
 
-    launch() {
-        this.isInSpace = true
-        this.boostersLanded = true
+    add( product ) {
+        this.products.push( product )
     }
 }
 ```
@@ -79,14 +77,14 @@ export class Rocket {
 ### Write the feature file
 
 ```gherkin
-# filename: test/features/rocket-launching.feature
-Feature: Rocket Launching
+# filename: test/features/shopping-basket.feature
+Feature: Shopping basket
 
-Scenario: Launching a SpaceX rocket
-  Given I am Elon Musk attempting to launch a rocket into space
-  When I launch the rocket
-  Then the rocket should end up in space
-  And the boosters should land back on the launch pad
+Scenario: Adding a product to an empty basket
+  Given my basket is empty
+  When I add a coffee mug to my basket
+  Then my basket holds 1 product
+  And the product in my basket is a coffee mug
 ```
 
 ### Write the step definitions
@@ -94,36 +92,36 @@ Scenario: Launching a SpaceX rocket
 The step definition file registers a definition for each step, then calls `Fusion` with the feature file's path:
 
 ```javascript
-// filename: test/features/rocket-launching.steps.js
+// filename: test/features/shopping-basket.steps.js
 import { Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 
-import { Rocket } from '../../src/rocket.js'
+import { Basket } from '../../src/basket.js'
 
-let rocket
+let basket
 
-Given( 'I am Elon Musk attempting to launch a rocket into space', () => {
-    rocket = new Rocket()
+Given( 'my basket is empty', () => {
+    basket = new Basket()
 } )
 
-When( 'I launch the rocket', () => {
-    rocket.launch()
+When( 'I add a coffee mug to my basket', () => {
+    basket.add( 'coffee mug' )
 } )
 
-Then( 'the rocket should end up in space', () => {
-    expect( rocket.isInSpace ).toBe( true )
+Then( 'my basket holds 1 product', () => {
+    expect( basket.products ).toHaveLength( 1 )
 } )
 
-And( 'the boosters should land back on the launch pad', () => {
-    expect( rocket.boostersLanded ).toBe( true )
+And( 'the product in my basket is a coffee mug', () => {
+    expect( basket.products[ 0 ] ).toBe( 'coffee mug' )
 } )
 
-Fusion( 'rocket-launching.feature' )
+Fusion( 'shopping-basket.feature' )
 ```
 
 - **A string matches a step whose text is exactly that string.** To capture a value from a step, such as a number, match it with a regular expression instead: see [Step definition arguments](./docs/StepDefinitionArguments.md).
 - **A step binds only to a definition registered with its own keyword.** An `And` step needs an `And(...)` definition, and a `Then(...)` definition with the same text does not serve it. When one definition should serve several keywords, chain it: `Then( And( 'text', fn ) )` registers it under both. Import only the keywords your steps use; `But` is also available.
 - **`Fusion` comes last**, after every definition, and its path is relative to the step definition file, so a feature file beside it is named on its own.
-- **A relative `import` names the file in full**, extension included: `'../../src/rocket.js'`, not `'../../src/rocket'`.
+- **A relative `import` names the file in full**, extension included: `'../../src/basket.js'`, not `'../../src/basket'`.
 - **`expect` and the other test globals work as usual.** The `jest` object (for `jest.fn()` and friends) is not a global in Jest's ES module mode: add `@jest/globals` to your `devDependencies` and write `import { jest } from '@jest/globals'`.
 
 ### Run the tests
@@ -135,9 +133,9 @@ npm test
 Jest reports one test for the scenario, named after it:
 
 ```text
- PASS  test/features/rocket-launching.steps.js
-  Rocket Launching
-    ✓ Launching a SpaceX rocket (2 ms)
+ PASS  test/features/shopping-basket.steps.js
+  Shopping basket
+    ✓ Adding a product to an empty basket (2 ms)
 
 Test Suites: 1 passed, 1 total
 Tests:       1 passed, 1 total
@@ -146,13 +144,13 @@ Tests:       1 passed, 1 total
 A test fails at the first step that fails, and names that step. If a step has no definition at all, Fusion refuses the whole file before any test runs, and gives you the code to add. Without the `And` definition above, for example:
 
 ```text
- FAIL  test/features/rocket-launching.steps.js
+ FAIL  test/features/shopping-basket.steps.js
   ● Test suite failed to run
 
-    Fusion found 1 step in the feature "Rocket Launching" that no registered step definition matches.
+    Fusion found 1 step in the feature "Shopping basket" that no registered step definition matches.
     ...
-      1. No step definition matches: "the boosters should land back on the launch pad"
-         And("the boosters should land back on the launch pad", () => {});
+      1. No step definition matches: "the product in my basket is a coffee mug"
+         And("the product in my basket is a coffee mug", () => {});
 ```
 
 ## Hooks
@@ -162,17 +160,17 @@ A test fails at the first step that fails, and names that step. If a step has no
 ```javascript
 import { Before, Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
 
-import { Rocket } from '../../src/rocket.js'
+import { Basket } from '../../src/basket.js'
 
-let rocket
+let basket
 
 Before( () => {
-    rocket = new Rocket()
+    basket = new Basket()
 } )
 
-// ...the step definitions, which no longer need to create the rocket...
+// ...the step definitions, which no longer need to create the basket...
 
-Fusion( 'rocket-launching.feature' )
+Fusion( 'shopping-basket.feature' )
 ```
 
 Register hooks, like step definitions, before the `Fusion` call. A hook may be `async`, and it receives nothing, so declare no parameters: Jest treats a declared parameter as a `done` callback and waits for it to be called.
@@ -182,7 +180,7 @@ Register hooks, like step definitions, before the `Fusion` call. A hook may be `
 Most of Gherkin works as you expect: `Background`, `Rule`, `Scenario Outline` with `Examples`, data tables, docstrings, tags and [80 languages](./docs/Language.md). The differences:
 
 - **Steps bind by keyword.** An `And` step needs an `And` definition, as above.
-- **No Cucumber Expressions.** A string is compared as plain text, so `'I have {int} cukes'` matches only that exact text. Use a regular expression to capture values: `/^I have (\d+) cukes$/`.
+- **No Cucumber Expressions.** A string is compared as plain text, so `'I add {int} products'` matches only that exact text. Use a regular expression to capture values: `/^I add (\d+) products$/`.
 - **No `*` steps.** Because a step binds by its keyword, Fusion refuses a `*` step and asks you to write it with `Given`, `When`, `Then`, `And` or `But`.
 - **No World.** Steps are plain functions with no shared `this`. Share state through variables in the step definition file, and reset it in a `Before` hook.
 - **Hooks take no tags.** `Before` and `After` run around every scenario of their `Fusion` call.

@@ -16,13 +16,13 @@ Scenario: Adding an item to my todo list
     | Fix bugs in my code | medium   |
     | Document my hours   | medium   |
   When I add the following task:
-    | TaskName                            | Priority |
-    | Watch cat videos on YouTube all day | high     |
+    | TaskName           | Priority |
+    | Review the release | high     |
   Then I should see the following todo list:
-    | TaskName                            | Priority |
-    | Fix bugs in my code                 | medium   |
-    | Document my hours                   | medium   |
-    | Watch cat videos on YouTube all day | high     |
+    | TaskName            | Priority |
+    | Fix bugs in my code | medium   |
+    | Document my hours   | medium   |
+    | Review the release  | high     |
 ```
 
 The code under test:
