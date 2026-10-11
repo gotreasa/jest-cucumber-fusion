@@ -13,9 +13,11 @@ Write Cucumber feature files and run them as Jest tests, without the scaffolding
 
 Jest Cucumber Fusion runs your Cucumber feature files as Jest tests. You write the feature file in Gherkin, and a step definition file with a `Given`, `When`, `Then`, `And` or `But` definition for each step. A `Fusion` call at the end of the step definition file links the two: Fusion reads the feature and creates one Jest test per scenario, so you write no `describe` or `it` blocks yourself. Everything else is plain Jest: `expect`, mocks, coverage and reporting.
 
-**New to Gherkin?** A feature file describes behaviour in plain sentences. It holds one `Feature`, and each `Scenario` in it is one example of that behaviour. Each line of a scenario starting with `Given`, `When`, `Then`, `And` or `But` is a step, and a step definition is the code that runs for one step. The [Gherkin reference](https://cucumber.io/docs/gherkin/reference/) covers the full syntax.
+**New to Gherkin?** A feature file describes behaviour in plain sentences. Each feature file holds one `Feature`, and each `Scenario` in it is one example of that behaviour. Each line of a scenario starting with `Given`, `When`, `Then`, `And` or `But` is a step, and a step definition is the code that runs for one step. The [Gherkin reference](https://cucumber.io/docs/gherkin/reference/) covers the full syntax.
 
-**Upgrading** from version 2, or from `jest-cucumber-fusion` 0.8.x? Your feature and step definition files keep their shape. [Migrating to version 3](./docs/Migrating.md) lists what changes.
+**Upgrading** from version 2, or from `jest-cucumber-fusion` 0.8.x? Your feature and step definition files keep their shape, and step files written as CommonJS keep their `require`. [Migrating to version 3](./docs/Migrating.md) lists what changes.
+
+**Know Cucumber already?** [If you know Cucumber](#if-you-know-cucumber) lists what differs.
 
 ## Getting Started
 
@@ -141,7 +143,7 @@ Test Suites: 1 passed, 1 total
 Tests:       1 passed, 1 total
 ```
 
-A test fails at the first step that fails, and names that step. If a step has no definition at all, Fusion refuses the whole file before any test runs, and gives you the code to add. Without the `And` definition above, for example:
+If Jest prints only the summary, without the list of tests, see [Troubleshooting](#troubleshooting). A test fails at the first step that fails, and names that step. If a step has no definition at all, Fusion refuses the whole file before any test runs, and gives you the code to add. Without the `And` definition above, for example:
 
 ```text
  FAIL  test/features/shopping-basket.steps.js
@@ -207,10 +209,10 @@ The [documentation index](./docs/README.md) lists every page, including the ones
 
 ## Troubleshooting
 
-- **`SyntaxError: Unexpected token 'with'`** when Jest loads your ES module steps: your Node is older than 20.11, which ES module steps need. Upgrade Node, or [use CommonJS](./docs/CommonJS.md), which runs from Node 18.14.
+- **`SyntaxError: Unexpected token 'with'`** when Jest loads your ES module steps: your Node cannot parse the import attributes in Fusion's ES modules (Node 18.19 and 20.9 fail; 20.11 is the oldest measured to work). Upgrade Node, or [use CommonJS](./docs/CommonJS.md), which runs from Node 18.14.
 - **`npm WARN EBADENGINE` on Node 18**, naming `brace-expansion` or `lru-cache`: these come from Jest 30's own dependencies, not from Fusion. CommonJS steps still run on Node 18.14 and newer.
 - **`No step definition matches`** for a step you did define: the step's keyword decides which definitions it can bind to. An `And` step needs an `And(...)` definition (see [Write the step definitions](#write-the-step-definitions)).
 - **`Your test suite must contain at least one test`**: the feature file has no `Feature:` line, or no scenarios, so Fusion registered nothing. Check the path passed to `Fusion` and the file's first lines.
 - **`Multiple configurations found`**: Jest found both a `jest` key in `package.json` and a `jest.config.js`. Keep one: see [Using TypeScript](./docs/TypeScript.md).
-- **A `Before` hook times out waiting for `done()`**: the hook declares a parameter. Remove it (see [Hooks](#hooks)).
+- **A `Before` or `After` hook times out waiting for `done()`**: the hook declares a parameter. Remove it (see [Hooks](#hooks)).
 - **Jest prints only the summary, without the list of tests:** Jest shortens its output when it detects an AI agent's environment variables, such as `AI_AGENT` or `CLAUDECODE`. Run it from a terminal that does not have them.

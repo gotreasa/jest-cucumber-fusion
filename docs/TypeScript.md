@@ -41,7 +41,7 @@ export default {
 }
 ```
 
-**Run `npm run typecheck` as well as `npm test`, for example in CI.** In ES module mode ts-jest only strips the types and does not check them, so a type error does not fail `npm test`; `tsc --noEmit` is what reports it. (`isolatedModules` tells ts-jest that this is expected. Without it, ts-jest warns `TS151002` and still does not check.)
+**Run `npm run typecheck` as well as `npm test`, for example in CI.** In ES module mode ts-jest only strips the types and does not check them, so a type error does not fail `npm test`; `tsc --noEmit` is what reports it. (`isolatedModules` tells ts-jest that this is expected. Without it, ts-jest warns `TS151002` and still does not check.) As in any ES module Jest project, `jest` itself is not a global: add `@jest/globals` to your `devDependencies` and write `import { jest } from '@jest/globals'`.
 
 `moduleNameMapper` lets your imports keep the `.js` extension that ES modules need, while Jest loads the `.ts` file: `import { Basket } from '../../src/basket.js'` loads `src/basket.ts`.
 
@@ -152,4 +152,4 @@ And( /^the gift message is "(.*)"$/, ( expected: string ) => {
 Fusion( 'gift-order.feature' )
 ```
 
-An argument you leave undeclared has the type `StepArgument` (`string | Array<Record<string, string>>`), which you can import from the package.
+An argument you leave undeclared has the type `StepArgument` (`string | Array<Record<string, string>>`), which you can import from the package: `import type { StepArgument } from '@g_package/jest-cucumber-fusion'`.
