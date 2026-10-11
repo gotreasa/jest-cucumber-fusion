@@ -74,15 +74,5 @@ Feature: Online sales
             | Item                                           | RebatePrice      | Amount    |
             | Autographed Neil deGrasse Tyson book           | 20               | 20        |
             | Rick Astley t-shirt                            | 50               | 50        |
-# Ability: this ones are not currently possible
-##
-#    Scenario Outline: Additional mix regexp and non-regexp in outline line with non-string variables and static one in the middle for <Item>
-#        Given I want to sell all my <Item>
-#        When I sell all my <Item> with a starting price <Description> price of <RebatePrice>$ <Currency> which is nice
-#        Then I should still get $<Amount>
-#
-#        Examples:
-#            | Item                                           | Description                  | RebatePrice   | Amount | Currency         |
-#            | Autographed Neil deGrasse Tyson book           | of $100 at the fantastic     | 20            | 20     | USD              |
-#            | Rick Astley t-shirt                            | of $100 at the fantastic     | 50            | 50     | CAD              |
-#            | Rick Astley t-shirt                            | of $100 at the rebate        | 50            | 50     | CAD              |
+# The outline that mixes placeholders with a dollar amount and a currency in one step, once
+# commented out here as "not currently possible", now runs: see outline-mixed-values.feature.
