@@ -102,8 +102,11 @@ export interface FusionOptions {
    * An expression that cannot be parsed is refused at collection, before anything is
    * registered, and the refusal names the expression you wrote. So is one with an operand
    * that is not a tag, such as `smoke` written for `@smoke`: it could never match.
+   *
+   * `null` means no filter. Unlike `undefined`, which counts as not set, it is a value, so
+   * `{ tagFilter: null }` on one call clears a filter set by `setFusionConfiguration`.
    */
-  tagFilter?: string;
+  tagFilter?: string | null;
   /**
    * Renames every test Fusion registers, Scenario Outline rows included. It is called once per
    * test while Fusion registers, never again while the tests run, and it names a test whatever
@@ -136,8 +139,9 @@ export function Fusion(feature: string, options?: FusionOptions): void;
  * as `{ tagFilter: process.env.TAGS }`, counts as not set and leaves the layer below in place.
  *
  * A second call REPLACES what the first set rather than merging into it, which is what lets a
- * global be cleared or redefined. Jest gives each test file its own module registry and runs
- * `setupFiles` inside it, so what is set here cannot reach another file.
+ * global be cleared or redefined. Jest gives each test file its own global object and runs
+ * `setupFiles` inside it. The configuration lives on that global, not in a module, so what is
+ * set here cannot reach another file, and `jest.resetModules()` does not clear it.
  *
  * An argument that is not an options object is refused where it is called, before any step
  * definition file has loaded. An unknown key is accepted and ignored, exactly as it is per call.
