@@ -9,8 +9,9 @@ Act on two reviews of the documentation on PR #38 (branch `docs/landing-page`), 
 gSmith pedagogy review (`gsmith-pedagogy-reviewer`, verdict NEEDS_REVISION). Gearoid chose
 "everything, including the restructure", and the type fix as its own `fix:` PR.
 
-- Branch: `docs/landing-page` (PR #38). No Jira for this repository.
-- Type fix: PR #39 (`fix/tagfilter-null-type`), separate, releases 3.0.4.
+- Branch: `docs/landing-page`, reviewed as PR #38 (merged), delivered as PR #40. No Jira for
+  this repository.
+- Type fix: PR #39 (`fix/tagfilter-null-type`), separate, merged; releases 3.0.4.
 
 ## Verdicts on the review findings
 
@@ -65,4 +66,6 @@ than explained.
       from the packed branch: all pass
 - [x] Every relative link and anchor resolves: 82 checked by script, which caught a planted
       broken anchor; suite, baselines, lint, Prettier
-- [ ] Commit, push, update the PR #38 body
+- [x] Commit and push. #38 had been squash-merged while this work ran, so it went up as a new
+      PR, #40, after merging `master` (its three conflicting files were unchanged on `master`
+      since this branch's own earlier commit)
