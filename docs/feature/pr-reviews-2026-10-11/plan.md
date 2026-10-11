@@ -79,7 +79,22 @@ merging each branch into the next cannot conflict. Each branch is then merged in
       `*` is in "nearly every" language; delivery charges in euro; the index names Hooks in the
       reading order and calls the other pages reference pages. Doc-example baseline 9 of 9;
       the absolute path and the folder loop run under Jest 29.7.0 (3 passed); 144 links, 0 broken
-- [ ] #47
+- [x] #47 (`5905c37`, its own branch off `main`): the copied "which is nice" definitions removed
+      from `scenario-outlines.steps.js`; the starting price asserted (the reviewer's `$7`
+      mutation now fails); comments on why the three regular expressions stay apart; the
+      feature says what it proves and that its title and rows are verbatim. Name baseline 9 of 9
+- [x] Pull request descriptions: a "Review round 3" section on #40 to #43, #46 and #47, and the
+      statements the reviews contradicted corrected (#42's "could not read `Rule:`", #43's
+      "official text unchanged", #41's `master`, #47's "taken from")
+
+## Follow-ups, not done here
+
+- The `prettier` job checks out `github.head_ref`, so it never checks a pull request's merge
+  with `main` (#44 description).
+- The doc-example baseline installs only Jest 30, never runs unnamed snippets and does not check
+  the test counts the pages state.
+- The merge commit `cb27cca` on #42's branch kept git's `# Conflicts:` lines after its trailers.
+- GitHub reported 8 Dependabot alerts on `main` (1 high, 6 moderate, 1 low) on 2026-10-11.
 
 ## Not taken, with the reason
 
