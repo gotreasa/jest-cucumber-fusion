@@ -14,3 +14,8 @@ LICENSE
 package.json
 package-lock.json
 README.md
+
+# Written by nWave (nwave-ai project enable), which renders its own managed section: formatting
+# them here would be undone by the next render.
+AGENTS.md
+CLAUDE.md
