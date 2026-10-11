@@ -5,13 +5,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for reporting a problem. The quickest reports to fix are the ones we can run: a feature file, its step definitions, and what Jest printed. Check the [Troubleshooting](https://github.com/gotreasa/jest-cucumber-fusion#troubleshooting) list first, in case it covers your error.
+        Thank you for reporting a problem. The quickest reports to fix are the ones we can run: a feature file, its step definitions, and what Jest printed. Check the [Troubleshooting](https://github.com/gotreasa/jest-cucumber-fusion#troubleshooting) list first, in case it covers your error, and search the [existing issues](https://github.com/gotreasa/jest-cucumber-fusion/issues?q=is%3Aissue), in case someone has reported it already.
   - type: input
     id: version
     attributes:
       label: Package version
       description: The `@g_package/jest-cucumber-fusion` version, from `npm ls @g_package/jest-cucumber-fusion`.
-      placeholder: "3.0.3"
+      placeholder: "3.0.4"
     validations:
       required: true
   - type: dropdown
@@ -53,10 +53,14 @@ body:
     id: steps
     attributes:
       label: Step definitions
-      description: The step definition file, including its `Fusion` call.
-      render: javascript
+      description: The step definition file, including its `Fusion` call. Put it in a code block, marked `javascript` or `typescript`.
     validations:
       required: true
+  - type: textarea
+    id: jest-config
+    attributes:
+      label: Jest configuration
+      description: The `jest` key of your `package.json`, or your `jest.config` file, if you have one. Module problems often depend on it.
   - type: textarea
     id: actual
     attributes:
@@ -71,3 +75,8 @@ body:
       label: What you expected
     validations:
       required: true
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else
+      description: Anything else that might help, such as when the problem started.

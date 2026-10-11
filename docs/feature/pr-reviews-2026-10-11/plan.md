@@ -57,7 +57,17 @@ merging each branch into the next cannot conflict. Each branch is then merged in
       scoped to JavaScript; Language and the TypeScript `Order` example say why they are what
       they are; `session` reset noted; the long JSDoc line reflowed. 103 links, 0 broken;
       doc-example baseline 7 of 7
-- [ ] #43
+- [x] #43: the guide says a `BREAKING CHANGE:` footer releases a major and `feat!` alone releases
+      nothing (re-run on the locked commit-analyzer: `feat!` null, footer major, `perf` patch,
+      `revert` null), quotes real commits, needs Node 22.22.1 for contributors, has a fork step,
+      an issue-first step and what happens after a pull request, says how squash titles and
+      bodies decide the release and that only the hook checks commit messages, defines the
+      baselines, and scopes the documentation section; conduct reports have a route in the
+      issue chooser, SUPPORT and CONTRIBUTING, and the code of conduct says the maintainer is
+      the moderator; SECURITY covers `scripts/prepare-hooks.js`, dates provenance from 3.0.2,
+      names version 1, has a fallback route and promises no response time; the issue forms
+      lost `render` on mixed code, gained a Jest configuration field, a search prompt and a
+      version field on questions (schema check: all four parse); the earlier plan is corrected
 - [ ] #46
 - [ ] #47
 
