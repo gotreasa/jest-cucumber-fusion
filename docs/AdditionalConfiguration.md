@@ -42,7 +42,7 @@ A third key, `allowScenariosNotInFeatureFile`, is accepted and ignored, so older
 
 ### `stepsMustMatchFeatureFile`
 
-On, a step with no registered definition is refused when the step definition file is collected, before any test is registered. One refusal names every unbound step of the feature, with starter code in Fusion's own verb idiom that you can paste and fill in. Steps that differ only in their values, such as the rows of a Scenario Outline, share one numbered entry and one definition, so you can paste every snippet at once:
+On, a step with no registered definition is refused when the step definition file is collected, before any test is registered. One refusal names every unbound step of the feature, with starter code in Fusion's own verb idiom that you can paste and fill in. Steps that differ only in their values, such as the rows of a Scenario Outline, share one numbered entry and one definition, so you can paste every snippet at once. For a feature "Stock" whose outline has the steps `Given the shop is open` and `And <count> coffee mugs are in stock`, with two rows, the refusal reads:
 
 ```text
 Fusion found 3 steps in the feature "Stock" that no registered step definition matches.

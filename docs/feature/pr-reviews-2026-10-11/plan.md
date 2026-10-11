@@ -36,7 +36,14 @@ merging each branch into the next cannot conflict. Each branch is then merged in
       project: 1 passed), needs "no experimental flag", and says to delete the `@jest/globals`
       import when converting; the ESLint comments say hooks run in `beforeEach`/`afterEach`;
       the TypeScript page shows the `StepArgument` import and the `@jest/globals` import
-- [ ] #41
+- [x] #41: the login example is "My account", and its email comes from the shared file, not a
+      repeated literal; the checkout feature uses the shared `Given I am logged in` too, so the
+      step really is shared; the shared checkout file is `basket-steps.js`, no longer one
+      character from `checkout.steps.js`; the order assertion reads `orders[ 0 ]`; the TypeScript
+      table assertion has actual and expected the right way round; the Cucumber Expressions
+      examples use a step from Getting Started; the sample refusal names its feature's steps;
+      the outline page says it is the shop owner's side, and how `(.*)` captures. Doc-example
+      baseline 7 of 7
 - [ ] #42
 - [ ] #43
 - [ ] #46

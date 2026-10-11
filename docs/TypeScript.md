@@ -142,7 +142,7 @@ When( 'I add the gift message', ( message: string ) => {
 } )
 
 Then( 'the order lines are', ( rows: Array<Record<string, string>> ) => {
-    expect( rows ).toStrictEqual( order.lines() )
+    expect( order.lines() ).toStrictEqual( rows )
 } )
 
 And( /^the gift message is "(.*)"$/, ( expected: string ) => {

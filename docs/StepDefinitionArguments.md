@@ -7,7 +7,7 @@ A step definition is matched by a string or by a regular expression.
 - **A string** matches a step whose text is exactly that string, and the step function receives no captured values.
 - **A regular expression** matches a step whose text it matches, and the step function receives each capture group's value as an argument, in order.
 
-Fusion does not support Cucumber Expressions such as `{int}` or `{string}`: a string is compared as plain text, so `'I add {int} products'` matches only a step with exactly that text. Use a regular expression to capture values.
+Fusion does not support Cucumber Expressions such as `{int}` or `{string}`: a string is compared as plain text, so `'I add {int} coffee mugs to my basket'` matches only a step with exactly that text. Use a regular expression to capture values.
 
 A step function receives its arguments in this order:
 

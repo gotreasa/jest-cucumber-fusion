@@ -182,7 +182,7 @@ Register hooks, like step definitions, before the `Fusion` call. A hook may be `
 Most of Gherkin works as you expect: `Background`, `Rule`, `Scenario Outline` with `Examples`, data tables, docstrings, tags and [80 languages](./docs/Language.md). The differences:
 
 - **Steps bind by keyword.** An `And` step needs an `And` definition, as above.
-- **No Cucumber Expressions.** A string is compared as plain text, so `'I add {int} products'` matches only that exact text. Use a regular expression to capture values: `/^I add (\d+) products$/`.
+- **No Cucumber Expressions.** A string is compared as plain text, so `'I add {int} coffee mugs to my basket'` matches only that exact text. Use a regular expression to capture values: `/^I add (\d+) coffee mugs to my basket$/`.
 - **No `*` steps.** Because a step binds by its keyword, Fusion refuses a `*` step and asks you to write it with `Given`, `When`, `Then`, `And` or `But`.
 - **No World.** Steps are plain functions with no shared `this`. Share state through variables in the step definition file, and reset it in a `Before` hook.
 - **Hooks take no tags.** `Before` and `After` run around every scenario of their `Fusion` call.
