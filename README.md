@@ -568,3 +568,5 @@ Working on the package:
   * [Architecture](./docs/Architecture.md)
 
 Every example on the guide pages above runs as written: the repository's tests copy each one into a fresh project and run it.
+
+The [documentation index](./docs/README.md) lists all of these pages, and says what the delivery records under `docs/feature/` are.
