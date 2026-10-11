@@ -3,7 +3,7 @@
 Write Cucumber feature files and run them as Jest tests, without the scaffolding.
 
 [![Build Status](https://github.com/gotreasa/jest-cucumber-fusion/workflows/Continuous%20Integration/badge.svg)](https://github.com/gotreasa/jest-cucumber-fusion/actions?query=workflow%3A%22Continuous+Integration%22)
-[![Codecov](https://codecov.io/gh/gotreasa/jest-cucumber-fusion/branch/master/graph/badge.svg)](https://codecov.io/gh/gotreasa/jest-cucumber-fusion)
+[![Codecov](https://codecov.io/gh/gotreasa/jest-cucumber-fusion/branch/main/graph/badge.svg)](https://codecov.io/gh/gotreasa/jest-cucumber-fusion)
 
 [![npm downloads](https://img.shields.io/npm/dm/@g_package/jest-cucumber-fusion)](https://www.npmjs.com/package/@g_package/jest-cucumber-fusion)
 [![npm latest](https://img.shields.io/npm/v/@g_package/jest-cucumber-fusion/latest.svg)](https://www.npmjs.com/package/@g_package/jest-cucumber-fusion)
