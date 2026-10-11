@@ -94,7 +94,7 @@ Scenario: Adding a product to an empty basket
 
 ### Write the step definitions
 
-Each step needs a definition registered with **the same keyword the step uses**. The last step of the feature starts with `And`, so its definition is `And(...)`: a `Then(...)` with the same text would not match it, and Fusion would report the step as having no definition. A `But` step likewise needs a `But(...)` definition: [Rule](./docs/Rule.md) shows one.
+Each step needs a definition registered with **the same keyword the step uses**. The last step of the feature starts with `And`, so its definition, in the file below, is `And(...)`: a `Then(...)` with the same text would not match it, and Fusion would report the step as having no definition. A `But` step likewise needs a `But(...)` definition: [Rule](./docs/Rule.md) shows one.
 
 The step definition file registers a definition for each step, then calls `Fusion` with the feature file's path:
 
@@ -163,7 +163,7 @@ If Jest prints only the summary, without the list of tests, see [Troubleshooting
 
 ### Run one scenario
 
-While you work on one scenario, you can run it alone. Each scenario is a Jest test named after it, so Jest's `-t` option selects it by name; the other tests are reported as skipped:
+While you work on one scenario, you can run it alone. Each scenario is a Jest test named after it, so Jest's `-t` option selects it by name; the other tests are reported as skipped. `-t` takes a regular expression and matches it anywhere in the test's full name, so a short phrase can select several tests:
 
 ```
 npm test -- -t "Adding a product"
@@ -175,7 +175,14 @@ To pick scenarios by tag instead, pass the tag filter from an environment variab
 Fusion( 'shopping-basket.feature', { tagFilter: process.env.TAGS } )
 ```
 
-Then tag the scenario, for example `@wip`, and run `TAGS=@wip npm test`. With `TAGS` unset the filter is off and every scenario runs. [Tag filtering](./docs/AdditionalConfiguration.md#tag-filtering) covers the expressions you can use, such as `@wip and not @slow`.
+Then tag the scenario, on the line above it:
+
+```gherkin
+@wip
+Scenario: Adding a product to an empty basket
+```
+
+and run `TAGS=@wip npm test`. That form of setting a variable works in macOS and Linux shells; in Windows PowerShell, set `$env:TAGS = '@wip'` first, then run `npm test`. With `TAGS` unset, this call adds no filter of its own, so every scenario runs unless a [global configuration](./docs/AdditionalConfiguration.md#global-configuration) sets one. [Tag filtering](./docs/AdditionalConfiguration.md#tag-filtering) covers the expressions you can use, such as `@wip and not @slow`.
 
 ## Hooks
 
@@ -232,9 +239,9 @@ The [documentation index](./docs/README.md) suggests an order to read the guides
 |---|---|
 | capture values from a step, or read a docstring | [Step definition arguments](./docs/StepDefinitionArguments.md) |
 | give every scenario the same first steps | [Background](./docs/Background.md) |
-| group scenarios under a business rule | [Rule](./docs/Rule.md) |
 | use a data table | [Gherkin tables](./docs/GherkinTables.md) |
 | run one scenario for every row of an `Examples` table | [Scenario outlines](./docs/ScenarioOutlines.md) |
+| group scenarios under a business rule | [Rule](./docs/Rule.md) |
 | share steps between feature files | [Re-using step definitions](./docs/ReusingStepDefinitions.md) |
 | filter by tag, name tests, or set options once for every file | [Configuration options](./docs/AdditionalConfiguration.md) |
 | use CommonJS, or Node 18 | [Using CommonJS](./docs/CommonJS.md) |

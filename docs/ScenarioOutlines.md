@@ -90,7 +90,7 @@ Feature: Delivery charges
 Scenario Outline: Delivering <Weight> kg to <Country>
   Given my order weighs <Weight> kg
   When I choose delivery to <Country>
-  Then the delivery charge is $<Charge>
+  Then the delivery charge is €<Charge>
 
   @domestic
   Examples: Within the country
@@ -131,7 +131,7 @@ When( /^I choose delivery to (.*)$/, ( country ) => {
     charge = deliveryCharge( weight, country )
 } )
 
-Then( /^the delivery charge is \$(\d+)$/, ( expected ) => {
+Then( /^the delivery charge is €(\d+)$/, ( expected ) => {
     expect( charge ).toBe( Number( expected ) )
 } )
 
@@ -140,4 +140,4 @@ Fusion( 'delivery-charges.feature' )
 
 This runs three tests, one per row. With a [tag filter](./AdditionalConfiguration.md#tag-filtering) you can run one table and skip the other: `Fusion( 'delivery-charges.feature', { tagFilter: '@domestic' } )` runs the two rows within the country, and `'not @international'` does the same. A [scenario title template](./AdditionalConfiguration.md#scenario-title-templates) receives a row's table tags in `scenarioTags`.
 
-Next: [Re-using step definitions](./ReusingStepDefinitions.md), to share steps between feature files.
+Next: [Rule](./Rule.md), for grouping scenarios under the business rule they illustrate.

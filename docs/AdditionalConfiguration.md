@@ -9,7 +9,7 @@ This page is the reference for what the package exports and for every option `Fu
 | `Given`, `When`, `Then`, `And`, `But` | `Given( stringOrRegExp, stepFunction )` | Registers a step definition for steps with that keyword. Returns a chain you can hand to another verb. |
 | | `Then( And( stringOrRegExp, stepFunction ) )` | The chained form: registers the same definition under a second keyword, so a step binds to it with either. |
 | `Before`, `After` | `Before( hookFunction )` | Runs the function before or after every scenario of the `Fusion` call that follows it. Register it before that call, like a step. Fusion passes it nothing, so declare no parameters: Jest treats a declared parameter as a `done` callback and waits for it. It may be `async`. |
-| `Fusion` | `Fusion( featurePath, options? )` | Reads the feature file (relative to the calling file) and registers one Jest test per scenario and per outline row. Call it after the step definitions and hooks. Each call uses what was registered before it and then empties the registry, so a second call in the same file needs its definitions registered again. |
+| `Fusion` | `Fusion( featurePath, options? )` | Reads the feature file (a relative path is relative to the calling file; an absolute path is used as it is) and registers one Jest test per scenario and per outline row. Call it after the step definitions and hooks. Each call uses what was registered before it and then empties the registry, so a second call in the same file needs its definitions registered again. |
 | `setFusionConfiguration` | `setFusionConfiguration( options )` | Sets options for every `Fusion` call of a test file, from a Jest `setupFiles` script. See [Global configuration](#global-configuration). |
 
 TypeScript types: `StepArgument` (what a step receives: a `string`, or a table's rows as `Array<Record<string, string>>`), `CallBack`, `StepChain`, `FusionOptions`, `FusionErrorOptions` and `ScenarioNameTemplateVars`.
@@ -239,15 +239,19 @@ A relative feature path is resolved against the file that calls `Fusion`:
 Fusion( 'shopping-basket.feature' )
 ```
 
-An absolute path is used as it is, so you can also build the path yourself, for example to keep feature files in a folder of their own:
+An absolute path is used as it is, so you can also build the path yourself. For example, with the step definition files in `test/steps/` and the feature files in `test/features/`:
 
 ```javascript
+// in test/steps/shopping-basket.steps.js
 import path from 'path'
+import url from 'url'
 
-Fusion( path.join( import.meta.dirname, '..', 'features', 'shopping-basket.feature' ) )
+const here = path.dirname( url.fileURLToPath( import.meta.url ) )
+
+Fusion( path.join( here, '..', 'features', 'shopping-basket.feature' ) )
 ```
 
-In CommonJS, use `__dirname` in place of `import.meta.dirname`.
+`import.meta.url` works under every Jest that Fusion supports; `import.meta.dirname` is shorter, but Jest 29 and older leave it undefined. In CommonJS, use `__dirname` in place of `here`.
 
 Fusion finds the calling file as the first stack frame outside this package. So if a helper of your own calls `Fusion` for you, from another file, the path resolves against the helper's file, not the step definition file that called the helper.
 

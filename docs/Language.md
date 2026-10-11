@@ -106,4 +106,4 @@ English has synonyms too, and a feature file can use any of them:
 | `Scenario Outline` | `Scenario Template` |
 | `Examples` | `Scenarios` |
 
-They change nothing else: an `Example` runs exactly as a `Scenario` does. Gherkin also lists `*` as a step keyword in every language, but Fusion refuses a `*` step, because it binds a step through its keyword: write it with `Given`, `When`, `Then`, `And` or `But`.
+They change nothing else: an `Example` runs exactly as a `Scenario` does. Gherkin also lists `*` as a step keyword in English and nearly every other language, but Fusion refuses a `*` step, because it binds a step through its keyword: write it with `Given`, `When`, `Then`, `And` or `But`.

@@ -68,10 +68,26 @@ merging each branch into the next cannot conflict. Each branch is then merged in
       names version 1, has a fallback route and promises no response time; the issue forms
       lost `render` on mixed code, gained a Jest configuration field, a search prompt and a
       version field on questions (schema check: all four parse); the earlier plan is corrected
-- [ ] #46
+- [x] #46: Background teaches the feature `Background` alone, and the Background inside a Rule
+      moved to the Rule page, which now uses `Scenario:` and says `Example:` is the same;
+      Rule moved after Scenario outlines in the reading order, the Next links and both tables;
+      the absolute-path example uses `import.meta.url`, in a `test/steps/` layout, and the
+      exports table mentions absolute paths; the folder loop is shown as code that builds the
+      folder's full path; the account example resets `session` in a hook; a JSON docstring
+      example, and the indentation rule stated exactly; "Run one scenario" shows the `@wip` tag,
+      says `-t` is a regular expression, gives the PowerShell form and the global-filter caveat;
+      `*` is in "nearly every" language; delivery charges in euro; the index names Hooks in the
+      reading order and calls the other pages reference pages. Doc-example baseline 9 of 9;
+      the absolute path and the folder loop run under Jest 29.7.0 (3 passed); 144 links, 0 broken
 - [ ] #47
 
 ## Not taken, with the reason
+
+- #46, the doc-example baseline gaps (Jest 30 only, no check of stated test counts, unnamed
+  snippets never run): real, but the reviewer found them outside this pull request's change.
+  A follow-up, not a documentation fix.
+- #41, a two-row table in the TypeScript gift order: the example now says why it uses an
+  `Order`; a second row would need a different class for one sentence's gain.
 
 - #41, the Dutch word order (`En is de verkoop geregistreerd`, `Maar heb ik ...`): correct.
   After `Dan ontvang ik €8`, a clause joined by `en` or `maar` keeps the inverted order.

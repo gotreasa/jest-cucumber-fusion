@@ -11,12 +11,12 @@ Feature: Gift cards
   @balance
   Rule: A gift card cannot be spent beyond its balance
 
-    Example: Spending part of the balance
+    Scenario: Spending part of the balance
       Given a gift card with a balance of $50
       When I spend $20
       Then the balance is $30
 
-    Example: Spending more than the balance
+    Scenario: Spending more than the balance
       Given a gift card with a balance of $50
       When I try to spend $80
       Then the payment is refused
@@ -25,7 +25,7 @@ Feature: Gift cards
   @expiry
   Rule: An expired gift card cannot be used
 
-    Example: Spending an expired card
+    Scenario: Spending an expired card
       Given an expired gift card with a balance of $50
       When I try to spend $10
       Then the payment is refused
@@ -91,6 +91,106 @@ This runs three tests: `Spending part of the balance`, `Spending more than the b
 
 - **Names.** A test is named after its scenario, not its rule, so give every scenario in a feature its own title: two scenarios of one title are refused, even in different rules (see [Configuration options](./AdditionalConfiguration.md#scenariosmustmatchfeaturefile)).
 - **Tags.** A rule's tags reach every scenario inside it, so a [tag filter](./AdditionalConfiguration.md#tag-filtering) of `@expiry` runs only the last scenario, and a [scenario title template](./AdditionalConfiguration.md#scenario-title-templates) receives `@expiry` in `scenarioTags`.
-- **Background.** A rule can have a `Background` of its own, for the scenarios inside it: see [Background](./Background.md).
+- **Background.** A rule can have a `Background` of its own: see below.
+- **`Example`.** Gherkin also accepts `Example:` in place of `Scenario:`, and the two run the same (see [Language](./Language.md#other-words-for-the-keywords-in-english)).
 
-Next: [Gherkin tables](./GherkinTables.md), for steps that carry a table.
+## A Background inside a Rule
+
+A `Rule` can have a `Background` of its own, for the scenarios inside it. Those scenarios run the feature's `Background` first, then the rule's, then their own steps:
+
+```gherkin
+# filename: test/features/gift-orders.feature
+Feature: Gift orders
+
+  Background:
+    Given I am logged in
+    And my basket holds a coffee mug
+
+  Rule: A gift order carries a message
+
+    Background:
+      Given I mark the order as a gift
+
+    Scenario: Adding a gift message
+      When I add the gift message "Happy birthday"
+      And I pay by card
+      Then an order is placed for a coffee mug
+      And the order carries the gift message "Happy birthday"
+```
+
+The code under test is the `Checkout` from [Background](./Background.md), with a gift flag and a message:
+
+```javascript
+// filename: src/checkout.js
+export class Checkout {
+    user = null
+    products = []
+    orders = []
+    gift = false
+    giftMessage = ''
+
+    logIn( email ) {
+        this.user = email
+    }
+
+    add( product ) {
+        this.products.push( product )
+    }
+
+    remove( product ) {
+        this.products = this.products.filter( ( held ) => held !== product )
+    }
+
+    pay() {
+        this.orders.push( { products: [ ...this.products ], gift: this.gift, giftMessage: this.giftMessage } )
+        this.products = []
+    }
+}
+```
+
+```javascript
+// filename: test/features/gift-orders.steps.js
+import { Before, Given, When, Then, And, Fusion } from '@g_package/jest-cucumber-fusion'
+
+import { Checkout } from '../../src/checkout.js'
+
+let checkout
+
+Before( () => {
+    checkout = new Checkout()
+} )
+
+Given( 'I am logged in', () => {
+    checkout.logIn( 'sam@example.com' )
+} )
+
+And( 'my basket holds a coffee mug', () => {
+    checkout.add( 'coffee mug' )
+} )
+
+Given( 'I mark the order as a gift', () => {
+    checkout.gift = true
+} )
+
+When( /^I add the gift message "(.*)"$/, ( message ) => {
+    checkout.giftMessage = message
+} )
+
+And( 'I pay by card', () => {
+    checkout.pay()
+} )
+
+Then( 'an order is placed for a coffee mug', () => {
+    expect( checkout.orders[ 0 ].products ).toEqual( [ 'coffee mug' ] )
+} )
+
+And( /^the order carries the gift message "(.*)"$/, ( message ) => {
+    expect( checkout.orders[ 0 ] ).toMatchObject( { gift: true, giftMessage: message } )
+} )
+
+Fusion( 'gift-orders.feature' )
+```
+
+This runs one test, `Adding a gift message`, whose steps run in that order: the feature's `Background`, the rule's, then the scenario's own.
+
+Next: [Re-using step definitions](./ReusingStepDefinitions.md), to share steps between feature files.

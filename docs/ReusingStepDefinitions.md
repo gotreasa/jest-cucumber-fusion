@@ -171,11 +171,15 @@ one steps file runs both, using the `session` module from above:
 
 ```javascript
 // filename: test/features/account.steps.js
-import { Given, Then, Fusion } from '@g_package/jest-cucumber-fusion'
+import { Before, Given, Then, Fusion } from '@g_package/jest-cucumber-fusion'
 
 import { session } from '../../src/session.js'
 
 const registerAccountSteps = () => {
+    Before( () => {
+        session.user = null
+    } )
+
     Given( 'I am logged in', () => {
         session.logIn( 'sam@example.com' )
     } )
@@ -191,7 +195,22 @@ for ( const feature of [ 'account-details.feature', 'account-settings.feature' ]
 }
 ```
 
-Jest reports each feature as its own group of tests. To run every feature in a folder rather than a fixed list, build the list with Node's `fs.readdirSync`, keeping the names that end in `.feature`; each path is still relative to the steps file.
+The hook is registered with the steps, because a `Fusion` call empties the hooks too; it logs out before each scenario, so a `Then` cannot pass on a login left behind by an earlier scenario. Jest reports each feature as its own group of tests.
+
+To run every feature in a folder rather than a fixed list, list the folder with Node's `fs.readdirSync`. It reads a relative folder from the directory Jest runs in, not from the steps file, so build the folder's full path first. With the account features in `test/features/account/`:
+
+```javascript
+import fs from 'fs'
+import path from 'path'
+import url from 'url'
+
+const folder = path.join( path.dirname( url.fileURLToPath( import.meta.url ) ), 'account' )
+
+for ( const feature of fs.readdirSync( folder ).filter( ( name ) => name.endsWith( '.feature' ) ) ) {
+    registerAccountSteps()
+    Fusion( path.join( folder, feature ) )
+}
+```
 
 ## Written as CommonJS
 

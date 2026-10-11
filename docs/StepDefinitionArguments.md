@@ -66,7 +66,7 @@ Fusion( 'bank-account.feature' )
 A step function receives its arguments in this order:
 
 1. **Each capture**, as a **string**. Convert it yourself, as the steps above do with `Number( balance )`. A group that did not take part in the match, such as an optional `( in a box)?`, arrives as `undefined`.
-2. **The docstring**, if the step has one, as one more string: its text, without the `"""` lines or their indentation. A content type written after the opening `"""`, as in `"""json`, does not reach the step; parse the text yourself, for example with `JSON.parse( text )`.
+2. **The docstring**, if the step has one, as one more string: its text, without the `"""` lines, and with the opening `"""`'s indentation taken off every line (any deeper indentation stays). A content type written after the opening `"""`, as in `"""json`, does not reach the step, so parse the text yourself: the last example on this page does.
 3. **The data table**, if the step has one, last, as an array of row objects (see [Gherkin tables](./GherkinTables.md)).
 
 In TypeScript you can declare these types on the step function's parameters (see [Typed step definitions](./TypeScript.md#typed-step-definitions)).
@@ -102,6 +102,37 @@ Then( /^the note for version (\d+) reads "(.*)"$/, ( version, expected ) => {
 } )
 
 Fusion( 'release-notes.feature' )
+```
+
+A docstring marked as JSON still arrives as text, which the step parses:
+
+```gherkin
+# filename: test/features/order-import.feature
+Feature: Order import
+
+Scenario: Importing an order
+  Given the imported order
+    """json
+    { "product": "coffee mug", "quantity": 2 }
+    """
+  Then the order is for 2 coffee mugs
+```
+
+```javascript
+// filename: test/features/order-import.steps.js
+import { Given, Then, Fusion } from '@g_package/jest-cucumber-fusion'
+
+let order
+
+Given( 'the imported order', ( text ) => {
+    order = JSON.parse( text )
+} )
+
+Then( /^the order is for (\d+) coffee mugs$/, ( quantity ) => {
+    expect( order ).toEqual( { product: 'coffee mug', quantity: Number( quantity ) } )
+} )
+
+Fusion( 'order-import.feature' )
 ```
 
 Next: [Background](./Background.md), for steps every scenario of a feature starts with.
