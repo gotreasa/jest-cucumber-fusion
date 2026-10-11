@@ -16,10 +16,10 @@ npm install
 
 ## Making a change
 
-1. Branch from `master`.
+1. Branch from `main`.
 2. Write a failing test first, then the change that makes it pass. Behaviour is tested through feature files under `test/specs/features`, with their step definitions in `test/specs/features/step-definitions`.
 3. Run the checks in [Before you push](./docs/RunningTheExamples.md#before-you-push). The pre-push hook runs the slower ones for you.
-4. Open a pull request against `master`.
+4. Open a pull request against `main`.
 
 **A new test feature file.** Add the `.feature` file and a `.steps.js` file that calls `Fusion` on it. Do not reword the existing feature files listed in `test/specs/baseline/test-names-2.0.0.txt`: that file is a recorded run of version 2.0.0, and the baseline checks that version 3 still gives those tests the same names, which consumers' CI history depends on.
 
@@ -38,7 +38,7 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/), che
 
 `npm run commit` starts a guided prompt that writes the message for you.
 
-Pull requests are squash-merged, so **the pull request's title becomes the commit on `master`**, and that title decides the release. Give it the type of the most significant change in the pull request.
+Pull requests are squash-merged, so **the pull request's title becomes the commit on `main`**, and that title decides the release. Give it the type of the most significant change in the pull request.
 
 ## The git hooks
 
@@ -68,7 +68,7 @@ Write prose in British English, and do not use em dashes.
 
 ## Releases
 
-A push to `master` runs semantic-release in CI after the checks pass. It reads the commit types since the last release, and when one calls for a release it tags the version, writes the GitHub release, and stages the package on npm with provenance. A maintainer then approves the staged package with two-factor authentication, which publishes it. Nothing is published from a contributor's machine.
+A push to `main` runs semantic-release in CI after the checks pass. It reads the commit types since the last release, and when one calls for a release it tags the version, writes the GitHub release, and stages the package on npm with provenance. A maintainer then approves the staged package with two-factor authentication, which publishes it. Nothing is published from a contributor's machine.
 
 ## Reporting problems
 
