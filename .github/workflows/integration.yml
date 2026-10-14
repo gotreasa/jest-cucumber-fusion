@@ -99,12 +99,14 @@ jobs:
     # comments on released issues/PRs — all of which need write access. The
     # default GITHUB_TOKEN is read-only, which caused EGITNOPERMISSION.
     # id-token: write lets the staging step authenticate to npm as a trusted publisher
-    # (OIDC) and sign the provenance attestation.
+    # (OIDC) and sign the provenance attestation; with attestations: write it also signs and
+    # stores the SBOM attestation.
     permissions:
       contents: write
       issues: write
       pull-requests: write
       id-token: write
+      attestations: write
     steps:
     - name: Checking code
       uses: actions/checkout@v7
@@ -137,13 +139,61 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
+    # The release gate for known vulnerabilities in what ships. Runtime dependencies only:
+    # development ones never reach a consumer. It runs wherever a release can be made (a push,
+    # or a manual run), not on pull requests, so an advisory published overnight blocks the next
+    # release, not every open pull request.
+    - name: Auditing runtime dependencies
+      if: github.event_name != 'pull_request'
+      run: npm audit --omit dev --audit-level=high
+
     # semantic-release decides the version, tags it and writes the GitHub release, but does not
     # publish to npm (npmPublish: false in package.json): it leaves the versioned tarball in
-    # release/ instead, and the next step stages it.
+    # release/ instead, and the next step stages it. After @semantic-release/npm has written
+    # the version, @semantic-release/exec writes the release's SBOM beside the tarball
+    # (CycloneDX, runtime dependencies only), and @semantic-release/github attaches it to the
+    # GitHub release. The CommonJS build bundles those dependencies (scripts/build-cjs.js),
+    # where a consumer's own npm audit cannot see them; the SBOM is the record of them.
     - name: Releasing
       run: npx semantic-release
       env:
         GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
+
+    # sbom-path takes one file, not a glob, so its name is found first. No SBOM means no
+    # release was made (a pull request, or no releasable commit), and the next step is skipped.
+    # @semantic-release/github only logs an asset it could not upload, and the release goes on,
+    # so this step also checks that the SBOM is on the GitHub release, before anything is staged.
+    - name: Finding the SBOM
+      id: sbom
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        shopt -s nullglob
+        sboms=(release/*.cdx.json)
+        if [ ${#sboms[@]} -eq 0 ]; then
+          exit 0
+        fi
+        sbom="${sboms[0]}"
+        file="$(basename "$sbom")"
+        version="${file#jest-cucumber-fusion-}"
+        version="${version%.cdx.json}"
+        # The tag is v<version>, semantic-release's default tagFormat; a different one fails here.
+        assets="$(gh release view "v$version" --json assets --jq '.assets[].name')"
+        if ! grep -qxF "$file" <<< "$assets"; then
+          echo "::error::$file is not attached to the GitHub release v$version."
+          exit 1
+        fi
+        echo "path=$sbom" >> "$GITHUB_OUTPUT"
+
+    # Signs the SBOM as a statement about the tarball that is staged next, so anyone can check
+    # it with gh attestation verify <tarball> --repo gotreasa/jest-cucumber-fusion. This is
+    # actions/attest with sbom-path: actions/attest-sbom 4 is deprecated and only wraps it.
+    - name: Attesting the SBOM
+      if: steps.sbom.outputs.path != ''
+      uses: actions/attest@v4
+      with:
+        subject-path: release/*.tgz
+        sbom-path: ${{ steps.sbom.outputs.path }}
 
     # A release is staged on npm, not published: a maintainer approves it with 2FA
     # (npm stage approve <stage-id>, or npmjs.com > Staged Packages). npm authenticates

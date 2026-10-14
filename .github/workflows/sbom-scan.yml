@@ -1,0 +1,67 @@
+name: Release SBOM scan
+
+# Dependabot alerts watch main. This watches what was shipped: it scans the SBOM attached to the
+# latest GitHub release, so an advisory published after a release shows up against the version
+# people actually installed. Results land in the repository's Security tab (code scanning), where
+# each one can be fixed or dismissed with a reason. A fix is a fix(deps) bump, which releases a
+# patch with a new SBOM, and the next scan comes back clean.
+on:
+  schedule:
+    # Mondays, 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    # Releases before the SBOM existed have none to download; the scan then has nothing to read,
+    # and says so. Any other failure (no release, the API, the network) fails the run, and so does
+    # an SBOM with no components, so a broken scan cannot pass for a clean one.
+    - name: Downloading the latest release's SBOM
+      id: sbom
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        assets="$(gh release view --json assets --jq '.assets[].name')"
+        if ! grep -q '\.cdx\.json$' <<< "$assets"; then
+          echo "::notice::The latest release has no SBOM attached, so there is nothing to scan."
+          exit 0
+        fi
+        mkdir -p "$RUNNER_TEMP/sbom"
+        gh release download --pattern '*.cdx.json' --dir "$RUNNER_TEMP/sbom"
+        shopt -s nullglob
+        sboms=("$RUNNER_TEMP"/sbom/*.cdx.json)
+        jq -e '.components | length > 0' "${sboms[0]}" > /dev/null
+        echo "path=${sboms[0]}" >> "$GITHUB_OUTPUT"
+
+    # fail-build is off: a finding is reported in the Security tab, not as a red run.
+    - name: Scanning
+      id: scan
+      if: steps.sbom.outputs.path != ''
+      uses: anchore/scan-action@v7
+      with:
+        sbom: ${{ steps.sbom.outputs.path }}
+        fail-build: false
+        output-format: sarif
+
+    # grype gives SBOM findings an empty file location, which code scanning cannot place. The
+    # lockfile is where the fix lands, so the alerts point there.
+    - name: Placing the findings on the lockfile
+      if: steps.sbom.outputs.path != ''
+      run: |
+        jq '(.runs[].results[]?.locations[]?.physicalLocation.artifactLocation.uri) = "package-lock.json"' \
+          "${{ steps.scan.outputs.sarif }}" > "$RUNNER_TEMP/sbom-scan.sarif"
+
+    - name: Uploading to code scanning
+      if: steps.sbom.outputs.path != ''
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: ${{ runner.temp }}/sbom-scan.sarif
+        category: release-sbom
