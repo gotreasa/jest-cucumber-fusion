@@ -102,6 +102,7 @@
       [
         "@semantic-release/exec",
         {
+          "generateNotesCmd": "node scripts/write-sbom.js --notes jest-cucumber-fusion-${nextRelease.version}.cdx.json",
           "prepareCmd": "node scripts/write-sbom.js release/jest-cucumber-fusion-${nextRelease.version}.cdx.json"
         }
       ]

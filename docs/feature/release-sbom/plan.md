@@ -29,6 +29,7 @@ SBOM is the record of which versions each release carries.
 | Need | How |
 |---|---|
 | Generate | `scripts/write-sbom.js`, run by `@semantic-release/exec` in the prepare step, after `@semantic-release/npm` has written the version. It runs `npm sbom --sbom-format cyclonedx --omit dev --package-lock-only`, fails if npm fails, and writes nothing then. Runtime dependencies only: development ones never ship. |
+| Read per release | The release notes end with a "Runtime dependencies" table (package, version, licence), printed by `scripts/write-sbom.js --notes` through `@semantic-release/exec`'s `generateNotesCmd`. GitHub renders the notes; the JSON is only a download. |
 | View per release | `@semantic-release/github` attaches `release/*.cdx.json` to the GitHub release, labelled "SBOM (CycloneDX)". The release job then checks that it is attached, because the plugin only logs an asset it could not upload. |
 | Prove it | `actions/attest@v4` with `sbom-path` signs the SBOM as a statement about the staged tarball. Check with `gh attestation verify <tarball> --repo gotreasa/jest-cucumber-fusion`. |
 | Find problems after release | `.github/workflows/sbom-scan.yml`, weekly and on demand: grype (`anchore/scan-action@v7`) scans the latest release's SBOM and uploads SARIF to code scanning (category `release-sbom`). |
@@ -80,7 +81,13 @@ SBOM is the record of which versions each release carries.
       [#49](https://github.com/gotreasa/jest-cucumber-fusion/pull/49). The 8 open Dependabot
       alerts on `main` on 2026-10-14 are all development scope, so the runtime audit gate does
       not block the next release.
-- [ ] After merge, on the first release: the SBOM is on the release page, `gh attestation verify`
+- [x] Readability follow-up, asked by Gearoid on 2026-10-14 ("How readable will the SBOM be?",
+      then "Yes, add the release-notes table to PR #49"): `--notes` mode, two tests (red then
+      green; the failure test passed before the change, and a deliberate break, printing the
+      heading before npm runs, turned it red)
+- [x] Review round 3: APPROVED WITH NOTES, below
+- [ ] Commit and push to PR #49
+- [ ] After merge, on the first release: the notes end with the table, the SBOM is on the release page, `gh attestation verify`
       passes, and a manual run of "Release SBOM scan" uploads to the Security tab
 
 ## Review round 1 (2026-10-14)
@@ -108,6 +115,20 @@ the checks avoid needing (a command substitution and a here-string, no pipe).
 | 2 | A manual run still releases without staging | Pre-existing, out of scope (below) | Reported |
 | 3 | The asset check assumes the tag is `v<version>` | Accepted; it fails closed | A comment at the check |
 | 4 | The failure test asserts npm's `ESBOMPROBLEMS` text | Kept: it proves the failure is the expected one, not some other crash | None |
+
+## Review round 3: the release notes table (2026-10-14)
+
+APPROVED WITH NOTES. Confirmed: `generateNotes` runs before `prepare` and before the tag
+(`semantic-release/index.js:200-208`), so a failed `npm sbom` there stops the release with no tag;
+it also runs in a dry run (`lib/definitions/plugins.js:39`), so such a failure now shows there.
+
+| # | Note | Verdict | Action |
+|---|---|---|---|
+| 1 | The notes derived the attached file name apart from `prepareCmd` | Accepted | `--notes` takes the file name; both are written side by side in the exec config |
+| 2 | Free-text licence names go unescaped into a table cell | Declined: npm takes them from each package's `license` field, all four are MIT, and GitHub sanitises HTML; the worst case is one visibly broken row, and an escape would be code no test can reach | None |
+| 3 | Several licence entries joined with " OR " can misstate them | Accepted | Listed with ", " |
+| 4 | "The CommonJS build bundles these" is true of `require` only | Accepted | The line names both entry points |
+| 5 | Two `npm sbom` runs could diverge | Note: both read the same lockfile, and `npm version` changes only the root version | None |
 
 Out of scope, reported, not changed: a manual run on `main` can already make a release and
 skip staging (`Releasing` has no condition; staging needs `push`). That predates this work.
@@ -151,6 +172,10 @@ skip staging (`Releasing` has no condition; staging needs `push`). That predates
   passing its own inputs through.
 - `npm audit --omit dev` on 2026-10-14: 0 vulnerabilities, so the new gate passes today. Its
   blocking case was not exercised.
+- **The release notes, through the exec plugin.** `generateNotes` with version 9.9.9 printed the
+  heading, the entry-point line naming `jest-cucumber-fusion-9.9.9.cdx.json`, and four rows:
+  `@cucumber/gherkin` 42.0.1, `@cucumber/messages` 34.2.1, `@cucumber/tag-expressions` 11.0.1 and
+  `callsites` 4.2.0, all MIT.
 - Gates on the branch after round 1: 52 of 52 suites, 1,144 passed, 3 skipped; tsd; 7 of 7
   baselines; ESLint; type check; secretlint; Prettier on the changed files. actionlint is not
   installed here, so the workflow YAML was checked by review and will be checked by GitHub on the
