@@ -8,7 +8,7 @@ Every release carries a software bill of materials (SBOM) that a person can open
 GitHub release page, and the vulnerabilities it exposes are found and fixed without anyone
 having to remember to look.
 
-- Branch: `worktree-feat-release-sbom`, from `main` at `2a2dffb`.
+- Branch: `ci/release-sbom` (local worktree branch `worktree-feat-release-sbom`), from `main` at `2a2dffb`.
 - Asked by Gearoid on 2026-10-14 ("How would you propose generating it so that it is easily
   viewable for each release and the security problems ... can easily be addressed?"), then
   "Yes, please build it", with `actions/attest-sbom` added to the release job. No Jira (ruled
@@ -76,7 +76,10 @@ SBOM is the record of which versions each release carries.
       check, scan error handling
 - [x] Suite, lint, Prettier, type check (results under Evidence)
 - [x] Review round 2: APPROVED WITH NOTES, no blockers; four minor notes, below
-- [ ] Commit, push, draft PR
+- [x] Commit (`487b58c`, signed), push to `ci/release-sbom`, draft PR
+      [#49](https://github.com/gotreasa/jest-cucumber-fusion/pull/49). The 8 open Dependabot
+      alerts on `main` on 2026-10-14 are all development scope, so the runtime audit gate does
+      not block the next release.
 - [ ] After merge, on the first release: the SBOM is on the release page, `gh attestation verify`
       passes, and a manual run of "Release SBOM scan" uploads to the Security tab
 
