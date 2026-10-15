@@ -137,9 +137,21 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
+    # The release gate for known vulnerabilities in what ships. Runtime dependencies only:
+    # development ones never reach a consumer. It runs wherever a release can be made (a push,
+    # or a manual run), not on pull requests, so an advisory published overnight blocks the next
+    # release, not every open pull request.
+    - name: Auditing runtime dependencies
+      if: github.event_name != 'pull_request'
+      run: npm audit --omit dev --audit-level=high
+
     # semantic-release decides the version, tags it and writes the GitHub release, but does not
     # publish to npm (npmPublish: false in package.json): it leaves the versioned tarball in
-    # release/ instead, and the next step stages it.
+    # release/ instead, and the next step stages it. After @semantic-release/npm has written
+    # the version, @semantic-release/exec writes the release's SBOM beside the tarball
+    # (CycloneDX, runtime dependencies only), and @semantic-release/github attaches it to the
+    # GitHub release. The SBOM is written in prepare, before the tag exists, so a failed npm
+    # sbom stops the release before anything is tagged.
     - name: Releasing
       run: npx semantic-release
       env:
