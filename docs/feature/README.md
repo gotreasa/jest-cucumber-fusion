@@ -17,4 +17,4 @@ test pins something the work found.
 | [`drop-jest-cucumber/`](./drop-jest-cucumber/plan.md) | October 2026, version 3.0.0: replacing `jest-cucumber` with Jest and `@cucumber/gherkin`, as a dual ES module and CommonJS package |
 | [`mutation-triage/`](./mutation-triage/plan.md) | October 2026: a verdict for every mutant that survived mutation testing, and tests for the behaviours they showed were unpinned |
 | [`docs-review-2026-10-11/`](./docs-review-2026-10-11/plan.md) | October 2026: acting on an adversarial review and a pedagogy review of this documentation |
-| [`release-sbom/`](./release-sbom/plan.md) | October 2026: an SBOM attached to and attested for every release, a weekly scan of the latest one, and an audit gate before releasing |
+| [`release-sbom/`](./release-sbom/plan.md) | October 2026: an SBOM attached to every release, and an audit gate before releasing; an adversarial review of whether any of it was needed |

@@ -4,87 +4,132 @@ Living plan. Updated as the work moves; correct anything here that proves wrong.
 
 ## Goal
 
-Every release carries a software bill of materials (SBOM) that a person can open from the
-GitHub release page, and the vulnerabilities it exposes are found and fixed without anyone
-having to remember to look.
+Every release carries a software bill of materials (SBOM) that a person can download from the
+GitHub release page, and no release ships with a known high-severity advisory in what it bundles.
 
-- Branch: `ci/release-sbom` (local worktree branch `worktree-feat-release-sbom`), from `main` at `2a2dffb`.
+- Branch: `ci/release-sbom` (local worktree branch `worktree-feat-release-sbom`), from `main` at
+  `2a2dffb`. PR [#49](https://github.com/gotreasa/jest-cucumber-fusion/pull/49).
 - Asked by Gearoid on 2026-10-14 ("How would you propose generating it so that it is easily
   viewable for each release and the security problems ... can easily be addressed?"), then
-  "Yes, please build it", with `actions/attest-sbom` added to the release job. No Jira (ruled
-  for this repository on 2026-10-09).
-- Route: worked directly with one independent review, not the DES step loop. The change only
-  acts inside a GitHub release run, so no local oracle can measure it RED and GREEN, and the
-  design was settled by the approved proposal.
+  "Yes, please build it", with `actions/attest-sbom` added to the release job. Slimmed on his
+  decision on 2026-10-15, after an adversarial review (below). No Jira (ruled for this
+  repository on 2026-10-09).
+- Route: worked directly with independent review, not the DES step loop. The change only acts
+  inside a GitHub release run, so no local oracle can measure it RED and GREEN. The adversarial
+  review was not bound to a DES candidate (`des prepare-role`), because there is no DES Request
+  for this work; its verdict lives here.
 
-## Why it matters for this package
+## Why, and what it is not
 
-The CommonJS build inlines `@cucumber/gherkin`, `@cucumber/messages`,
-`@cucumber/tag-expressions` and `callsites` into `dist/index.cjs` (`scripts/build-cjs.js`). A
-consumer who `require`s the package runs that code, but their own `npm audit` cannot see it. The
-SBOM is the record of which versions each release carries.
+The honest reason is the request: a standard, machine-readable SBOM for each release. Nothing
+obliges it (see the adversarial review), and no mainstream consumer tool reads it.
+
+**Corrected 2026-10-15.** This section first said the CommonJS bundle hides the four runtime
+dependencies from a consumer's `npm audit`. That was false: `package.json` declares them as
+ordinary, exact-pinned `dependencies`, so a consumer installs them and their audit reports them.
+What the bundle does change is that a consumer cannot fix one themselves; only a new release of
+this package can, which `.github/dependabot.yml` already handles with `fix(deps)` bumps. A
+human-readable list of the bundled versions already ships in every tarball as
+`dist/THIRD_PARTY_LICENSES.txt` (`scripts/build-cjs.js:81-86`).
 
 ## Design
 
 | Need | How |
 |---|---|
-| Generate | `scripts/write-sbom.js`, run by `@semantic-release/exec` in the prepare step, after `@semantic-release/npm` has written the version. It runs `npm sbom --sbom-format cyclonedx --omit dev --package-lock-only`, fails if npm fails, and writes nothing then. Runtime dependencies only: development ones never ship. |
-| View per release | `@semantic-release/github` attaches `release/*.cdx.json` to the GitHub release, labelled "SBOM (CycloneDX)". The release job then checks that it is attached, because the plugin only logs an asset it could not upload. |
-| Prove it | `actions/attest@v4` with `sbom-path` signs the SBOM as a statement about the staged tarball. Check with `gh attestation verify <tarball> --repo gotreasa/jest-cucumber-fusion`. |
-| Find problems after release | `.github/workflows/sbom-scan.yml`, weekly and on demand: grype (`anchore/scan-action@v7`) scans the latest release's SBOM and uploads SARIF to code scanning (category `release-sbom`). |
+| Generate | `@semantic-release/exec`'s `prepareCmd` runs `npm sbom --sbom-format cyclonedx --omit dev --package-lock-only > release/jest-cucumber-fusion-<version>.cdx.json`, after `@semantic-release/npm` has written the version. Runtime dependencies only. |
+| View per release | `@semantic-release/github` attaches `release/*.cdx.json` to the GitHub release, labelled "SBOM (CycloneDX)". |
 | Stop a known problem shipping | `npm audit --omit dev --audit-level=high` before `Releasing`, on every run except a pull request. |
 | Fix | Unchanged: Dependabot's `npm-security` group raises the bump as `fix(deps)`, which releases a patch with a new SBOM. |
 
-## Decisions and deviations
+## Decisions
 
-- **`actions/attest`, not `actions/attest-sbom`.** Gearoid asked for `actions/attest-sbom`. Its
-  latest release, v4.1.0 (2026-03-18), is a composite that prints
-  `actions/attest-sbom has been deprecated, please use actions/attest instead` and then calls
-  `actions/attest` with the same inputs. The direct call produces the same attestation without a
-  deprecation warning on every release. Reverting is a one-line change to the `uses:` line.
-- **The SBOM's root name is corrected.** `npm sbom` (npm 11.21.0) names the root component after
-  the checkout directory, not the package: in a copy named `sim` it wrote `"name": "sim"`, while
-  its `purl` and `bom-ref` were right (`pkg:npm/%40g_package/jest-cucumber-fusion`).
-  `scripts/write-sbom.js` sets `group` and `name` from `package.json`, the CycloneDX form for a
-  scoped npm package.
-- **A Node script, not a shell pipe.** The first form piped `npm sbom` into `jq`. Without
-  `pipefail` the pipe's status is jq's, and `npm sbom` fails with an empty stdout (`EUSAGE` with
-  no lockfile, `ESBOMPROBLEMS` when it is out of step with `package.json`; both measured), so a
-  failure became a 0-byte SBOM that was uploaded and attested. The script matches
-  `scripts/build-cjs.js` and needs no `jq`.
-- **Findings point at `package-lock.json`.** grype gives an SBOM finding an empty file location
-  (`"uri": ""`), which code scanning cannot place. The lockfile is where a fix lands.
+- **Fails before the tag.** `prepare` runs before semantic-release creates the tag
+  (`semantic-release/index.js:202-208`). A plain redirect keeps `npm sbom`'s exit status (the
+  first form, a pipe into `jq`, lost it), so a failed `npm sbom` rejects the exec plugin's prepare
+  and stops the release with nothing tagged. The redirect leaves a 0-byte file on the runner,
+  which nothing uploads because the release has already stopped.
+- **The root component is named after the checkout directory.** `npm sbom` (npm 11.21.0) does
+  this; in CI the directory is `jest-cucumber-fusion`, so the root reads `jest-cucumber-fusion`
+  without the `@g_package` group. Its `purl` and `bom-ref` are right
+  (`pkg:npm/%40g_package/jest-cucumber-fusion`), and tools match on those. Accepted as cosmetic.
 - **The audit gate skips pull requests only.** On every pull request, an advisory published
   overnight would turn unrelated work red. On a push or a manual run, where a release can be
-  made, it stops the release, which is the point.
-- **Permissions.** The release job gains `attestations: write` only. `artifact-metadata: write`
-  is not needed: `actions/attest` creates a storage record only with `push-to-registry`, which
-  applies to container images, not an npm tarball.
+  made, it stops the release. An advisory with no patched version blocks every release until
+  someone acts; that is accepted as the gate doing its job.
+- **Not part of the slim version:** the attestation, the weekly scan, the asset-present check and
+  `scripts/write-sbom.js`. See the adversarial review.
 
 ## Steps
 
-- [x] Add `@semantic-release/exec@^7.1.0` (peer `semantic-release >=24.1.0`; this repo has 25).
-      The lockfile change is the plugin and its own dependencies, plus `figures` hoisted.
-- [x] Release config: SBOM in prepare, attached as a release asset
-- [x] Release job: audit gate, finding and checking the SBOM, attesting it
-- [x] Weekly scan workflow
-- [x] Local proof of the release path (below)
-- [x] Review round 1 (`nw-platform-architect-reviewer`): REJECTED, 1 blocker, 3 major, 4 minor.
-      Each finding re-verified against source; verdicts below.
-- [x] Fixes for round 1: `scripts/write-sbom.js` with its tests, test first
-      (`test/specs/packaging/release-sbom.steps.js`, red then green), audit gate, release asset
-      check, scan error handling
-- [x] Suite, lint, Prettier, type check (results under Evidence)
-- [x] Review round 2: APPROVED WITH NOTES, no blockers; four minor notes, below
-- [x] Commit (`487b58c`, signed), push to `ci/release-sbom`, draft PR
-      [#49](https://github.com/gotreasa/jest-cucumber-fusion/pull/49). The 8 open Dependabot
-      alerts on `main` on 2026-10-14 are all development scope, so the runtime audit gate does
-      not block the next release.
+- [x] First version built and reviewed in three rounds (history below): SBOM script with tests,
+      release asset and its check, attestation, weekly scan, audit gate
 - [x] Tried and withdrawn: a "Runtime dependencies" table in each release's notes (`66b19f8`,
-      reviewed in a third round). Gearoid judged on 2026-10-14 that it adds no value, and it was
-      reverted; the attached JSON stays the only view of the SBOM.
-- [ ] After merge, on the first release: the SBOM is on the release page, `gh attestation verify`
-      passes, and a manual run of "Release SBOM scan" uploads to the Security tab
+      reverted in `0040733`). Gearoid judged on 2026-10-14 that it adds no value.
+- [x] Adversarial value review (2026-10-15), below
+- [x] Slimmed on Gearoid's decision: plain `npm sbom` `prepareCmd`, release asset, audit gate.
+      Removed `scripts/write-sbom.js`, its tests, `.github/workflows/sbom-scan.yml`, the asset
+      check, the attestation and its permission. Rationale corrected in the workflow and here.
+- [x] Local proof of the slim release path (Evidence, slim version)
+- [x] Suite (51 of 51 suites, 1,142 passed, 3 skipped), tsd, 7 of 7 baselines, ESLint, type
+      check, secretlint, Prettier; commit, push, PR description
+- [ ] After merge, on the first `fix` or `feat` release: the SBOM is on the release page
+
+## Adversarial value review (2026-10-15)
+
+Asked by Gearoid ("Let's do an adversarial review since you're unsure if any of this is
+needed"). A fresh `nw-platform-architect-reviewer`, with none of the earlier rounds' context,
+argued the prosecution against closed criteria declared up front: what fails without each part
+given what the repository already had, what each part costs, whether it serves the request, and
+keep, cut or simplify. `nw-researcher` checked the outside facts in parallel.
+
+**Verdict: MERGE SLIMMED.**
+
+| Part | Verdict | Reason |
+|---|---|---|
+| Audit gate | Keep | The only part that stops a vulnerable release; three lines |
+| SBOM generation | Simplify | The request itself; a plain redirect fails before the tag as the script did |
+| Release asset | Keep | What makes it viewable for each release |
+| Asset-present check | Cut | It ran after the tag and the GitHub release and before npm staging, so a failure left a release that never reached npm |
+| Attestation | Cut | Same ordering hazard; no consumer tool reads it, and it does not raise OpenSSF Scorecard's Signed-Releases score |
+| Weekly scan | Cut | The same four packages from the same lockfile as Dependabot: a second alert stream |
+
+Re-verified against source before acting: the bundled versions already ship in
+`dist/THIRD_PARTY_LICENSES.txt` (run `npm run build`: `@cucumber/gherkin@42.0.1 (MIT)` and the
+others); the asset check (`integration.yml:166`) and the attestation (`:191`) ran after
+`Releasing` (`:157`) and before staging (`:206`).
+
+Outside facts (`nw-researcher`, primary sources; the CRA read through a mirror of the Official
+Journal because EUR-Lex did not load):
+
+- **EU Cyber Resilience Act (Regulation (EU) 2024/2847):** no SBOM duty here. Annex I Part II(1)
+  binds manufacturers; recital 18 treats free software that is not monetised as outside
+  commercial activity; an open-source steward must be a legal person (Art 3(14)), and Art 24
+  gives stewards no SBOM duty. Main obligations apply from 11 December 2027 (Art 71(2)).
+- **UK:** the Product Security and Telecommunications Infrastructure Act 2022 covers consumer
+  connectable products and has no SBOM requirement.
+- **OpenSSF Scorecard:** its SBOM check looks for a `.cdx.json` release asset by name and scores
+  it 10, but is experimental and off by default (`SCORECARD_EXPERIMENTAL`).
+- **Consumer tools:** npm audit, Dependabot, Snyk and deps.dev derive dependencies from
+  manifests, lockfiles or the registry; none fetches an author-published SBOM.
+
+## Evidence, slim version (2026-10-15)
+
+- **Success, through the real plugins.** In a copy of the tree, `@semantic-release/npm`'s
+  `prepare` and then `@semantic-release/exec`'s, with version 9.9.9: exec logged
+  `npm sbom --sbom-format cyclonedx --omit dev --package-lock-only > release/jest-cucumber-fusion-9.9.9.cdx.json`,
+  and `release/` held the tarball and the SBOM: CycloneDX 1.5, root version 9.9.9, purl
+  `pkg:npm/%40g_package/jest-cucumber-fusion@9.9.9`, four components. `@semantic-release/github`'s
+  `globAssets` on the real config returned that file with the label "SBOM (CycloneDX)".
+- **Failure, through the same plugins.** With a runtime dependency the lockfile lacks, npm
+  failed with `ESBOMPROBLEMS` and the exec plugin's `prepare` rejected (exit 1), which is what
+  stops semantic-release before the tag. A 0-byte file was left in `release/`.
+- **Not provable locally:** the asset upload to a real GitHub release.
+
+## History: the first version
+
+Everything below records the first version and its three review rounds, as they stood. Where it
+describes the script, the attestation, the asset check or the weekly scan, those were removed
+in the slim version above.
 
 ## Review round 1 (2026-10-14)
 
