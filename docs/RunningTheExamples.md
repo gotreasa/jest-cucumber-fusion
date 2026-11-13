@@ -32,7 +32,7 @@ The pre-push hook and CI run more than `npm test`. Run these too:
 
 | Command | What it checks |
 |---|---|
-| `npm run test-d` | the published types, with `tsd` |
+| `npm run test-d` | the published types, with `tstyche`, imported through the package's own `exports` map as an ES module consumer would |
 | `npm run test:baseline` | the packed package in fresh consumer projects, including every named example on the guide pages. It needs network access: it installs the packed package from a tarball. |
 | `npm run lint` | ESLint, with no warnings allowed |
 | `npm run typecheck` | TypeScript checking `src/` as JavaScript (`jsconfig.json`) |
