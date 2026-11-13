@@ -86,6 +86,33 @@ test("every file the published prepare script runs is in the package", () => {
   expect(scriptFiles.filter((file) => !files.includes(file))).toEqual([]);
 });
 
+// Every type file package.json names must ship. TypeScript reads the top-level `types` field
+// under the older module resolution modes and the `exports` conditions under node16, nodenext
+// and bundler, and npm run test-d (tstyche, nodenext) reaches only the second. Pointing `types`
+// at a missing file passed test-d (adversarial review of PR #56, 2026-11-13, finding 1).
+const typePathsIn = (value, key) => {
+  if (typeof value === "string") return key === "types" ? [value] : [];
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value).flatMap(([childKey, child]) =>
+    typePathsIn(child, childKey),
+  );
+};
+
+test("every type file package.json names is in the package", () => {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(repositoryRoot, "package.json"), "utf8"),
+  );
+  const typePaths = [
+    ...typePathsIn(manifest.types, "types"),
+    ...typePathsIn(manifest.exports, "exports"),
+  ].map((typePath) => typePath.replace(/^\.\//, ""));
+  expect(typePaths).toEqual(
+    expect.arrayContaining(["src/index.d.ts", "dist/index.d.cts"]),
+  );
+  const files = packedFiles();
+  expect(typePaths.filter((typePath) => !files.includes(typePath))).toEqual([]);
+});
+
 // Fusion never imports jest: it registers through the runner's globals. So jest is a peer, and
 // the consumer's own Jest is the only one installed, instead of a nested Jest 30 beside an
 // older one (fresh adversarial review of PR #16, 2026-10-10, M2). This repository's own suite
