@@ -51,9 +51,9 @@ export function After(callback: () => void | Promise<void>): void;
  * others. Switching the step check off leaves the duplicate check exactly as it was.
  */
 export interface FusionErrorOptions {
-  stepsMustMatchFeatureFile?: boolean;
-  scenariosMustMatchFeatureFile?: boolean;
-  allowScenariosNotInFeatureFile?: boolean;
+  stepsMustMatchFeatureFile?: boolean | undefined;
+  scenariosMustMatchFeatureFile?: boolean | undefined;
+  allowScenariosNotInFeatureFile?: boolean | undefined;
 }
 
 /**
@@ -81,8 +81,8 @@ export interface FusionOptions {
    * directory of the file that called it, and hands an absolute path on from there, so there
    * is nothing left for this to switch.
    */
-  loadRelativePath?: boolean;
-  errors?: boolean | FusionErrorOptions;
+  loadRelativePath?: boolean | undefined;
+  errors?: boolean | FusionErrorOptions | undefined;
   /**
    * Which scenarios to run, as a tag expression: a tag name written `@name`, combined with
    * the operators `and`, `or` and `not` and grouped with parentheses. For example
@@ -106,7 +106,7 @@ export interface FusionOptions {
    * `null` means no filter. Unlike `undefined`, which counts as not set, it is a value, so
    * `{ tagFilter: null }` on one call clears a filter set by `setFusionConfiguration`.
    */
-  tagFilter?: string | null;
+  tagFilter?: string | null | undefined;
   /**
    * Renames every test Fusion registers, Scenario Outline rows included. It is called once per
    * test while Fusion registers, never again while the tests run, and it names a test whatever
@@ -116,7 +116,8 @@ export interface FusionOptions {
    * It must return a non-empty string. A template that throws, or that answers with anything
    * else, is refused at collection rather than naming a test something Jest cannot report.
    */
-  scenarioNameTemplate?: (vars: ScenarioNameTemplateVars) => string;
+  scenarioNameTemplate?:
+    ((vars: ScenarioNameTemplateVars) => string) | undefined;
 }
 
 export function Fusion(feature: string, options?: FusionOptions): void;
