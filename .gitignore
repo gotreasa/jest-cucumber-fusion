@@ -75,8 +75,8 @@ typings/
 .nuxt
 dist
 
-# CommonJS twin of the type tests, written by scripts/build-cjs.js
-test-d/*.test-d.cts
+# CommonJS twin of the type tests, written by scripts/build-type-tests.js
+test-d/**/*.test-d.cts
 
 
 
