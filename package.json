@@ -16,6 +16,7 @@
   "scripts": {
     "pretest": "npm run build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --color",
+    "pretest-d": "npm run build",
     "test-d": "tstyche",
     "test:baseline": "node test/specs/baseline/run-all.js",
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
