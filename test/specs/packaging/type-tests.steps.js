@@ -54,10 +54,11 @@ test("the build neither reads nor writes the type tests", () => {
       fs.cpSync(path.join(repositoryRoot, entry), path.join(copy, entry), {
         recursive: true,
       });
+    // "junction" needs no privilege on Windows; other platforms ignore the type.
     fs.symlinkSync(
       path.join(repositoryRoot, "node_modules"),
       path.join(copy, "node_modules"),
-      "dir",
+      "junction",
     );
 
     const run = spawnSync(process.execPath, ["scripts/build-cjs.js"], {
@@ -80,20 +81,64 @@ test("the build neither reads nor writes the type tests", () => {
 // The ES module file names its twin in a reference directive, so a run without the twin fails
 // with ts(6053) instead of passing half the assertions. The twin must drop that line, since a
 // file cannot reference itself (ts(1006)), and must otherwise be the source unchanged.
+//
+// The twin is gitignored and written only by pretest-d, so npm test cannot read one from the
+// checkout: on a fresh clone there is none. Each test runs the generator in a copy instead.
+const reference = '/// <reference path="./index.test-d.cts" />\n';
+
+const generateTwinFrom = (source) => {
+  const copy = fs.mkdtempSync(path.join(os.tmpdir(), "fusion-twin-"));
+  try {
+    fs.mkdirSync(path.join(copy, "scripts"));
+    fs.mkdirSync(path.join(copy, "test-d"));
+    fs.copyFileSync(
+      path.join(repositoryRoot, "scripts", "build-type-tests.js"),
+      path.join(copy, "scripts", "build-type-tests.js"),
+    );
+    fs.writeFileSync(path.join(copy, "test-d", "index.test-d.ts"), source);
+
+    const run = spawnSync(process.execPath, ["scripts/build-type-tests.js"], {
+      cwd: copy,
+      encoding: "utf8",
+    });
+    const twin = path.join(copy, "test-d", "index.test-d.cts");
+    return {
+      status: run.status,
+      stderr: run.stderr,
+      twin: fs.existsSync(twin) ? fs.readFileSync(twin, "utf8") : null,
+    };
+  } finally {
+    fs.rmSync(copy, { recursive: true, force: true });
+  }
+};
+
 test("the CommonJS twin is the ES module type test minus its reference to the twin", () => {
   const source = fs.readFileSync(
     path.join(typeTests, "index.test-d.ts"),
     "utf8",
   );
-  const twin = fs.readFileSync(
-    path.join(typeTests, "index.test-d.cts"),
-    "utf8",
-  );
-  const reference = '/// <reference path="./index.test-d.cts" />\n';
-
   expect(source.startsWith(reference)).toBe(true);
+
+  const { status, twin } = generateTwinFrom(source);
+
+  expect(status).toBe(0);
   expect(twin).not.toContain(reference);
   expect(twin.slice(twin.indexOf("\n") + 1)).toBe(
     source.slice(reference.length),
   );
+});
+
+test("a type test without the reference to its twin is refused, and no twin is written", () => {
+  const source = fs.readFileSync(
+    path.join(typeTests, "index.test-d.ts"),
+    "utf8",
+  );
+
+  const { status, stderr, twin } = generateTwinFrom(
+    source.slice(reference.length),
+  );
+
+  expect(status).not.toBe(0);
+  expect(stderr).toMatch(/must open with \/\/\/ <reference/);
+  expect(twin).toBeNull();
 });
