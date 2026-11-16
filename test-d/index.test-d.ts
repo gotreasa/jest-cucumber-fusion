@@ -63,3 +63,30 @@ expect(Given(/^(\d+)$/, (count: number) => {})).type.toRaiseError();
 expect(Fusion("launch.feature", { tagFilter: null })).type.toBe<void>();
 expect(setFusionConfiguration({ tagFilter: null })).type.toBe<void>();
 expect(Fusion("launch.feature", { tagFilter: 42 })).type.toRaiseError();
+
+// undefined counts as "not set", as the configuration page documents, so a consumer
+// compiling with exactOptionalPropertyTypes can forward a value that may be missing,
+// such as { tagFilter: process.env.TAGS }. tstyche's baseline turns that option on,
+// and each of these was refused (TS2379, TS2322) until issue #57.
+// env has the shape of Node's process.env, whose types this baseline does not load.
+declare const env: Record<string, string | undefined>;
+declare const maybeText: string | undefined;
+declare const maybeFlag: boolean | undefined;
+expect(Fusion("launch.feature", { tagFilter: env.TAGS })).type.toBe<void>();
+expect(
+  Fusion("launch.feature", { loadRelativePath: maybeFlag }),
+).type.toBe<void>();
+expect(Fusion("launch.feature", { errors: maybeFlag })).type.toBe<void>();
+expect(
+  Fusion("launch.feature", { scenarioNameTemplate: undefined }),
+).type.toBe<void>();
+expect(
+  Fusion("launch.feature", {
+    errors: {
+      stepsMustMatchFeatureFile: maybeFlag,
+      scenariosMustMatchFeatureFile: maybeFlag,
+      allowScenariosNotInFeatureFile: maybeFlag,
+    },
+  }),
+).type.toBe<void>();
+expect(setFusionConfiguration({ tagFilter: maybeText })).type.toBe<void>();
