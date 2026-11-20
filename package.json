@@ -43,7 +43,7 @@
   "dependencies": {
     "@cucumber/gherkin": "42.0.1",
     "@cucumber/messages": "34.2.1",
-    "@cucumber/tag-expressions": "11.0.1",
+    "@cucumber/tag-expressions": "11.2.0",
     "callsites": "4.2.0"
   },
   "devDependencies": {
@@ -64,7 +64,7 @@
     "husky": "^9.1.7",
     "jest": "^30.4.2",
     "lint-staged": "^17.6.0",
-    "prettier": "3.9.10",
+    "prettier": "3.10.1",
     "secretlint": "^13.0.7",
     "semantic-release": "^25.0.5",
     "tstyche": "^7.2.5",
