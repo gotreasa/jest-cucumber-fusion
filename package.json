@@ -42,7 +42,7 @@
   ],
   "dependencies": {
     "@cucumber/gherkin": "42.0.1",
-    "@cucumber/messages": "34.2.1",
+    "@cucumber/messages": "35.0.0",
     "@cucumber/tag-expressions": "11.2.0",
     "callsites": "4.2.0"
   },
